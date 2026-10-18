@@ -1,0 +1,10 @@
+[
+  { "id": "sails", "title": { "ru": "Настройка парусов", "en": "Sail trim" }, "description": { "ru": "Как работают шкоты и где стоит каретка.", "en": "How the sheets work and where the car goes." } },
+  { "id": "cleats", "title": { "ru": "Швартовы и утка", "en": "Lines and cleats" }, "description": { "ru": "Как закладывать конец на утку и держать его под нагрузкой.", "en": "How to make a line fast on a cleat and hold it under load." } },
+  { "id": "fenders", "title": { "ru": "Кранцы", "en": "Fenders" }, "description": { "ru": "На какой высоте вешать кранцы и когда их убирать.", "en": "How high to hang fenders and when to stow them." } },
+  { "id": "captain_only", "title": { "ru": "Слушаем только капитана", "en": "Only the skipper gives orders" }, "description": { "ru": "Маринер кричит — экипаж ждёт команды капитана.", "en": "The marinero shouts; the crew waits for the skipper." } },
+  { "id": "anchor", "title": { "ru": "Работа с якорем", "en": "Anchor work" }, "description": { "ru": "Знаки руками на баке, сколько травить цепи.", "en": "Hand signals at the bow and how much chain to let out." } },
+  { "id": "loaded_lines", "title": { "ru": "Безопасность и нагруженные концы", "en": "Safety and loaded lines" }, "description": { "ru": "Нагруженный конец не держат руками; сначала оборот на лебёдку.", "en": "Never hold a loaded line by hand; take a turn on the winch first." } },
+  { "id": "toilet", "title": { "ru": "Гальюн и вода", "en": "Heads and water" }, "description": { "ru": "Что нельзя бросать в гальюн и как экономить воду в душе.", "en": "What never goes in the head and how to save water in the shower." } },
+  { "id": "mob", "title": { "ru": "Человек за бортом", "en": "Man overboard" }, "description": { "ru": "Кто показывает рукой, кто бросает круг, кто жмёт MOB.", "en": "Who points, who throws the ring, who presses MOB." } }
+]
