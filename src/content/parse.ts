@@ -4,6 +4,7 @@ import {
   BalanceSchema, BoatSchema, BriefingTopicSchema, CrewArchetypeSchema, DebriefRuleSchema, DialogueSchema,
   GameEventSchema, ManeuverSchema, MapPointSchema, RouteSchema, WeatherTemplateSchema,
 } from './schema';
+import { validateConditions } from './conditions';
 import { crossValidate } from './validate';
 
 export const CONTENT_FILES = ['boats', 'map', 'routes', 'weather', 'crew', 'briefing', 'events', 'dialogues', 'debrief', 'maneuvers', 'balance'] as const;
@@ -39,7 +40,7 @@ export function parseContent(raw: Partial<Record<ContentFile, unknown>>): ParseR
   }
   if (errors.length) return { content: null, errors };
   const content = parsed as unknown as Content;
-  const cross = crossValidate(content);
+  const cross = [...crossValidate(content), ...validateConditions(content)];
   return cross.length ? { content: null, errors: cross } : { content, errors: [] };
 }
 
