@@ -1,0 +1,2005 @@
+[
+  {
+    "id": "toilet_clog",
+    "pillar": "boat",
+    "trigger": {
+      "phase": "evening",
+      "conditions": [
+        "day >= 3",
+        "!checkin.toilets",
+        "!briefing.toilet"
+      ],
+      "chance": 0.35
+    },
+    "scene": "cabin_night",
+    "text": {
+      "ru": "Из носового гальюна доносится крик. Насос не качает.",
+      "en": "A shout from the forward head. The pump won't move."
+    },
+    "voices": [
+      {
+        "voice": "mechanic",
+        "min_level": 2,
+        "text": {
+          "ru": "Клапан забит. Это час работы и перчатки.",
+          "en": "Valve's clogged. An hour of work and gloves."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "fix_self",
+        "text": {
+          "ru": "Чинить самому",
+          "en": "Fix it yourself"
+        },
+        "check": {
+          "voice": "mechanic",
+          "difficulty": 2
+        },
+        "success": {
+          "fatigue": 15,
+          "mood": 5
+        },
+        "fail": {
+          "fatigue": 25,
+          "mood": -10,
+          "damage": "toilet_broken"
+        }
+      },
+      {
+        "id": "call_base",
+        "text": {
+          "ru": "Звонить на базу",
+          "en": "Call the base"
+        },
+        "effects": {
+          "money": -80,
+          "time_hours": 4
+        }
+      },
+      {
+        "id": "endure",
+        "text": {
+          "ru": "Терпеть до марины",
+          "en": "Put up with it until the marina"
+        },
+        "effects": {
+          "mood_per_day": -8
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Гальюны не проверены на приёмке и не было брифинга по их использованию.",
+      "en": "Heads were not checked at check-in and the crew got no briefing on them."
+    }
+  },
+  {
+    "id": "impeller_overheat",
+    "pillar": "boat",
+    "trigger": {
+      "phase": "passage",
+      "conditions": [
+        "defect.worn_impeller"
+      ],
+      "chance": 0.5
+    },
+    "scene": "engine_bay",
+    "text": {
+      "ru": "Сигнал перегрева. Из выхлопа валит пар, а воды почти нет.",
+      "en": "The overheat alarm shrieks. Steam pours from the exhaust, and the water is almost gone."
+    },
+    "voices": [
+      {
+        "voice": "mechanic",
+        "min_level": 1,
+        "text": {
+          "ru": "Импеллер. Его надо было смотреть на приёмке.",
+          "en": "The impeller. Should have been checked at check-in."
+        }
+      },
+      {
+        "voice": "pride",
+        "min_level": 1,
+        "text": {
+          "ru": "Дотянем. Не позорься перед гостями.",
+          "en": "We'll make it. Don't embarrass yourself in front of the guests."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "keep_motoring",
+        "text": {
+          "ru": "Идти дальше на моторе",
+          "en": "Keep motoring"
+        },
+        "effects": {
+          "damage": "impeller",
+          "mood": -5,
+          "time_hours": 1
+        }
+      },
+      {
+        "id": "change_impeller",
+        "text": {
+          "ru": "Встать и поменять импеллер",
+          "en": "Stop and change the impeller"
+        },
+        "check": {
+          "voice": "mechanic",
+          "difficulty": 2
+        },
+        "success": {
+          "time_hours": 0.75,
+          "fatigue": 10
+        },
+        "fail": {
+          "time_hours": 1.5,
+          "fatigue": 15,
+          "money": -150
+        }
+      },
+      {
+        "id": "sail_on",
+        "text": {
+          "ru": "Заглушить и идти под парусом",
+          "en": "Kill the engine and sail on"
+        },
+        "effects": {
+          "time_hours": 1,
+          "mood": -2
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Импеллер не проверили на приёмке — двигатель перегрелся на переходе.",
+      "en": "The impeller was not checked at check-in, so the engine overheated on passage."
+    }
+  },
+  {
+    "id": "warm_fridge",
+    "pillar": "boat",
+    "trigger": {
+      "phase": "evening",
+      "conditions": [
+        "service_bank < 30"
+      ],
+      "chance": 0.7
+    },
+    "scene": "galley",
+    "text": {
+      "ru": "Пиво тёплое, масло растаяло. Холодильник гудит из последних сил.",
+      "en": "The beer is warm, the butter has melted. The fridge hums on its last legs."
+    },
+    "voices": [
+      {
+        "voice": "mechanic",
+        "min_level": 2,
+        "text": {
+          "ru": "Сервисный банк почти пуст. Холодильник съедает половину заряда.",
+          "en": "The service bank is nearly flat. The fridge eats half the charge."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "ignore",
+        "text": {
+          "ru": "Переживём",
+          "en": "We'll survive"
+        },
+        "effects": {
+          "mood_per_day": -3
+        }
+      },
+      {
+        "id": "run_engine",
+        "text": {
+          "ru": "Погонять двигатель час",
+          "en": "Run the engine for an hour"
+        },
+        "effects": {
+          "fuel": -5,
+          "service_bank": 25,
+          "mood": -3
+        }
+      },
+      {
+        "id": "fridge_off",
+        "text": {
+          "ru": "Выключить холодильник на ночь",
+          "en": "Switch the fridge off for the night"
+        },
+        "effects": {
+          "service_bank": 10,
+          "mood": -5
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Электричество конечно: автопилот, плоттер и холодильник съели банк без зарядки.",
+      "en": "Power is finite: autopilot, plotter and fridge ate the bank with no charging."
+    }
+  },
+  {
+    "id": "water_low_warning",
+    "pillar": "boat",
+    "trigger": {
+      "phase": "morning",
+      "conditions": [
+        "water_pct < 30"
+      ],
+      "chance": 0.8
+    },
+    "scene": "cabin_day",
+    "text": {
+      "ru": "Насос захлёбывается воздухом. Танк почти сухой, до марины полдня.",
+      "en": "The pump gulps air. The tank is nearly dry, and the marina is half a day away."
+    },
+    "voices": [
+      {
+        "voice": "mechanic",
+        "min_level": 2,
+        "text": {
+          "ru": "Литров на день — если без душа.",
+          "en": "A day's worth of litres, if nobody showers."
+        }
+      },
+      {
+        "voice": "crew_voice",
+        "min_level": 0,
+        "text": {
+          "ru": "Я только голову помою, быстро!",
+          "en": "I'll just wash my hair, quick!"
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "carry_on",
+        "text": {
+          "ru": "Ничего страшного",
+          "en": "No big deal"
+        },
+        "effects": {
+          "mood": 2
+        }
+      },
+      {
+        "id": "ration",
+        "text": {
+          "ru": "Объявить экономию воды",
+          "en": "Announce water rationing"
+        },
+        "effects": {
+          "mood": -4,
+          "water": 20
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Свободный душ опустошил танк к середине недели.",
+      "en": "Unlimited showers emptied the tank by midweek."
+    }
+  },
+  {
+    "id": "dead_starter_morning",
+    "pillar": "boat",
+    "trigger": {
+      "phase": "morning",
+      "conditions": [
+        "boat.shared_bank",
+        "starter_bank < 50"
+      ],
+      "chance": 0.6
+    },
+    "scene": "cockpit_morning",
+    "text": {
+      "ru": "Ключ. Щелчок. Тишина.",
+      "en": "Key. Click. Silence."
+    },
+    "voices": [
+      {
+        "voice": "mechanic",
+        "min_level": 2,
+        "text": {
+          "ru": "Банк один на всё. Холодильник ночью выпил и стартовый.",
+          "en": "One bank for everything. The fridge drank the starter too, overnight."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "try_again",
+        "text": {
+          "ru": "Крутить ещё",
+          "en": "Keep cranking"
+        },
+        "effects": {
+          "starter_bank": -10,
+          "fatigue": 5
+        }
+      },
+      {
+        "id": "ask_neighbors",
+        "text": {
+          "ru": "Попросить соседей прикурить",
+          "en": "Ask the neighbours for a jump"
+        },
+        "check": {
+          "voice": "diplomat",
+          "difficulty": 1
+        },
+        "success": {
+          "time_hours": 1,
+          "mood": 2,
+          "starter_bank": 40
+        },
+        "fail": {
+          "time_hours": 2,
+          "money": -120,
+          "starter_bank": 50
+        }
+      },
+      {
+        "id": "call_base",
+        "text": {
+          "ru": "Звонить на базу",
+          "en": "Call the base"
+        },
+        "effects": {
+          "money": -120,
+          "time_hours": 3,
+          "starter_bank": 50
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Один общий аккумулятор: ночной расход посадил и стартовый.",
+      "en": "One shared battery: the night drain flattened the starter too."
+    }
+  },
+  {
+    "id": "gas_smell",
+    "pillar": "boat",
+    "trigger": {
+      "phase": "evening",
+      "conditions": [
+        "defect.gas_leak"
+      ],
+      "chance": 0.6
+    },
+    "scene": "galley",
+    "text": {
+      "ru": "У плиты пахнет газом. Света уже чиркает спичкой.",
+      "en": "The stove reeks of gas. Sveta is already striking a match."
+    },
+    "voices": [
+      {
+        "voice": "caution",
+        "min_level": 1,
+        "text": {
+          "ru": "Стоп. Сначала кран баллона.",
+          "en": "Stop. The cylinder valve first."
+        }
+      },
+      {
+        "voice": "economist",
+        "min_level": 2,
+        "text": {
+          "ru": "Таверна на берегу дешевле новой лодки.",
+          "en": "A taverna ashore is cheaper than a new boat."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "cook_anyway",
+        "text": {
+          "ru": "Готовить, проветрим потом",
+          "en": "Cook anyway, air it out later"
+        },
+        "check": {
+          "voice": "caution",
+          "difficulty": 3
+        },
+        "success": {
+          "mood": 2
+        },
+        "fail": {
+          "injury": true,
+          "mood": -30,
+          "gas": -30
+        }
+      },
+      {
+        "id": "close_valve",
+        "text": {
+          "ru": "Перекрыть газ, ужин холодный",
+          "en": "Close the valve, cold dinner"
+        },
+        "effects": {
+          "mood": -6
+        }
+      },
+      {
+        "id": "taverna_ashore",
+        "text": {
+          "ru": "Ужин на берегу",
+          "en": "Dinner ashore"
+        },
+        "requires": [
+          "at_marina || at_quay"
+        ],
+        "effects": {
+          "money": -140,
+          "mood": 4
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Газ не проверен на приёмке: треснувший шланг нашёлся у открытого огня.",
+      "en": "Gas was not checked at check-in: the cracked hose turned up next to an open flame."
+    }
+  },
+  {
+    "id": "toilet_misuse",
+    "pillar": "boat",
+    "trigger": {
+      "phase": "evening",
+      "conditions": [
+        "boat.electric_toilet",
+        "!briefing.toilet"
+      ],
+      "chance": 0.4
+    },
+    "scene": "cabin_night",
+    "text": {
+      "ru": "Электрогальюн взвыл и замолчал. Кто-то спустил салфетки.",
+      "en": "The electric head howls and dies. Someone flushed wipes."
+    },
+    "voices": [
+      {
+        "voice": "mechanic",
+        "min_level": 2,
+        "text": {
+          "ru": "Мацератор забит бумагой. Разбирать снизу.",
+          "en": "The macerator is choked with paper. Strip it from below."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "fix_self",
+        "text": {
+          "ru": "Разобрать самому",
+          "en": "Take it apart yourself"
+        },
+        "check": {
+          "voice": "mechanic",
+          "difficulty": 2
+        },
+        "success": {
+          "fatigue": 15
+        },
+        "fail": {
+          "fatigue": 25,
+          "mood": -8,
+          "damage": "toilet_broken"
+        }
+      },
+      {
+        "id": "call_base",
+        "text": {
+          "ru": "Звонить на базу",
+          "en": "Call the base"
+        },
+        "effects": {
+          "money": -100,
+          "time_hours": 3
+        }
+      },
+      {
+        "id": "close_it",
+        "text": {
+          "ru": "Закрыть гальюн до марины",
+          "en": "Seal the head until the marina"
+        },
+        "effects": {
+          "mood_per_day": -5
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Не было брифинга по гальюнам — электрогальюн забили в первую же неделю.",
+      "en": "No briefing on the heads, so the electric head was clogged within the first week."
+    }
+  },
+  {
+    "id": "genoa_seam_rip",
+    "pillar": "boat",
+    "trigger": {
+      "phase": "passage",
+      "conditions": [
+        "defect.torn_genoa_seam",
+        "wind >= 14"
+      ],
+      "chance": 0.5
+    },
+    "scene": "deck_wind",
+    "text": {
+      "ru": "Треск над головой. Шов на генуе разошёлся на ладонь.",
+      "en": "A crack overhead. The genoa seam has opened a hand's width."
+    },
+    "voices": [
+      {
+        "voice": "sea_sense",
+        "min_level": 2,
+        "text": {
+          "ru": "Ещё час под нагрузкой — и паруса не будет.",
+          "en": "One more hour under load and there is no sail."
+        }
+      },
+      {
+        "voice": "pride",
+        "min_level": 1,
+        "text": {
+          "ru": "Дойдём, не сворачивать же из-за ниток.",
+          "en": "We'll make it. Not turning back over a few stitches."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "keep_sailing",
+        "text": {
+          "ru": "Идти дальше под генуей",
+          "en": "Keep sailing on the genoa"
+        },
+        "effects": {
+          "damage": "sail_torn",
+          "mood": -5
+        }
+      },
+      {
+        "id": "furl_and_motor",
+        "text": {
+          "ru": "Свернуть геную, идти на моторе",
+          "en": "Furl the genoa and motor"
+        },
+        "effects": {
+          "fuel": -6,
+          "time_hours": 0.5
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Паруса не осмотрели на приёмке — шов порвался под ветром.",
+      "en": "The sails were not inspected at check-in, so the seam tore in the wind."
+    }
+  },
+  {
+    "id": "anchor_shackle_loose",
+    "pillar": "boat",
+    "trigger": {
+      "phase": "arrival",
+      "conditions": [
+        "defect.loose_anchor_shackle",
+        "at_bay"
+      ],
+      "chance": 0.5
+    },
+    "scene": "bow_anchor",
+    "text": {
+      "ru": "Брашпиль травит цепь, а скоба на якоре держится на последнем витке.",
+      "en": "The windlass pays out chain, and the anchor shackle hangs on its last thread."
+    },
+    "voices": [
+      {
+        "voice": "order",
+        "min_level": 2,
+        "text": {
+          "ru": "Проверь скобу, прежде чем травить.",
+          "en": "Check the shackle before you pay out."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "drop_anyway",
+        "text": {
+          "ru": "Отдавать как есть",
+          "en": "Drop it as it is"
+        },
+        "check": {
+          "voice": "order",
+          "difficulty": 3
+        },
+        "success": {},
+        "fail": {
+          "damage": "anchor_lost",
+          "time_hours": 1,
+          "mood": -8
+        }
+      },
+      {
+        "id": "mouse_shackle",
+        "text": {
+          "ru": "Затянуть и законтрить скобу",
+          "en": "Tighten and mouse the shackle"
+        },
+        "effects": {
+          "time_hours": 0.5,
+          "fatigue": 5
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Якорное устройство не проверено: скоба не была законтрена.",
+      "en": "The ground tackle was not checked: the shackle was never moused."
+    }
+  },
+  {
+    "id": "front_squall",
+    "pillar": "weather",
+    "trigger": {
+      "phase": "passage",
+      "conditions": [
+        "front",
+        "hour >= 13"
+      ],
+      "chance": 0.7
+    },
+    "scene": "deck_squall",
+    "text": {
+      "ru": "С запада стена серого. Первый порыв кладёт лодку на борт.",
+      "en": "A grey wall from the west. The first gust lays the boat on her side."
+    },
+    "voices": [
+      {
+        "voice": "sea_sense",
+        "min_level": 1,
+        "text": {
+          "ru": "Это не прогнозные двадцать. Это тридцать.",
+          "en": "That is not the forecast twenty. That is thirty."
+        }
+      },
+      {
+        "voice": "pride",
+        "min_level": 1,
+        "text": {
+          "ru": "Держи курс. Гости смотрят.",
+          "en": "Hold your course. The guests are watching."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "hold_course",
+        "text": {
+          "ru": "Держать курс под всеми парусами",
+          "en": "Hold course under full sail"
+        },
+        "check": {
+          "voice": "sea_sense",
+          "difficulty": 3
+        },
+        "success": {
+          "mood": -5,
+          "fatigue": 10
+        },
+        "fail": {
+          "damage": "sail_torn",
+          "mood": -15,
+          "fatigue": 15
+        }
+      },
+      {
+        "id": "reef_now",
+        "text": {
+          "ru": "Взять риф прямо сейчас",
+          "en": "Take a reef right now"
+        },
+        "effects": {
+          "time_hours": 0.5,
+          "fatigue": 10,
+          "mood": -3
+        }
+      },
+      {
+        "id": "motor_to_shelter",
+        "text": {
+          "ru": "Убрать паруса, уйти в укрытие на моторе",
+          "en": "Drop the sails and motor to shelter"
+        },
+        "effects": {
+          "fuel": -8,
+          "time_hours": 1,
+          "mood": -2
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Прогноз обещал 20 узлов, с фронтом в заливе пришло 30. Барометр и облака предупреждали.",
+      "en": "The forecast said 20 knots; with the front, the bay got 30. The barometer and the clouds had warned."
+    }
+  },
+  {
+    "id": "local_warning",
+    "pillar": "weather",
+    "trigger": {
+      "phase": "morning",
+      "conditions": [
+        "front"
+      ],
+      "chance": 0.6
+    },
+    "scene": "quay_morning",
+    "text": {
+      "ru": "Старый рыбак на причале смотрит на запад и качает головой: «После обеда будет плохо».",
+      "en": "An old fisherman on the quay looks west and shakes his head: \"Bad after lunch.\""
+    },
+    "voices": [
+      {
+        "voice": "sea_sense",
+        "min_level": 2,
+        "text": {
+          "ru": "Перистые на западе. Он прав.",
+          "en": "Cirrus in the west. He's right."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "laugh_off",
+        "text": {
+          "ru": "Улыбнуться и выйти по плану",
+          "en": "Smile and leave as planned"
+        },
+        "effects": {
+          "signal": "local_warning"
+        }
+      },
+      {
+        "id": "listen",
+        "text": {
+          "ru": "Расспросить и сократить переход",
+          "en": "Ask him and shorten the passage"
+        },
+        "effects": {
+          "signal": "local_warning",
+          "time_hours": 0.25,
+          "mood": -1
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Местные предупреждали о фронте — сигнал был, его не услышали.",
+      "en": "The locals warned about the front: the signal was there, and nobody heard it."
+    }
+  },
+  {
+    "id": "barometer_drop",
+    "pillar": "weather",
+    "trigger": {
+      "phase": "morning",
+      "conditions": [
+        "front",
+        "voice.sea_sense >= 2"
+      ],
+      "chance": 1
+    },
+    "scene": "cabin_day",
+    "text": {
+      "ru": "Стрелка барометра ушла на пять гектопаскалей за ночь.",
+      "en": "The barometer needle fell five hectopascals overnight."
+    },
+    "voices": [
+      {
+        "voice": "sea_sense",
+        "min_level": 2,
+        "text": {
+          "ru": "Падает быстро. После обеда придёт фронт.",
+          "en": "Falling fast. A front arrives after lunch."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "noted",
+        "text": {
+          "ru": "Отметить в журнале",
+          "en": "Note it in the log"
+        },
+        "effects": {
+          "signal": "barometer"
+        }
+      },
+      {
+        "id": "short_day",
+        "text": {
+          "ru": "Сократить переход и рифиться в бухте",
+          "en": "Shorten the passage and reef in the bay"
+        },
+        "effects": {
+          "signal": "barometer",
+          "mood": -2
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Барометр падал с утра — это был самый ранний сигнал фронта.",
+      "en": "The barometer was falling since morning, the earliest signal of the front."
+    }
+  },
+  {
+    "id": "rolly_anchorage",
+    "pillar": "weather",
+    "trigger": {
+      "phase": "evening",
+      "conditions": [
+        "at_bay",
+        "wind >= 15"
+      ],
+      "chance": 0.4
+    },
+    "scene": "anchorage_night",
+    "text": {
+      "ru": "Зыбь заходит в бухту. Посуда звенит, цепь стонет.",
+      "en": "Swell creeps into the bay. Dishes rattle, the chain groans."
+    },
+    "voices": [
+      {
+        "voice": "caution",
+        "min_level": 2,
+        "text": {
+          "ru": "Поползём ночью — проснёмся на камнях.",
+          "en": "If we drag tonight, we wake up on the rocks."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "sleep_on",
+        "text": {
+          "ru": "Ложиться спать",
+          "en": "Go to sleep"
+        },
+        "effects": {
+          "mood": -6,
+          "fatigue": 10
+        }
+      },
+      {
+        "id": "anchor_watch",
+        "text": {
+          "ru": "Назначить якорную вахту",
+          "en": "Set an anchor watch"
+        },
+        "effects": {
+          "fatigue": 15
+        }
+      },
+      {
+        "id": "re_anchor",
+        "text": {
+          "ru": "Переставиться глубже в бухту",
+          "en": "Re-anchor deeper in the bay"
+        },
+        "check": {
+          "voice": "order",
+          "difficulty": 2
+        },
+        "success": {
+          "fatigue": 8,
+          "mood": 2
+        },
+        "fail": {
+          "fatigue": 15,
+          "mood": -5
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Бухта открыта ветру этого направления — выбор стоянки решил ночь.",
+      "en": "The bay is open to this wind direction: the choice of anchorage decided the night."
+    }
+  },
+  {
+    "id": "strait_chop",
+    "pillar": "weather",
+    "trigger": {
+      "phase": "passage",
+      "conditions": [
+        "wind >= 18"
+      ],
+      "chance": 0.4
+    },
+    "scene": "deck_spray",
+    "text": {
+      "ru": "В проливе ветер против течения. Короткая злая волна бьёт в скулу.",
+      "en": "In the strait the wind fights the current. A short, vicious chop hammers the bow."
+    },
+    "voices": [
+      {
+        "voice": "sea_sense",
+        "min_level": 1,
+        "text": {
+          "ru": "Пролив усиливает ветер. Здесь всегда так.",
+          "en": "The strait squeezes the wind. It is always like this here."
+        }
+      },
+      {
+        "voice": "pride",
+        "min_level": 1,
+        "text": {
+          "ru": "Пробьёмся.",
+          "en": "We'll punch through."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "bash_through",
+        "text": {
+          "ru": "Пробиваться напрямую",
+          "en": "Punch straight through"
+        },
+        "effects": {
+          "mood": -10,
+          "fatigue": 10
+        }
+      },
+      {
+        "id": "detour",
+        "text": {
+          "ru": "Уйти полным курсом, крюк",
+          "en": "Bear away on a long detour"
+        },
+        "effects": {
+          "time_hours": 1.5,
+          "mood": -3
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Проливы и мысы добавляют к прогнозу треть ветра — их лучше проходить утром.",
+      "en": "Straits and capes add a third to the forecast wind, so it is better to pass them in the morning."
+    }
+  },
+  {
+    "id": "late_marina_queue",
+    "pillar": "time",
+    "trigger": {
+      "phase": "arrival",
+      "conditions": [
+        "at_marina",
+        "hour >= 15"
+      ],
+      "chance": 0.6
+    },
+    "scene": "marina_entrance",
+    "text": {
+      "ru": "У входа в марину очередь из пяти лодок. Маринер машет: «Ждите!»",
+      "en": "A queue of five boats at the marina entrance. The marinero waves: \"Wait!\""
+    },
+    "voices": [
+      {
+        "voice": "diplomat",
+        "min_level": 2,
+        "text": {
+          "ru": "Улыбнись и скажи, что вы на две ночи. Маринеры это любят.",
+          "en": "Smile and say you're staying two nights. Marineros love that."
+        }
+      },
+      {
+        "voice": "pride",
+        "min_level": 1,
+        "text": {
+          "ru": "Скажи, что у тебя бронь.",
+          "en": "Tell him you have a booking."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "argue",
+        "text": {
+          "ru": "Спорить с маринером",
+          "en": "Argue with the marinero"
+        },
+        "check": {
+          "voice": "diplomat",
+          "difficulty": 3
+        },
+        "success": {
+          "money": -20
+        },
+        "fail": {
+          "mood": -8,
+          "time_hours": 1
+        }
+      },
+      {
+        "id": "tip",
+        "text": {
+          "ru": "Дать на чай",
+          "en": "Slip him a tip"
+        },
+        "effects": {
+          "money": -30
+        }
+      },
+      {
+        "id": "wait",
+        "text": {
+          "ru": "Ждать на входе",
+          "en": "Wait at the entrance"
+        },
+        "effects": {
+          "time_hours": 1,
+          "mood": -4
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Поздний приход в марину — очередь и риск отказа: места кончаются после обеда.",
+      "en": "Late arrival at a marina means a queue and a risk of refusal: berths run out after lunch."
+    }
+  },
+  {
+    "id": "crew_wants_more_stops",
+    "pillar": "time",
+    "trigger": {
+      "phase": "morning",
+      "conditions": [
+        "wish.beach",
+        "day <= 2"
+      ],
+      "chance": 0.6
+    },
+    "scene": "cockpit_morning",
+    "text": {
+      "ru": "За завтраком гости листают путеводитель: «Давайте сегодня ещё два пляжа и пещеру!»",
+      "en": "Over breakfast the guests thumb the guidebook: \"Two more beaches and a cave today!\""
+    },
+    "voices": [
+      {
+        "voice": "crew_voice",
+        "min_level": 0,
+        "text": {
+          "ru": "Мы же в отпуске!",
+          "en": "We're on holiday!"
+        }
+      },
+      {
+        "voice": "caution",
+        "min_level": 2,
+        "text": {
+          "ru": "Каждая остановка — якорь, купание и снова якорь. Час минимум.",
+          "en": "Every stop is anchor, swim, anchor again. An hour minimum."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "add_stops",
+        "text": {
+          "ru": "Конечно, всё успеем",
+          "en": "Sure, we'll fit it all in"
+        },
+        "effects": {
+          "mood": 3,
+          "time_hours": 1.5
+        }
+      },
+      {
+        "id": "one_good_stop",
+        "text": {
+          "ru": "Одна хорошая бухта и долгое купание",
+          "en": "One good bay and a long swim"
+        },
+        "effects": {
+          "mood": 2
+        }
+      },
+      {
+        "id": "explain",
+        "text": {
+          "ru": "Объяснить, почему меньше — значит лучше",
+          "en": "Explain why less is more"
+        },
+        "check": {
+          "voice": "diplomat",
+          "difficulty": 2
+        },
+        "success": {
+          "mood": 2
+        },
+        "fail": {
+          "mood": -4
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Насыщенный маршрут съедает отдых: экипаж ценит время в бухте больше числа точек.",
+      "en": "A packed route eats the rest: the crew values time in a bay more than the number of stops."
+    }
+  },
+  {
+    "id": "lunch_stop_drags",
+    "pillar": "time",
+    "trigger": {
+      "phase": "passage",
+      "conditions": [
+        "day <= 3"
+      ],
+      "chance": 0.3
+    },
+    "scene": "bay_lunch",
+    "text": {
+      "ru": "Обеденная стоянка. Гости в воде и явно никуда не торопятся.",
+      "en": "Lunch stop. The guests are in the water and clearly in no hurry."
+    },
+    "voices": [
+      {
+        "voice": "crew_voice",
+        "min_level": 0,
+        "text": {
+          "ru": "Ещё десять минуточек!",
+          "en": "Ten more minutes!"
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "wait",
+        "text": {
+          "ru": "Пусть купаются",
+          "en": "Let them swim"
+        },
+        "effects": {
+          "time_hours": 1,
+          "mood": 3
+        }
+      },
+      {
+        "id": "hurry",
+        "text": {
+          "ru": "Поторопить всех на борт",
+          "en": "Rush everyone back aboard"
+        },
+        "effects": {
+          "mood": -5
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Остановки в пути всегда длиннее плана — нужен запас.",
+      "en": "Stops on passage always run longer than planned, so leave a buffer."
+    }
+  },
+  {
+    "id": "sunset_arrival",
+    "pillar": "time",
+    "trigger": {
+      "phase": "arrival",
+      "conditions": [
+        "hour >= 19"
+      ],
+      "chance": 0.8
+    },
+    "scene": "dusk_harbour",
+    "text": {
+      "ru": "Солнце садится. Входим в сумерках, огни на берегу путают глаз.",
+      "en": "The sun is going down. We enter at dusk, shore lights confusing the eye."
+    },
+    "voices": [
+      {
+        "voice": "order",
+        "min_level": 2,
+        "text": {
+          "ru": "Медленно. Каждому — одна задача.",
+          "en": "Slowly. One task per person."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "rush",
+        "text": {
+          "ru": "Швартоваться быстро, пока видно",
+          "en": "Moor fast while there is still light"
+        },
+        "check": {
+          "voice": "order",
+          "difficulty": 2
+        },
+        "success": {
+          "fatigue": 10
+        },
+        "fail": {
+          "fatigue": 15,
+          "damage": "hull_scratch"
+        }
+      },
+      {
+        "id": "slow_and_safe",
+        "text": {
+          "ru": "Медленно, с фонарём и багром",
+          "en": "Slow, with a torch and a boathook"
+        },
+        "effects": {
+          "fatigue": 12,
+          "mood": -4
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Слишком длинный день закончился швартовкой в темноте.",
+      "en": "A day that ran too long ended with mooring in the dark."
+    }
+  },
+  {
+    "id": "fuel_dock_queue",
+    "pillar": "time",
+    "trigger": {
+      "phase": "arrival",
+      "conditions": [
+        "at_marina",
+        "fuel_pct < 40"
+      ],
+      "chance": 0.5
+    },
+    "scene": "fuel_dock",
+    "text": {
+      "ru": "На заправке три лодки и один заправщик, у которого обед.",
+      "en": "Three boats at the fuel dock and one attendant, who is at lunch."
+    },
+    "voices": [
+      {
+        "voice": "mechanic",
+        "min_level": 2,
+        "text": {
+          "ru": "Топлива на завтра впритык.",
+          "en": "Fuel for tomorrow is cutting it close."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "skip",
+        "text": {
+          "ru": "Заправимся потом",
+          "en": "Refuel later"
+        },
+        "effects": {}
+      },
+      {
+        "id": "queue_now",
+        "text": {
+          "ru": "Встать в очередь",
+          "en": "Join the queue"
+        },
+        "effects": {
+          "time_hours": 1.5,
+          "mood": -2
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Заправка занимает больше времени, чем кажется, — лучше утром до выхода.",
+      "en": "Refuelling takes longer than it seems, so do it in the morning before departure."
+    }
+  },
+  {
+    "id": "marinero_commands",
+    "pillar": "briefing",
+    "trigger": {
+      "phase": "arrival",
+      "conditions": [
+        "at_marina || at_quay",
+        "!briefing.captain_only"
+      ],
+      "chance": 0.7
+    },
+    "scene": "marina_berth",
+    "text": {
+      "ru": "Маринер кричит «Давай-давай!», и Олег бросает ему кормовой, хотя команды не было.",
+      "en": "The marinero yells \"Dai-dai!\" and Oleg tosses him the stern line, though no order was given."
+    },
+    "voices": [
+      {
+        "voice": "order",
+        "min_level": 2,
+        "text": {
+          "ru": "Твой экипаж — твои команды.",
+          "en": "Your crew, your commands."
+        }
+      },
+      {
+        "voice": "pride",
+        "min_level": 1,
+        "text": {
+          "ru": "Перекричи его!",
+          "en": "Shout louder than him!"
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "shout_over",
+        "text": {
+          "ru": "Перекричать маринера",
+          "en": "Shout over the marinero"
+        },
+        "check": {
+          "voice": "order",
+          "difficulty": 3
+        },
+        "success": {
+          "mood": -2
+        },
+        "fail": {
+          "damage": "hull_scratch",
+          "mood": -5
+        }
+      },
+      {
+        "id": "abort_redo",
+        "text": {
+          "ru": "Отойти и зайти заново",
+          "en": "Pull away and come in again"
+        },
+        "effects": {
+          "time_hours": 0.5,
+          "fatigue": 10
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Не было брифинга «слушаем только капитана» — экипаж выполнял команды маринера.",
+      "en": "No \"skipper's orders only\" briefing, so the crew followed the marinero's commands."
+    }
+  },
+  {
+    "id": "line_not_cleated",
+    "pillar": "briefing",
+    "trigger": {
+      "phase": "arrival",
+      "conditions": [
+        "!briefing.cleats",
+        "!at_bay"
+      ],
+      "chance": 0.4
+    },
+    "scene": "marina_berth",
+    "text": {
+      "ru": "Кормовой лёг на утку одним шлагом. Лодку тянет ветром, конец ползёт.",
+      "en": "The stern line sits on the cleat with a single turn. Wind pulls the boat, and the line creeps."
+    },
+    "voices": [
+      {
+        "voice": "order",
+        "min_level": 1,
+        "text": {
+          "ru": "Не хватай руками!",
+          "en": "Don't grab it with your hands!"
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "grab_line",
+        "text": {
+          "ru": "Схватить конец руками",
+          "en": "Grab the line by hand"
+        },
+        "check": {
+          "voice": "order",
+          "difficulty": 3
+        },
+        "success": {
+          "fatigue": 5
+        },
+        "fail": {
+          "injury": true,
+          "mood": -30
+        }
+      },
+      {
+        "id": "let_go",
+        "text": {
+          "ru": "Отдать и зайти заново",
+          "en": "Let go and come in again"
+        },
+        "effects": {
+          "time_hours": 0.5,
+          "fatigue": 8
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Экипаж не умел закладывать на утку — нагруженный конец хватали руками.",
+      "en": "The crew could not make fast on a cleat, so they grabbed the loaded line by hand."
+    }
+  },
+  {
+    "id": "fenders_wrong_height",
+    "pillar": "briefing",
+    "trigger": {
+      "phase": "arrival",
+      "conditions": [
+        "!briefing.fenders",
+        "at_marina || at_quay"
+      ],
+      "chance": 0.35
+    },
+    "scene": "marina_berth",
+    "text": {
+      "ru": "Кранцы болтаются у ватерлинии, причал на полметра выше.",
+      "en": "The fenders dangle at the waterline; the quay is half a metre higher."
+    },
+    "voices": [
+      {
+        "voice": "order",
+        "min_level": 2,
+        "text": {
+          "ru": "Кранцы — до захода, а не после.",
+          "en": "Fenders go out before the approach, not after."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "ignore",
+        "text": {
+          "ru": "Да ладно, аккуратно зайдём",
+          "en": "Never mind, we'll go in gently"
+        },
+        "effects": {
+          "damage": "hull_scratch"
+        }
+      },
+      {
+        "id": "fix_now",
+        "text": {
+          "ru": "Остановиться и перевесить",
+          "en": "Stop and rehang them"
+        },
+        "effects": {
+          "time_hours": 0.25,
+          "fatigue": 5
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Не было брифинга по кранцам — борт прошёлся по причалу.",
+      "en": "No briefing on fenders, so the hull scraped along the quay."
+    }
+  },
+  {
+    "id": "anchor_chain_pile",
+    "pillar": "briefing",
+    "trigger": {
+      "phase": "arrival",
+      "conditions": [
+        "at_bay",
+        "!briefing.anchor"
+      ],
+      "chance": 0.4
+    },
+    "scene": "bow_anchor",
+    "text": {
+      "ru": "На баке отдали всю цепь разом, она легла горкой прямо на якорь.",
+      "en": "Up front they dropped all the chain at once. It lies in a heap right on top of the anchor."
+    },
+    "voices": [
+      {
+        "voice": "caution",
+        "min_level": 2,
+        "text": {
+          "ru": "Так он не возьмёт. Ночью поползём.",
+          "en": "It won't bite like that. We'll drag tonight."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "hope_holds",
+        "text": {
+          "ru": "Авось держит",
+          "en": "Hope it holds"
+        },
+        "effects": {
+          "mood": -6,
+          "fatigue": 10
+        }
+      },
+      {
+        "id": "redo",
+        "text": {
+          "ru": "Выбрать и поставить заново",
+          "en": "Haul it up and set it again"
+        },
+        "effects": {
+          "time_hours": 0.75,
+          "fatigue": 10
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Не было брифинга по якорю — цепь отдали кучей, ночь прошла на якорной вахте.",
+      "en": "No briefing on anchoring: the chain went down in a heap and the night became an anchor watch."
+    }
+  },
+  {
+    "id": "hat_overboard",
+    "pillar": "briefing",
+    "trigger": {
+      "phase": "passage",
+      "conditions": [
+        "!briefing.mob",
+        "day >= 2"
+      ],
+      "chance": 0.15
+    },
+    "scene": "deck_wind",
+    "text": {
+      "ru": "Шляпа Иры улетает за борт. Все кричат, никто не показывает рукой.",
+      "en": "Ira's hat flies overboard. Everyone shouts, nobody points."
+    },
+    "voices": [
+      {
+        "voice": "order",
+        "min_level": 2,
+        "text": {
+          "ru": "Это учения. Кто показывает? Кто на руле?",
+          "en": "This is a drill. Who is pointing? Who is on the helm?"
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "chase",
+        "text": {
+          "ru": "Развернуться и ловить",
+          "en": "Turn around and fetch it"
+        },
+        "check": {
+          "voice": "order",
+          "difficulty": 2
+        },
+        "success": {
+          "mood": 4,
+          "fatigue": 5
+        },
+        "fail": {
+          "mood": -5,
+          "fatigue": 10
+        }
+      },
+      {
+        "id": "let_go",
+        "text": {
+          "ru": "Пусть плывёт",
+          "en": "Let it float away"
+        },
+        "effects": {
+          "mood": -2
+        }
+      },
+      {
+        "id": "drill",
+        "text": {
+          "ru": "Сделать из этого учебную тревогу",
+          "en": "Turn it into a man-overboard drill"
+        },
+        "effects": {
+          "time_hours": 0.5,
+          "mood": 1,
+          "flag": "mob_drill_done"
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Без брифинга «человек за бортом» даже шляпа за бортом превращается в хаос.",
+      "en": "Without a man-overboard briefing, even a hat overboard turns into chaos."
+    }
+  },
+  {
+    "id": "crew_grumbles_departure",
+    "pillar": "promises",
+    "trigger": {
+      "phase": "morning",
+      "conditions": [
+        "mood < 50"
+      ],
+      "chance": 0.5
+    },
+    "scene": "cockpit_morning",
+    "text": {
+      "ru": "За завтраком тихо. Кто-то вспоминает, что вчера «выходили в восемь».",
+      "en": "Breakfast is quiet. Someone recalls that yesterday we were \"leaving at eight\"."
+    },
+    "voices": [
+      {
+        "voice": "diplomat",
+        "min_level": 2,
+        "text": {
+          "ru": "Не обещай снова. Объясни, что изменилось.",
+          "en": "Don't promise again. Explain what changed."
+        }
+      },
+      {
+        "voice": "crew_voice",
+        "min_level": 0,
+        "text": {
+          "ru": "Нам обещали!",
+          "en": "We were promised!"
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "promise_early",
+        "text": {
+          "ru": "Сегодня точно выйдем пораньше",
+          "en": "Today we'll definitely leave early"
+        },
+        "effects": {
+          "promise": "early_try",
+          "mood": 3
+        }
+      },
+      {
+        "id": "explain",
+        "text": {
+          "ru": "Честно объяснить, почему не вышло",
+          "en": "Honestly explain why it didn't work out"
+        },
+        "check": {
+          "voice": "diplomat",
+          "difficulty": 2
+        },
+        "success": {
+          "mood": 4
+        },
+        "fail": {
+          "mood": -3
+        }
+      },
+      {
+        "id": "ignore",
+        "text": {
+          "ru": "Сменить тему",
+          "en": "Change the subject"
+        },
+        "effects": {
+          "mood": -5
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Новое обещание поверх сорванного бьёт по настроению сильнее первого.",
+      "en": "A new promise on top of a broken one hits morale harder than the first."
+    }
+  },
+  {
+    "id": "taverna_question",
+    "pillar": "promises",
+    "trigger": {
+      "phase": "evening",
+      "conditions": [
+        "wish.taverna",
+        "!at_marina",
+        "!at_quay"
+      ],
+      "chance": 0.5
+    },
+    "scene": "anchorage_sunset",
+    "text": {
+      "ru": "Аня смотрит на огни на берегу: «А завтра будет таверна?»",
+      "en": "Anya gazes at the lights ashore: \"Will there be a taverna tomorrow?\""
+    },
+    "voices": [
+      {
+        "voice": "diplomat",
+        "min_level": 2,
+        "text": {
+          "ru": "Скажи «если дойдём до города». Не «да».",
+          "en": "Say \"if we reach a town\". Not \"yes\"."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "of_course",
+        "text": {
+          "ru": "Конечно, завтра таверна!",
+          "en": "Of course, taverna tomorrow!"
+        },
+        "effects": {
+          "promise": "promise_taverna",
+          "mood": 4
+        }
+      },
+      {
+        "id": "maybe",
+        "text": {
+          "ru": "Если дойдём до города — можно",
+          "en": "If we reach a town, we can"
+        },
+        "effects": {
+          "promise": "maybe_taverna",
+          "mood": 1
+        }
+      },
+      {
+        "id": "no_promises",
+        "text": {
+          "ru": "Посмотрим по ветру",
+          "en": "We'll see what the wind says"
+        },
+        "effects": {
+          "mood": -2
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Экипаж слышит «да» там, где капитан сказал «постараемся».",
+      "en": "The crew hears \"yes\" where the skipper said \"we'll try\"."
+    }
+  },
+  {
+    "id": "sailor_wants_sailing",
+    "pillar": "promises",
+    "trigger": {
+      "phase": "morning",
+      "conditions": [
+        "wish.sailing",
+        "day >= 2"
+      ],
+      "chance": 0.3
+    },
+    "scene": "cockpit_morning",
+    "text": {
+      "ru": "Макс уже у мачты: «Сегодня ведь весь день под парусом?»",
+      "en": "Max is already at the mast: \"We're sailing all day today, right?\""
+    },
+    "voices": [
+      {
+        "voice": "crew_voice",
+        "min_level": 0,
+        "text": {
+          "ru": "Мы же на яхте, а не на катере!",
+          "en": "This is a yacht, not a motorboat!"
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "promise_sail_day",
+        "text": {
+          "ru": "Конечно, весь день под парусом!",
+          "en": "Of course, sailing all day!"
+        },
+        "effects": {
+          "mood": 4,
+          "flag": "promised_sailing"
+        }
+      },
+      {
+        "id": "honest",
+        "text": {
+          "ru": "Посмотрим по ветру, пару часов обещаю",
+          "en": "Depends on the wind, a couple of hours I promise"
+        },
+        "check": {
+          "voice": "diplomat",
+          "difficulty": 2
+        },
+        "success": {
+          "mood": 2
+        },
+        "fail": {
+          "mood": -3
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Обещание «весь день под парусом» зависит от ветра, а не от капитана.",
+      "en": "A promise of \"all day under sail\" depends on the wind, not on the skipper."
+    }
+  },
+  {
+    "id": "loaded_sheet",
+    "pillar": "safety",
+    "trigger": {
+      "phase": "passage",
+      "conditions": [
+        "!briefing.loaded_lines",
+        "wind >= 16"
+      ],
+      "chance": 0.4
+    },
+    "scene": "deck_winch",
+    "text": {
+      "ru": "Денис тянется снять шкот с лебёдки голыми руками. Шкот звенит от нагрузки.",
+      "en": "Denis reaches to pull the sheet off the winch with bare hands. The sheet hums under load."
+    },
+    "voices": [
+      {
+        "voice": "order",
+        "min_level": 1,
+        "text": {
+          "ru": "Стоп! Сначала команда рулевому — привестись.",
+          "en": "Stop! First tell the helm to luff up."
+        }
+      },
+      {
+        "voice": "pride",
+        "min_level": 1,
+        "text": {
+          "ru": "Пусть учится, он взрослый.",
+          "en": "Let him learn, he's an adult."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "let_him",
+        "text": {
+          "ru": "Пусть попробует",
+          "en": "Let him try"
+        },
+        "check": {
+          "voice": "order",
+          "difficulty": 3
+        },
+        "success": {},
+        "fail": {
+          "injury": true,
+          "mood": -30
+        }
+      },
+      {
+        "id": "stop_explain",
+        "text": {
+          "ru": "Остановить и показать, как правильно",
+          "en": "Stop him and show the right way"
+        },
+        "effects": {
+          "time_hours": 0.25,
+          "mood": -1
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Нагруженный конец нельзя брать руками — без брифинга это закончилось травмой.",
+      "en": "A loaded line must not be taken by hand; without a briefing it ended in injury."
+    }
+  },
+  {
+    "id": "swimmer_near_prop",
+    "pillar": "safety",
+    "trigger": {
+      "phase": "arrival",
+      "conditions": [
+        "at_bay"
+      ],
+      "chance": 0.25
+    },
+    "scene": "anchorage_day",
+    "text": {
+      "ru": "Двигатель ещё работает на заднем, а Олег уже прыгает с кормы.",
+      "en": "The engine is still running astern, and Oleg is already jumping off the stern."
+    },
+    "voices": [
+      {
+        "voice": "caution",
+        "min_level": 1,
+        "text": {
+          "ru": "Глуши! Винт!",
+          "en": "Kill it! The prop!"
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "ignore",
+        "text": {
+          "ru": "Он же умеет плавать",
+          "en": "He can swim, can't he"
+        },
+        "check": {
+          "voice": "caution",
+          "difficulty": 2
+        },
+        "success": {},
+        "fail": {
+          "injury": true,
+          "mood": -30
+        }
+      },
+      {
+        "id": "kill_engine",
+        "text": {
+          "ru": "Заглушить двигатель и крикнуть",
+          "en": "Kill the engine and shout"
+        },
+        "effects": {
+          "mood": -1
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Купание у работающего винта — правило «двигатель заглушен» надо проговаривать заранее.",
+      "en": "Swimming next to a running prop: the \"engine off\" rule has to be stated in advance."
+    }
+  },
+  {
+    "id": "guest_seasick",
+    "pillar": "safety",
+    "trigger": {
+      "phase": "passage",
+      "conditions": [
+        "wind >= 16"
+      ],
+      "chance": 0.4
+    },
+    "scene": "deck_spray",
+    "text": {
+      "ru": "Света побледнела и просится вниз полежать.",
+      "en": "Sveta has gone pale and wants to lie down below."
+    },
+    "voices": [
+      {
+        "voice": "caution",
+        "min_level": 2,
+        "text": {
+          "ru": "Вниз нельзя — там будет хуже. Горизонт и свежий воздух.",
+          "en": "Not below, it only gets worse there. Horizon and fresh air."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "send_below",
+        "text": {
+          "ru": "Отправить вниз отдохнуть",
+          "en": "Send her below to rest"
+        },
+        "effects": {
+          "mood": -12
+        }
+      },
+      {
+        "id": "horizon",
+        "text": {
+          "ru": "Посадить на подветренный борт, смотреть на горизонт",
+          "en": "Seat her on the lee side, eyes on the horizon"
+        },
+        "effects": {
+          "mood": -4
+        }
+      },
+      {
+        "id": "change_course",
+        "text": {
+          "ru": "Сменить курс, уменьшить качку",
+          "en": "Change course to ease the motion"
+        },
+        "effects": {
+          "time_hours": 1,
+          "mood": -2
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Укачивание лечится горизонтом и воздухом, а не каютой.",
+      "en": "Seasickness is cured by horizon and air, not by the cabin."
+    }
+  }
+]

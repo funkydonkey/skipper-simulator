@@ -1,0 +1,18 @@
+[
+  { "id": "early_try", "contexts": ["briefing", "morning", "evening"], "strength": 0.9, "expectation": { "kind": "depart_by", "hour": 8 },
+    "said": { "ru": "Постараемся выйти пораньше", "en": "We'll try to leave early" }, "heard": { "ru": "Выходим в 8", "en": "We leave at 8" } },
+  { "id": "ten_bonus", "contexts": ["briefing", "evening"], "strength": 0.6, "expectation": { "kind": "depart_by", "hour": 10 },
+    "said": { "ru": "Выходим в 10, если получится раньше — бонус", "en": "We leave at 10; if it's earlier, that's a bonus" }, "heard": { "ru": "Выходим в 10", "en": "We leave at 10" } },
+  { "id": "decide_morning", "contexts": ["briefing", "morning", "evening"], "strength": 0.2, "expectation": { "kind": "none" },
+    "said": { "ru": "Решим утром по погоде", "en": "We'll decide in the morning, depending on the weather" }, "heard": { "ru": "Пока неясно", "en": "Nothing is decided yet" } },
+  { "id": "promise_taverna", "contexts": ["evening"], "strength": 0.7, "expectation": { "kind": "activity", "activity": "taverna" },
+    "said": { "ru": "Завтра ужинаем в таверне", "en": "Tomorrow we dine at a taverna" }, "heard": { "ru": "Завтра точно таверна", "en": "Taverna tomorrow, guaranteed" } },
+  { "id": "maybe_taverna", "contexts": ["evening"], "strength": 0.3, "expectation": { "kind": "activity", "activity": "taverna" },
+    "said": { "ru": "Если дойдём до города — можно в таверну", "en": "If we reach a town, maybe a taverna" }, "heard": { "ru": "Может быть, таверна", "en": "Maybe a taverna" } },
+  { "id": "swim_tomorrow", "contexts": ["morning", "evening"], "strength": 0.6, "expectation": { "kind": "activity", "activity": "swim" },
+    "said": { "ru": "Обязательно искупаемся", "en": "We'll definitely have a swim" }, "heard": { "ru": "Купаемся точно", "en": "Swimming is guaranteed" } },
+  { "id": "marina_tomorrow", "contexts": ["evening"], "strength": 0.7, "expectation": { "kind": "arrive_at_kind", "pointKind": "marina" },
+    "said": { "ru": "Завтра ночуем в марине, будет душ", "en": "Tomorrow night in a marina, with showers" }, "heard": { "ru": "Завтра марина и душ", "en": "Marina and showers tomorrow" } },
+  { "id": "beach_week", "contexts": ["briefing"], "strength": 0.8, "expectation": { "kind": "activity", "activity": "beach" },
+    "said": { "ru": "Пляжей будет много", "en": "There'll be plenty of beaches" }, "heard": { "ru": "Завтра пляж", "en": "Beach tomorrow" } }
+]
