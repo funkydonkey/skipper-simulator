@@ -1,0 +1,82 @@
+import { describe, expect, it } from 'vitest';
+import { loadContentDir } from '../../src/content/load-node';
+import { parseContent } from '../../src/content/parse';
+import { finishWeek, presentEvent } from '../../src/engine';
+import { buildConditionContext } from '../../src/engine/expr';
+import { PILLARS, type GameEvent } from '../../src/engine/types';
+import { pillarsAffected, playDay, runWeek, setupWeek, weekScore } from '../../src/sim/run';
+import { expert, newbie } from '../../src/sim/strategies';
+
+const loaded = await loadContentDir('content');
+if (!loaded.content) throw new Error(JSON.stringify(loaded.errors));
+const content = loaded.content;
+
+const SEEDS = Array.from({ length: 40 }, (_, i) => i + 1);
+const newbieRuns = SEEDS.map((seed) => runWeek(content, seed, newbie));
+const expertRuns = SEEDS.map((seed) => runWeek(content, seed, expert));
+const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+
+describe('ТЗ 7.4 acceptance', () => {
+  it('#1 the week runs from boat choice to debrief with no dead ends', () => {
+    for (const r of [...newbieRuns, ...expertRuns]) {
+      expect(r.state.phase).toBe('debrief');
+      expect(r.state.day).toBe(content.balance.schedule.days + 1);
+      expect(r.state.eventQueue).toEqual([]);
+    }
+  });
+
+  it('#2 every pillar influences a typical game', () => {
+    const counts = newbieRuns.map((r) => pillarsAffected(r.state).size).sort((a, b) => a - b);
+    expect(counts[Math.floor(counts.length / 2)]).toBeGreaterThanOrEqual(5);
+    const union = new Set(newbieRuns.flatMap((r) => [...pillarsAffected(r.state)]));
+    expect([...union].sort()).toEqual([...PILLARS].sort());
+  });
+
+  it('#3 the newbie strategy clearly loses to the right one', () => {
+    expect(mean(expertRuns.map((r) => weekScore(r.debrief)))).toBeGreaterThanOrEqual(mean(newbieRuns.map((r) => weekScore(r.debrief))) + 2);
+    expect(mean(newbieRuns.map((r) => r.debrief.depositLossEur))).toBeGreaterThan(mean(expertRuns.map((r) => r.debrief.depositLossEur)));
+    expect(mean(newbieRuns.map((r) => r.state.resources.mood))).toBeLessThan(mean(expertRuns.map((r) => r.state.resources.mood)));
+  });
+
+  it('#4 the debrief shows at least 3 decision → consequence links', () => {
+    const withThree = newbieRuns.filter((r) => r.debrief.links.length >= 3).length;
+    expect(withThree / newbieRuns.length).toBeGreaterThanOrEqual(0.8);
+  });
+
+  it('#5 texts come out in both languages', () => {
+    const s = setupWeek(content, 1, expert, 'en');
+    const ev = content.events[0]!;
+    expect(presentEvent(ev, s, buildConditionContext(s, content), content.balance).text).toBe(ev.text.en);
+  });
+
+  it('#6 a new event works by editing JSON only', () => {
+    const extra: GameEvent = {
+      id: 'json_only_test', pillar: 'time', trigger: { phase: 'morning', conditions: ['day == 1'], chance: 1 }, scene: 'cockpit_morning',
+      text: { ru: 'Тестовое событие.', en: 'A test event.' },
+      voices: [{ voice: 'caution', min_level: 0, text: { ru: 'Проверка.', en: 'Check.' } }],
+      options: [
+        { id: 'a', text: { ru: 'А', en: 'A' }, effects: { mood: 1 } },
+        { id: 'b', text: { ru: 'Б', en: 'B' }, effects: { mood: -1 } },
+      ],
+      debrief: { ru: 'Тест.', en: 'Test.' },
+    };
+    const raw = JSON.parse(JSON.stringify({ ...content, events: [extra, ...content.events] }));
+    const parsed = parseContent(raw);
+    expect(parsed.errors).toEqual([]);
+    expect(runWeek(parsed.content!, 1, newbie).state.firedEvents).toContain('json_only_test');
+  });
+
+  it('#7 the same seed gives the same week; different seeds differ', () => {
+    expect(runWeek(content, 42, newbie)).toEqual(runWeek(content, 42, newbie));
+    expect(runWeek(content, 42, newbie).state.log).not.toEqual(runWeek(content, 43, newbie).state.log);
+  });
+
+  it('save/load mid-week continues identically (Review Focus #4)', () => {
+    let s = setupWeek(content, 7, newbie);
+    for (let i = 0; i < 3; i++) s = playDay(s, content, newbie);
+    let restored = JSON.parse(JSON.stringify(s));
+    while (s.phase === 'morning') s = playDay(s, content, newbie);
+    while (restored.phase === 'morning') restored = playDay(restored, content, newbie);
+    expect(finishWeek(restored, content)).toEqual(finishWeek(s, content));
+  });
+});
