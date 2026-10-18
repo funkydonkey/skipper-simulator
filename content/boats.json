@@ -1,0 +1,56 @@
+[
+  {
+    "id": "aurora_45",
+    "name": { "ru": "Аврора 45", "en": "Aurora 45" },
+    "lengthFt": 45, "cabins": 4, "berths": 8,
+    "waterTankL": 300, "fuelTankL": 160,
+    "serviceBankAh": 140, "serviceBanks": 1, "starterSeparate": false,
+    "solarW": 0, "generator": false, "electricToilet": true, "bowThruster": true,
+    "motorKn": 7, "hullSpeedKn": 8.2, "priceEur": 5200, "depositEur": 3000,
+    "shinyFeatures": [
+      { "ru": "Подруливающее устройство", "en": "Bow thruster" },
+      { "ru": "Плоттер 12 дюймов с радаром", "en": "12-inch chartplotter with radar" },
+      { "ru": "Электрические гальюны", "en": "Electric heads" },
+      { "ru": "Аудиосистема в кокпите", "en": "Cockpit sound system" }
+    ],
+    "hiddenDefects": [
+      { "id": "worn_impeller", "checkpoint": "impeller", "description": { "ru": "Импеллер забортной воды изношен", "en": "The raw-water impeller is worn" } },
+      { "id": "toilet_valve", "checkpoint": "toilets", "description": { "ru": "Клапан носового гальюна подтекает", "en": "The forward head valve is leaking" } },
+      { "id": "old_scratch", "checkpoint": "damage_photos", "description": { "ru": "Старая царапина на правом борту", "en": "An old scratch on the starboard side" }, "chargedOnReturn": "hull_scratch" }
+    ]
+  },
+  {
+    "id": "meltemi_40",
+    "name": { "ru": "Мельтеми 40", "en": "Meltemi 40" },
+    "lengthFt": 40, "cabins": 3, "berths": 6,
+    "waterTankL": 450, "fuelTankL": 140,
+    "serviceBankAh": 110, "serviceBanks": 3, "starterSeparate": true,
+    "solarW": 200, "generator": false, "electricToilet": false, "bowThruster": false,
+    "motorKn": 6.5, "hullSpeedKn": 7.6, "priceEur": 4300, "depositEur": 2500,
+    "shinyFeatures": [
+      { "ru": "Новый бимини", "en": "New bimini" }
+    ],
+    "hiddenDefects": [
+      { "id": "torn_genoa_seam", "checkpoint": "sails", "description": { "ru": "Шов на генуе расходится у шкотового угла", "en": "The genoa seam is opening near the clew" } },
+      { "id": "loose_anchor_shackle", "checkpoint": "anchor", "description": { "ru": "Скоба якоря не законтрена", "en": "The anchor shackle is not moused" } }
+    ]
+  },
+  {
+    "id": "calypso_38",
+    "name": { "ru": "Калипсо 38", "en": "Calypso 38" },
+    "lengthFt": 38, "cabins": 3, "berths": 6,
+    "waterTankL": 330, "fuelTankL": 120,
+    "serviceBankAh": 90, "serviceBanks": 2, "starterSeparate": true,
+    "solarW": 0, "generator": false, "electricToilet": false, "bowThruster": false,
+    "motorKn": 6, "hullSpeedKn": 7.2, "priceEur": 3400, "depositEur": 2000,
+    "shinyFeatures": [
+      { "ru": "Стереосистема", "en": "Stereo" },
+      { "ru": "Тиковая палуба", "en": "Teak deck" }
+    ],
+    "hiddenDefects": [
+      { "id": "gas_leak", "checkpoint": "gas", "description": { "ru": "Шланг газа к плите потрескался", "en": "The stove gas hose is cracked" } },
+      { "id": "worn_impeller", "checkpoint": "impeller", "description": { "ru": "Импеллер забортной воды изношен", "en": "The raw-water impeller is worn" } },
+      { "id": "old_scratch", "checkpoint": "damage_photos", "description": { "ru": "Скол гелькоута на носу", "en": "A gelcoat chip on the bow" }, "chargedOnReturn": "hull_scratch" }
+    ]
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "party_guest",
+    "name": { "ru": "Гость-отпускник", "en": "Holiday guest" },
+    "names": [ { "ru": "Аня", "en": "Anya" }, { "ru": "Олег", "en": "Oleg" }, { "ru": "Света", "en": "Sveta" } ],
+    "wishes": ["taverna", "beach", "swim", "rest"],
+    "seasickness": 0.35, "patience": 0.4, "promiseSensitivity": 1.2
+  },
+  {
+    "id": "keen_sailor",
+    "name": { "ru": "Яхтсмен-энтузиаст", "en": "Keen sailor" },
+    "names": [ { "ru": "Ира", "en": "Ira" }, { "ru": "Макс", "en": "Max" }, { "ru": "Денис", "en": "Denis" } ],
+    "wishes": ["sailing", "early_start"],
+    "seasickness": 0.1, "patience": 0.7, "promiseSensitivity": 0.8
+  }
+]
