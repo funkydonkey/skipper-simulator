@@ -42,19 +42,23 @@ export function PlanningScreen() {
         ? <Button onClick={() => act({ type: 'draft_plan', plan: toDayPlan(draft) })}>{t('stay')}</Button>
         : <Button disabled={!canSail} onClick={() => act({ type: 'draft_plan', plan: toDayPlan(draft) })}>{t('toManeuvers')}</Button>}
     >
-      <ChartMap
-        locationId={game.locationId}
-        trail={trail}
-        reachableIds={canSail ? reachableFrom(content, game, draft) : []}
-        onPointClick={(id) => setDraft((d) => addLeg(content, game, d, id))}
-        wind={w ? { dir: w.forecastDir, kn: w.forecastKn, gustKn: w.forecastGustKn } : null}
-      />
-      <div className={styles.columns}>
-        <LegEditor legs={draft.legs} trail={trail} onChange={(i, patch) => setDraft((d) => updateLeg(d, i, patch))} onRemoveLast={() => setDraft(removeLastLeg)} />
-        <DaySettings draft={draft} departures={departures} onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))} />
+      <div className={styles.layout}>
+        <ChartMap
+          locationId={game.locationId}
+          trail={trail}
+          reachableIds={canSail ? reachableFrom(content, game, draft) : []}
+          onPointClick={(id) => setDraft((d) => addLeg(content, game, d, id))}
+          wind={w ? { dir: w.forecastDir } : null}
+        />
+        <div className={styles.controls}>
+          <div className={styles.columns}>
+            <LegEditor legs={draft.legs} trail={trail} onChange={(i, patch) => setDraft((d) => updateLeg(d, i, patch))} onRemoveLast={() => setDraft(removeLastLeg)} />
+            <DaySettings draft={draft} departures={departures} onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))} />
+          </div>
+          {estimate.preview && <PreviewPanel preview={estimate.preview} />}
+          {estimate.error && <p role="status" className={styles.warn}>{t('noEstimate', { message: te(estimate.error) })}</p>}
+        </div>
       </div>
-      {estimate.preview && <PreviewPanel preview={estimate.preview} />}
-      {estimate.error && <p role="status" className={styles.warn}>{t('noEstimate', { message: te(estimate.error) })}</p>}
     </ScreenFrame>
   );
 }

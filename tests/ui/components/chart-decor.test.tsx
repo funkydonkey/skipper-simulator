@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ChartMap } from '../../../src/ui/components/chart/ChartMap';
 import { hashId, islandPath, landOffset } from '../../../src/ui/components/chart/decor';
 import { content } from '../fixtures';
+import { chevronTip, rotatedTip } from '../helpers/arrow';
 import { renderWithSession } from '../render';
 
 describe('chart decor', () => {
@@ -19,7 +20,7 @@ describe('chart decor', () => {
   });
 
   it('draws defs, one coastline per point and animated water', () => {
-    const { container } = renderWithSession(<ChartMap locationId="base_marina" wind={{ dir: 'NW', kn: 15 }} />);
+    const { container } = renderWithSession(<ChartMap locationId="base_marina" wind={{ dir: 'NW' }} />);
     expect(container.querySelector('filter#hand')).not.toBeNull();
     expect(container.querySelectorAll('[data-coast]')).toHaveLength(content.map.length);
     expect(container.querySelector('animateTransform')).not.toBeNull();
@@ -34,11 +35,24 @@ describe('chart decor', () => {
   });
 
   it('keeps decor layers non-interactive so they never block point clicks', () => {
-    const { container } = renderWithSession(<ChartMap locationId="base_marina" wind={{ dir: 'NW', kn: 15 }} />);
+    const { container } = renderWithSession(<ChartMap locationId="base_marina" wind={{ dir: 'NW' }} />);
     for (const cls of ['water', 'clouds', 'windField']) {
       const g = container.querySelector(`g[class*="${cls}"]`);
       expect(g, cls).not.toBeNull();
       expect(g!.getAttribute('pointer-events'), cls).toBe('none');
+    }
+  });
+
+  it.each([
+    ['N', 0, 1],
+    ['W', 1, 0],
+    ['NW', 1, 1],
+  ] as const)('wind field arrows point downwind for %s wind', (dir, sx, sy) => {
+    const { container } = renderWithSession(<ChartMap locationId="base_marina" wind={{ dir }} />);
+    for (const a of container.querySelectorAll('[data-wind-arrow]')) {
+      const tip = rotatedTip(a.getAttribute('transform')!, chevronTip(a.getAttribute('d')!));
+      expect(Math.sign(Math.round(tip.x)) + 0).toBe(sx);
+      expect(Math.sign(Math.round(tip.y)) + 0).toBe(sy);
     }
   });
 });

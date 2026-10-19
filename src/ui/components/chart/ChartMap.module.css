@@ -1,5 +1,5 @@
 .chart { position: relative; margin: 0; }
-.svg { display: block; width: 100%; height: auto; border-radius: var(--radius); box-shadow: var(--shadow); }
+.svg { display: block; height: var(--chart-max-h); width: auto; max-width: 100%; margin-inline: auto; border-radius: var(--radius); box-shadow: var(--shadow); }
 .paper { fill: var(--chart-paper, var(--panel)); }
 .grid line { stroke: var(--line); stroke-width: 0.5; }
 .route line { stroke: var(--fg-soft); stroke-width: 1.2; opacity: 0.55; }
@@ -12,11 +12,15 @@
 .halo { fill: none; stroke: var(--focus); stroke-width: 1.5; stroke-dasharray: 3 3; }
 .trail { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 2 6; stroke-linecap: round; }
 .boat { fill: var(--red-500); stroke: var(--paper); stroke-width: 1; }
-.rose { position: absolute; right: var(--space-2); top: var(--space-2); }
-.label { font-family: var(--font-hand); font-size: 17px; fill: var(--fg); stroke: var(--chart-paper, var(--panel)); stroke-width: 3px; paint-order: stroke; }
+.label { font-family: var(--font-hand); font-size: 24px; fill: var(--fg); stroke: var(--chart-paper, var(--panel)); stroke-width: 3px; paint-order: stroke; }
 .wave { fill: none; stroke: var(--sea-500); stroke-width: 0.8; opacity: 0.25; }
 .land { fill: var(--ochre-200); stroke: var(--ink-soft); stroke-width: 1.2; }
 .isobath { fill: none; stroke: var(--sea-500); stroke-width: 0.7; stroke-dasharray: 3 4; opacity: 0.45; }
 .clouds ellipse { fill: var(--paper); opacity: 0.22; filter: blur(6px); }
 .windField path { fill: none; stroke: var(--sea-700); stroke-width: 1; opacity: 0.25; }
 .water, .clouds, .windField { pointer-events: none; }
+
+/* Phone: full width; the chart is drawn at ~0.6 scale, which is why labels are 24 units (labels.ts LABEL_FONT_MAX). */
+@media (max-width: 600px) {
+  .svg { width: 100%; height: auto; }
+}
