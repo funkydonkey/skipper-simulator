@@ -36,4 +36,9 @@ describe('Shell', () => {
     expect(document.documentElement.lang).toBe('en');
     expect(screen.queryByRole('alert')).toBeNull();
   });
+
+  it('tints the whole app by the game clock', () => {
+    const { container } = renderShell({ ...gameAt('evening'), clockMin: 22 * 60 });
+    expect(container.querySelector('.app')?.getAttribute('data-daytime')).toBe('night');
+  });
 });

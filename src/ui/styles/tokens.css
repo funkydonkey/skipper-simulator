@@ -48,3 +48,33 @@
   --shadow: 0 2px 8px rgb(42 38 32 / 0.15);
   --duration: 240ms;
 }
+
+/* ТЗ 6.2: day and night change the tone of the whole interface. */
+.app[data-daytime='dawn'] {
+  --bg: #f1e2cf;
+  --panel: #f9efe1;
+  --line: #e2cdb0;
+  --accent: #2d5f7c;
+}
+.app[data-daytime='dusk'] {
+  --bg: #e6c9a4;
+  --panel: #f1dcbd;
+  --line: #d4b48b;
+  --fg-soft: #6a4e3a;
+  --accent: #8a4a33;
+  --accent-strong: #6b3423;
+  --chart-paper: #efd9b6;
+}
+.app[data-daytime='night'] {
+  --bg: #13212d;
+  --fg: #e9e1cf;
+  --fg-soft: #a99f8a;
+  --panel: #1c2f3e;
+  --line: #2c4456;
+  --accent: #d9a441;
+  --accent-strong: #ecd9a8;
+  --accent-fg: #13212d;
+  --focus: #ecd9a8;
+  --chart-paper: #22384a;
+  --shadow: 0 2px 10px rgb(0 0 0 / 0.45);
+}
