@@ -37,6 +37,7 @@ export const PLANNING = dict({
   tooLateForBase: { ru: 'Не успеваете на базу к {time}.', en: 'You will not make base by {time}.' },
   fuelShort: { ru: 'Топлива может не хватить: нужно ~{need} л.', en: 'Fuel may run short: about {need} L needed.' },
   rest: { ru: 'На отдых останется около {h} ч.', en: 'About {h} h left for rest.' },
+  noEstimate: { ru: 'Не удаётся оценить этот план: {message}', en: "Can't estimate this plan: {message}" },
   stayRest: { ru: 'День на месте: отдых и купание.', en: 'A day in place: rest and swimming.' },
   tooLate: { ru: 'Сегодня уже поздно выходить', en: 'Too late to leave today' },
   stay: { ru: 'Провести день здесь', en: 'Spend the day here' },

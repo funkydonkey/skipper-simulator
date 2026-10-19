@@ -44,4 +44,10 @@ describe('PlanningScreen', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(/^Не получилось:/);
     expect(r.currentScreen()).toBe('planning');
   });
+
+  it('shows a localized line instead of the preview when the engine cannot estimate', () => {
+    renderShell({ ...atBase(), weather: null });
+    expect(screen.getByText(/^Не удаётся оценить этот план: /)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Провести день здесь' })).toBeInTheDocument();
+  });
 });

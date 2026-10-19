@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { previewPlan, type PlanPreview } from '../../../engine';
+import { EngineError, previewPlan, type PlanPreview } from '../../../engine';
 import { Button } from '../../components/Button';
 import { ChartMap } from '../../components/chart/ChartMap';
 import { ResourcePanel } from '../../components/ResourcePanel';
@@ -21,8 +21,11 @@ export function PlanningScreen() {
   const [draft, setDraft] = useState<Draft>(() => initialDraft(game, content));
   const trail = trailOf(content, game.locationId, draft.legs);
   const canSail = departures.length > 0;
-  const preview = useMemo<PlanPreview | null>(() => {
-    try { return previewPlan(game, content, toDayPlan(draft)); } catch { return null; }
+  const estimate = useMemo<{ preview: PlanPreview | null; error: string | null }>(() => {
+    try { return { preview: previewPlan(game, content, toDayPlan(draft)), error: null }; } catch (e) {
+      if (e instanceof EngineError) return { preview: null, error: e.message };
+      throw e;
+    }
   }, [game, content, draft]);
   const w = game.weather;
 
@@ -47,7 +50,8 @@ export function PlanningScreen() {
         <LegEditor legs={draft.legs} trail={trail} onChange={(i, patch) => setDraft((d) => updateLeg(d, i, patch))} onRemoveLast={() => setDraft(removeLastLeg)} />
         <DaySettings draft={draft} departures={departures} onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))} />
       </div>
-      {preview && <PreviewPanel preview={preview} />}
+      {estimate.preview && <PreviewPanel preview={estimate.preview} />}
+      {estimate.error && <p role="status" className={styles.warn}>{t('noEstimate', { message: estimate.error })}</p>}
     </ScreenFrame>
   );
 }
