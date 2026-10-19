@@ -67,4 +67,13 @@ describe('expr', () => {
     expect(c.wind).toBe(12);
     expect(c.front).toBe(false);
   });
+
+  it('wind and gust are the real wind now: afternoon factor and an active front included', () => {
+    const content = makeContent();
+    const front = { ...makeState().weather!, front: true, frontAddKn: 10 };
+    expect(buildConditionContext(makeState({ clockMin: 15 * 60 }), content)).toMatchObject({ wind: 14.4, gust: 21.6 });
+    expect(buildConditionContext(makeState({ clockMin: 15 * 60, weather: front }), content)).toMatchObject({ wind: 24.4, gust: 31.6 });
+    expect(buildConditionContext(makeState({ clockMin: 10 * 60, weather: front }), content)).toMatchObject({ wind: 12, gust: 18 });
+    expect(buildConditionContext(makeState({ weather: null }), content)).toMatchObject({ wind: 0, gust: 0 });
+  });
 });

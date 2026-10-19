@@ -1,5 +1,7 @@
 import { EngineError } from './errors';
+import { requireTemplate } from './state';
 import type { Content, GameState } from './types';
+import { realWind } from './weather';
 
 export type CondValue = number | boolean | string;
 export type CondContext = Readonly<Record<string, CondValue>>;
@@ -160,6 +162,7 @@ export function buildConditionContext(state: GameState, content: Content): CondC
   const point = content.map.find((p) => p.id === state.locationId);
   const r = state.resources;
   const w = state.weather;
+  const wind = w ? realWind(w, 1, state.clockMin / 60, requireTemplate(content, state.weatherTemplateId), content.balance) : null;
   const ctx: Record<string, CondValue> = {
     day: state.day,
     hour: state.clockMin / 60,
@@ -174,8 +177,8 @@ export function buildConditionContext(state: GameState, content: Content): CondC
     mood: r.mood,
     fatigue: r.fatigue,
     injuries: state.injuries,
-    wind: w?.forecastKn ?? 0,
-    gust: w?.forecastGustKn ?? 0,
+    wind: wind?.windKn ?? 0,
+    gust: wind?.gustKn ?? 0,
     front: w?.front ?? false,
     location_kind: point?.kind ?? '',
     at_base: point?.kind === 'base',

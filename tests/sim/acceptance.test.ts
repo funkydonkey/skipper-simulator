@@ -52,6 +52,17 @@ describe('ТЗ 7.4 acceptance', () => {
     }
   });
 
+  it('every event fires in some simulated week, except an explained allow-list', () => {
+    const NEVER_FIRES_IN_SIM = [
+      'fuel_dock_queue', // needs fuel_pct < 40 at a marina: both strategies refill at every berth and never burn 60% of a tank in one day
+      'gas_smell', // needs defect.gas_leak, which only calypso_38 has; no strategy picks that boat
+    ];
+    const fired = new Set([...newbieRuns, ...expertRuns].flatMap((r) => r.state.firedEvents));
+    const never = content.events.map((e) => e.id).filter((id) => !fired.has(id)).sort();
+    expect(never).toEqual(NEVER_FIRES_IN_SIM);
+    expect(fired).toContain('strait_chop');
+  });
+
   it('#5 texts come out in both languages', () => {
     const s = setupWeek(content, 1, expert, 'en');
     const ev = content.events[0]!;
