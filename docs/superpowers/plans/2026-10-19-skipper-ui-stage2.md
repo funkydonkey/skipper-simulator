@@ -6229,6 +6229,8 @@ Expected: tsc чистый; все тесты (Этап 1 и UI) PASS; `Content 
 
 - [ ] **Step 3: CI и деплой на GitHub Pages**
 
+GitHub Pages на бесплатном плане работает только для публичного репозитория (для приватного нужен GitHub Pro). Включение Pages и видимость репозитория — шаг владельца, агент их не трогает. Переезд на Render Static Site обсуждается позже, отдельно.
+
 `.github/workflows/ci.yml`:
 
 ```yaml
@@ -6322,7 +6324,7 @@ npm run validate-content                          # проверка content/*.j
 
 ## Деплой
 
-`main` автоматически публикуется на GitHub Pages (`.github/workflows/pages.yml`). Один раз включите Pages: **Settings → Pages → Source: GitHub Actions**.
+`main` автоматически публикуется на GitHub Pages (`.github/workflows/pages.yml`). Один раз включите Pages: **Settings → Pages → Source: GitHub Actions**. На бесплатном плане GitHub это работает только для публичного репозитория.
 ````
 
 - [ ] **Step 5: Commit**
@@ -7048,7 +7050,7 @@ git commit -m "style: make the UI work on phones; add Playwright visual smoke te
 6. **Сохранение только утром** (ТЗ 7.1), без сейва на каждый шаг. Перезагрузка посреди дня откатывает к утру. Цена: одна строка в `shouldAutosave`, если плейтест скажет «бесит».
 7. **Слот очищается на разборе,** чтобы «Продолжить» не вёл в утро 6-го дня.
 8. **Двойной клик гасится ключом экрана** (`useAct`), а не блокировкой кнопок.
-9. **Деплой на GitHub Pages** (CLAUDE.md называет Render, но ТЗ просит статику; Pages бесплатен и не требует сервера).
+9. **Деплой на GitHub Pages** (решение автора, 2026-10-19). Нужен публичный репозиторий или GitHub Pro. Render Static Site — вариант на потом.
 10. **Стиль Этапа 4 включён в этот же план** (Волна 5), кроме иллюстраций: они рисуются вне кода.
 
 ## Открытые вопросы к автору
