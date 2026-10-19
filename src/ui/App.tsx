@@ -5,12 +5,13 @@ import { SCREENS } from './screens/registry';
 import { SessionProvider, useSession } from './session/SessionContext';
 import { readLangPref } from './session/save';
 import { screenFor, screenKey } from './session/screen';
+import { daytimeFor } from './theme/daytime';
 
 export function Shell() {
   const { session } = useSession();
   const Current = SCREENS[screenFor(session)];
   return (
-    <div className="app" data-daytime="day">
+    <div className="app" data-daytime={daytimeFor(session.game, session.content.balance, screenFor(session))}>
       <ErrorBanner />
       <div className="screen" key={screenKey(session)}>
         <Current />
