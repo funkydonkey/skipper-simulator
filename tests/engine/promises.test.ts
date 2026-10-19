@@ -61,4 +61,11 @@ describe('promises', () => {
     expect(() => sayDialogue(s, content, 'promise_taverna', 'briefing')).toThrow(/cannot be said during briefing/);
     expect(() => sayDialogue(s, content, 'ghost', 'evening')).toThrow(/not found/);
   });
+
+  it('saying the same line twice logs it twice but keeps one open expectation', () => {
+    const once = sayDialogue(makeState({ day: 2 }), content, 'promise_taverna', 'evening');
+    const twice = sayDialogue(once, content, 'promise_taverna', 'evening');
+    expect(twice.expectations).toHaveLength(1);
+    expect(twice.log.filter((e) => e.cause === 'dialogue:promise_taverna')).toHaveLength(2);
+  });
 });

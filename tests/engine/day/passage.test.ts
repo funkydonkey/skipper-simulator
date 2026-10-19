@@ -112,6 +112,7 @@ describe('planDay', () => {
     expect(() => planDay(s, content, plan({ departureHour: content.balance.time.sunsetHour }))).toThrow(/departureHour/);
     expect(() => planDay(s, content, plan({ swimStops: 9 }))).toThrow(/swimStops/);
     expect(() => planDay(s, content, plan({ maneuverOrders: { departure: ['neutral'] } }))).toThrow(/4 steps/);
+    expect(() => planDay(s, content, plan({ legs: [], maneuverOrders: { mooring: ['a', 'zzz'] } }))).toThrow(/unknown step "zzz"/);
     expect(JSON.stringify(s)).toBe(snapshot);
   });
 

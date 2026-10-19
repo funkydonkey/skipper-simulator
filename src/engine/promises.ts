@@ -66,5 +66,6 @@ export function sayDialogue(state: GameState, content: Content, dialogueId: stri
   if (!d.contexts.includes(context)) throw new EngineError('INVALID_INPUT', `Dialogue ${d.id} cannot be said during ${context}`);
   const s = appendLog(state, { kind: 'decision', cause: `dialogue:${d.id}`, pillar: 'promises', data: { strength: d.strength } });
   const e = createExpectation(d, context, state.day);
-  return e ? { ...s, expectations: [...s.expectations, e] } : s;
+  const alreadyOpen = e !== null && s.expectations.some((x) => x.id === e.id && x.status === 'open');
+  return e && !alreadyOpen ? { ...s, expectations: [...s.expectations, e] } : s;
 }

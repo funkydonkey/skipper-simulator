@@ -16,8 +16,8 @@ export function startDay(state: GameState, content: Content, choice: MorningChoi
   const visible = signalsVisible(state.voices.sea_sense, choice.openBarometer, b);
   let s: GameState = { ...state, rng: r.next, clockMin: b.start.hour * 60, weather: { ...r.value, signalsVisible: visible } };
   s = appendLog(s, { kind: 'decision', cause: `barometer:${choice.openBarometer ? 'open' : 'ignored'}`, pillar: 'weather' });
-  if (r.value.front && visible) {
-    s = appendLog(s, { kind: 'signal', cause: 'signal:front', pillar: 'weather', data: { barometerTrendHpa: r.value.barometerTrendHpa, frontAddKn: r.value.frontAddKn } });
+  if (r.value.front) {
+    s = appendLog(s, { kind: 'signal', cause: 'signal:front', pillar: 'weather', data: { barometerTrendHpa: r.value.barometerTrendHpa, frontAddKn: r.value.frontAddKn, seen: visible } });
   }
   if (choice.dialogueId) s = sayDialogue(s, content, choice.dialogueId, 'morning');
   s = queueEvent(s, content, 'morning');

@@ -11,6 +11,7 @@ export const FLAG_PREFIXES = ['checkin.', 'briefing.', 'flag.', 'defect.', 'dama
 export const CONTEXT_KEYS = [
   'day', 'hour', 'water', 'water_pct', 'fuel', 'fuel_pct', 'service_bank', 'starter_bank', 'gas', 'money',
   'mood', 'fatigue', 'injuries', 'wind', 'gust', 'front', 'location_kind', 'at_base', 'at_marina', 'at_bay', 'at_quay',
+  'moored_berth',
 ] as const;
 export const BOAT_KEYS = ['boat.shared_bank', 'boat.electric_toilet', 'boat.bow_thruster', 'boat.generator', 'boat.solar'] as const;
 
@@ -163,6 +164,7 @@ export function buildConditionContext(state: GameState, content: Content): CondC
   const r = state.resources;
   const w = state.weather;
   const wind = w ? realWind(w, 1, state.clockMin / 60, requireTemplate(content, state.weatherTemplateId), content.balance) : null;
+  const anchoredOutside = state.dayFacts?.mooring === 'anchor';
   const ctx: Record<string, CondValue> = {
     day: state.day,
     hour: state.clockMin / 60,
@@ -182,7 +184,8 @@ export function buildConditionContext(state: GameState, content: Content): CondC
     front: w?.front ?? false,
     location_kind: point?.kind ?? '',
     at_base: point?.kind === 'base',
-    at_marina: point?.kind === 'marina' || point?.kind === 'base',
+    at_marina: (point?.kind === 'marina' || point?.kind === 'base') && !anchoredOutside,
+    moored_berth: state.dayFacts?.mooring === 'berth',
     at_bay: point?.kind === 'bay',
     at_quay: point?.kind === 'quay',
     'boat.shared_bank': boat ? !boat.starterSeparate : false,

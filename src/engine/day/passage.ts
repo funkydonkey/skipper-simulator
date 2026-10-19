@@ -1,10 +1,11 @@
 import { assertNoPendingEvent, assertPhase, EngineError } from '../errors';
 import { queueEvent } from '../events';
 import { appendLog } from '../log';
+import { maneuverForKind, validateOrder } from '../maneuver';
 import { applyOutcome } from '../resources';
 import { advanceClock, otherEnd, requireBoat, requirePoint, requireRoute, round1, round2 } from '../state';
 import { restHours } from '../time';
-import type { Activity, Balance, Boat, Content, DayPlan, EventPhase, GameState } from '../types';
+import type { Activity, Balance, Boat, Content, DayPlan, EventPhase, GameState, ManeuverKind } from '../types';
 import { arrive, runManeuver } from './arrival';
 import { runLeg, startEngine } from './legs';
 
@@ -18,6 +19,14 @@ interface DaySummary { moving: boolean; departureHour: number | null; mooring: '
 
 function invalid(msg: string): never {
   throw new EngineError('INVALID_INPUT', msg);
+}
+
+function validateOrders(content: Content, plan: DayPlan): void {
+  for (const [kind, order] of Object.entries(plan.maneuverOrders ?? {}) as [ManeuverKind, string[]][]) {
+    const m = maneuverForKind(content, kind);
+    const problem = m ? validateOrder(m, order) : null;
+    if (problem) invalid(problem);
+  }
 }
 
 export function validatePlan(state: GameState, content: Content, plan: DayPlan): void {
@@ -38,6 +47,7 @@ export function validatePlan(state: GameState, content: Content, plan: DayPlan):
     }
     at = next;
   });
+  validateOrders(content, plan);
 }
 
 function logPlanDecisions(state: GameState, content: Content, plan: DayPlan): GameState {
@@ -98,19 +108,19 @@ function sail(state: GameState, content: Content, boat: Boat, plan: DayPlan): { 
   const departureHour = s.clockMin / 60;
   s = runManeuver(s, content, origin.kind === 'bay' ? 'anchor_up' : 'departure', plan.maneuverOrders);
   s = advanceClock(s, b.time.departureMin);
-  const summary: DaySummary = { moving: true, departureHour, mooring: 'anchor', motor: b.time.departureMin / 60, sail: 0, legHours: 0, swum: 0 };
-  let at = s.locationId;
-  for (const leg of plan.legs) {
-    const r = runLeg(s, content, boat, leg, at);
-    s = r.state;
-    at = r.to;
-    summary.motor += r.motorHours;
-    summary.sail += r.sailHours;
-    summary.legHours += r.motorHours + r.sailHours;
-  }
-  const swim = swimStops({ ...s, locationId: at }, boat, plan.swimStops, b);
+  const start: DaySummary = { moving: true, departureHour, mooring: 'anchor', motor: b.time.departureMin / 60, sail: 0, legHours: 0, swum: 0 };
+  const sailed = plan.legs.reduce((acc, leg) => {
+    const r = runLeg(acc.state, content, boat, leg, acc.at);
+    const sum = acc.summary;
+    return {
+      state: r.state,
+      at: r.to,
+      summary: { ...sum, motor: sum.motor + r.motorHours, sail: sum.sail + r.sailHours, legHours: sum.legHours + r.motorHours + r.sailHours },
+    };
+  }, { state: s, at: s.locationId, summary: start });
+  const swim = swimStops({ ...sailed.state, locationId: sailed.at }, boat, plan.swimStops, b);
   const arrival = arrive(swim.state, content, boat, plan.maneuverOrders);
-  return { state: arrival.state, summary: { ...summary, mooring: arrival.mooring, swum: swim.swum } };
+  return { state: arrival.state, summary: { ...sailed.summary, mooring: arrival.mooring, swum: swim.swum } };
 }
 
 export function planDay(state: GameState, content: Content, plan: DayPlan): GameState {

@@ -19,15 +19,16 @@ describe('startDay', () => {
     expect(s.weather).toMatchObject({ day: 1, forecastKn: 12, forecastDir: 'NW', front: false });
     expect(s.rng).not.toBe(42);
     expect(s.log.map((e) => e.cause)).toContain('barometer:ignored');
+    expect(s.log.map((e) => e.cause)).not.toContain('signal:front');
   });
 
-  it('front is visible with sea sense or an opened barometer → signal logged', () => {
+  it('a front always leaves its sign in the log; seen only with sea sense or an opened barometer', () => {
     const seen = startDay(morning(), frontEveryDay, { openBarometer: false });
     expect(seen.weather!.signalsVisible).toBe(true);
-    expect(seen.log.map((e) => e.cause)).toContain('signal:front');
+    expect(seen.log.find((e) => e.cause === 'signal:front')!.data).toMatchObject({ seen: true });
     const blind = startDay(morning({ voices: { ...makeState().voices, sea_sense: 0 } }), frontEveryDay, { openBarometer: false });
     expect(blind.weather!.front).toBe(true);
-    expect(blind.log.map((e) => e.cause)).not.toContain('signal:front');
+    expect(blind.log.find((e) => e.cause === 'signal:front')!.data).toMatchObject({ seen: false });
     const opened = startDay(morning({ voices: { ...makeState().voices, sea_sense: 0 } }), frontEveryDay, { openBarometer: true });
     expect(opened.log.map((e) => e.cause)).toEqual(expect.arrayContaining(['barometer:open', 'signal:front']));
   });

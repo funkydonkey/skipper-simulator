@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildConditionContext, conditionIdentifiers, evaluateAll, evaluateCondition, parseCondition } from '../../src/engine/expr';
+import { buildConditionContext, CONTEXT_KEYS, conditionIdentifiers, evaluateAll, evaluateCondition, parseCondition } from '../../src/engine/expr';
 import { makeContent } from '../fixtures/content';
 import { makeState } from '../fixtures/state';
 
@@ -66,6 +66,17 @@ describe('expr', () => {
     expect(c['boat.shared_bank']).toBe(false);
     expect(c.wind).toBe(12);
     expect(c.front).toBe(false);
+  });
+
+  it('at_marina is false when anchored outside after a refusal; moored_berth tells berth from anchor', () => {
+    const content = makeContent();
+    const facts = { day: 1, departureHour: 9, arrivalHour: 16, arrivalPointKind: 'bay' as const, mooring: 'anchor' as const, activities: [], motorHours: 1, sailHours: 0, autopilotHours: 0, shower: 'normal' as const };
+    const refused = buildConditionContext(makeState({ locationId: 'marina_b', dayFacts: facts }), content);
+    expect(refused).toMatchObject({ at_marina: false, moored_berth: false, location_kind: 'marina' });
+    const berthed = buildConditionContext(makeState({ locationId: 'marina_b', dayFacts: { ...facts, mooring: 'berth' } }), content);
+    expect(berthed).toMatchObject({ at_marina: true, moored_berth: true });
+    expect(buildConditionContext(makeState({ locationId: 'marina_b' }), content)).toMatchObject({ at_marina: true, moored_berth: false });
+    expect(CONTEXT_KEYS).toContain('moored_berth');
   });
 
   it('wind and gust are the real wind now: afternoon factor and an active front included', () => {
