@@ -19,3 +19,7 @@ h1, h2, h3 { font-weight: 700; line-height: 1.2; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; animation-delay: 0s !important; transition-duration: 0.01ms !important; }
 }
+
+html { -webkit-text-size-adjust: 100%; }
+img, svg { max-width: 100%; }
+@media (max-width: 600px) { body { font-size: 15px; } }
