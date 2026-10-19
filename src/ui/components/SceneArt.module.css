@@ -13,3 +13,10 @@
 .scene[data-mood='dusk'] { --scene-sky: var(--ochre-500); --scene-sun: var(--red-500); --scene-sea: var(--sea-700); --scene-swell: var(--ochre-200); }
 .scene[data-mood='night'] { --scene-sky: var(--sea-900); --scene-sun: var(--paper-dark); --scene-sea: var(--ink); --scene-swell: var(--sea-500); }
 .scene[data-mood='storm'] { --scene-sky: var(--ink-soft); --scene-sun: var(--ink-soft); --scene-sea: var(--sea-900); --scene-swell: var(--paper-dark); }
+.swell { animation: sway 8s ease-in-out infinite alternate; transform-origin: center; }
+.swell + .swell { animation-duration: 11s; animation-direction: alternate-reverse; }
+.stars circle { fill: var(--paper); animation: twinkle 3.5s ease-in-out infinite alternate; }
+.stars circle:nth-child(2n) { animation-delay: 1.2s; }
+.rain line { stroke: var(--sea-200); stroke-width: 1; opacity: 0.6; }
+@keyframes sway { from { transform: translateX(-12px); } to { transform: translateX(12px); } }
+@keyframes twinkle { from { opacity: 0.25; } to { opacity: 1; } }

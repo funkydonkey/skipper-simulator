@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { TRAINABLE_VOICES, type TrainableVoice } from '../../../engine';
 import { Button } from '../../components/Button';
 import { ScreenFrame } from '../../components/ScreenFrame';
+import { VoiceIcon } from '../../components/voices/icons';
 import { COMMON } from '../../i18n/common';
 import { VOICE_HINTS, VOICE_NAMES } from '../../i18n/glossary';
 import { useAct, useGame, useT } from '../../session/SessionContext';
@@ -38,7 +39,7 @@ export function CaptainScreen() {
         {TRAINABLE_VOICES.map((v) => (
           <li key={v} className={styles.voice}>
             <div className={styles.head}>
-              <strong>{VOICE_NAMES[v][lang]}</strong>
+              <strong className={styles.name}><VoiceIcon voice={v} /> {VOICE_NAMES[v][lang]}</strong>
               <span className={styles.stepper}>
                 <Button variant="secondary" aria-label={t('lower', { voice: VOICE_NAMES[v][lang] })} disabled={alloc[v] === 0} onClick={() => change(v, -1)}>−</Button>
                 <span className={`${styles.level} mono`} aria-live="polite">{alloc[v]}</span>
@@ -54,7 +55,7 @@ export function CaptainScreen() {
         {([['pride', prideLevel], ['crew_voice', crewVoiceLevel]] as const).map(([v, level]) => (
           <li key={v} className={styles.voice} data-fixed="true">
             <div className={styles.head}>
-              <strong>{VOICE_NAMES[v][lang]}</strong>
+              <strong className={styles.name}><VoiceIcon voice={v} /> {VOICE_NAMES[v][lang]}</strong>
               <span className="mono">{level}</span>
               <em className={styles.fixed}>{t('fixed')}</em>
             </div>
