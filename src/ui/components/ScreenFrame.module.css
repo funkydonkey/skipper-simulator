@@ -1,0 +1,9 @@
+.frame { max-width: 1200px; margin: 0 auto; padding: var(--space-6) var(--space-4) var(--space-8); }
+.header { margin-bottom: var(--space-6); }
+.title { font-size: var(--text-2xl); margin: 0; letter-spacing: 0.01em; }
+.subtitle { margin: var(--space-2) 0 0; color: var(--fg-soft); font-style: italic; }
+.body { display: block; }
+.withSide { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--space-6); align-items: start; }
+.content { min-width: 0; }
+.side { background: var(--panel); border-radius: var(--radius); padding: var(--space-4); box-shadow: var(--shadow); }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-6); }
