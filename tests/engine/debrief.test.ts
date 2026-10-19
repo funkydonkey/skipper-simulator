@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildDebrief, depositLoss, findLinks, gradeWeek } from '../../src/engine/debrief';
 import { appendLog } from '../../src/engine/log';
-import type { DebriefRule, GameState } from '../../src/engine/types';
+import type { DebriefRule, GameState, LogEntry } from '../../src/engine/types';
 import { makeContent } from '../fixtures/content';
 import { makeState } from '../fixtures/state';
 
@@ -48,6 +48,61 @@ describe('debrief', () => {
   it('findLinks ignores consequences that happened before the decision', () => {
     const s = withLog([['effect', 'marina:refused'], ['decision', 'plan:route:busy']]);
     expect(findLinks(s.log, rules, 5)).toEqual([]);
+  });
+
+  const at = (day: number, kind: LogEntry['kind'], cause: string): LogEntry => ({ day, clockMin: 600, kind, cause });
+  const rule = (id: string, pillar: DebriefRule['pillar'], priority: number, decision: string, consequence: string, signal?: string): DebriefRule =>
+    ({ id, pillar, priority, decision, consequence, ...(signal ? { signal } : {}), text: t(id) });
+
+  it('findLinks takes the latest matching decision before the consequence', () => {
+    const log = [at(1, 'decision', 'dialogue:early_try'), at(2, 'decision', 'dialogue:early_try'), at(2, 'effect', 'promise:early_try:broken')];
+    const [link] = findLinks(log, [rule('p', 'promises', 1, 'dialogue:early_try', 'promise:early_try:broken')], 5);
+    expect(link!.decision).toBe(log[1]);
+  });
+
+  it('findLinks: plan/barometer/order decisions and signal:* must be on the consequence day', () => {
+    const r = [rule('busy', 'time', 1, 'plan:route:busy', 'marina:refused', 'signal:front')];
+    expect(findLinks([at(1, 'decision', 'plan:route:busy'), at(2, 'effect', 'marina:refused')], r, 5)).toEqual([]);
+    const log = [at(1, 'signal', 'signal:front'), at(1, 'decision', 'plan:route:busy'), at(2, 'decision', 'plan:route:busy'), at(2, 'effect', 'marina:refused')];
+    const [link] = findLinks(log, r, 5);
+    expect(link!.decision).toBe(log[2]);
+    expect(link!.signal).toBeNull();
+    const barometer = [rule('b', 'weather', 1, 'barometer:ignored', 'sail:break')];
+    expect(findLinks([at(1, 'decision', 'barometer:ignored'), at(2, 'effect', 'sail:break')], barometer, 5)).toEqual([]);
+    const briefing = [rule('i', 'safety', 1, 'briefing:skip:cleats', 'injury:event:line_not_cleated')];
+    expect(findLinks([at(0, 'decision', 'briefing:skip:cleats'), at(4, 'effect', 'injury:event:line_not_cleated:grab_line:fail')], briefing, 5)).toHaveLength(1);
+  });
+
+  it('findLinks: a log entry is the consequence of at most one link', () => {
+    const r = [rule('a', 'time', 5, 'plan:route:busy', 'marina:refused'), rule('b', 'time', 3, 'plan:depart:late', 'marina:refused')];
+    const one = [at(1, 'decision', 'plan:route:busy'), at(1, 'decision', 'plan:depart:late'), at(1, 'effect', 'marina:refused')];
+    expect(findLinks(one, r, 5).map((l) => l.ruleId)).toEqual(['a']);
+    const two = [...one, at(2, 'decision', 'plan:route:busy'), at(2, 'decision', 'plan:depart:late'), at(2, 'effect', 'marina:refused')];
+    const links = findLinks(two, r, 5);
+    expect(links.map((l) => l.ruleId)).toEqual(['a', 'b']);
+    expect(links[0]!.consequence).toBe(two[2]);
+    expect(links[1]!.consequence).toBe(two[5]);
+  });
+
+  it('findLinks spreads across pillars first, then fills by priority, capped', () => {
+    const r = [
+      rule('s10', 'safety', 10, 'briefing:skip:a', 'x:a'), rule('s9', 'safety', 9, 'briefing:skip:b', 'x:b'),
+      rule('s8', 'safety', 8, 'briefing:skip:c', 'x:c'), rule('boat1', 'boat', 1, 'checkin:skip:d', 'x:d'),
+    ];
+    const log = ['a', 'b', 'c', 'd'].flatMap((k) => [at(1, 'decision', `${k === 'd' ? 'checkin' : 'briefing'}:skip:${k}`), at(1, 'effect', `x:${k}`)]);
+    expect(findLinks(log, r, 2).map((l) => l.ruleId)).toEqual(['s10', 'boat1']);
+    expect(findLinks(log, r, 5).map((l) => l.ruleId)).toEqual(['s10', 'boat1', 's9', 's8']);
+  });
+
+  it('buildDebrief caps event notes by maxItems minus links', () => {
+    const events = ['e1', 'e2', 'e3'].map((id) => ({ ...content.events[0]!, id, debrief: t(id) }));
+    const c = { ...content, events };
+    const s = makeState({ firedEvents: ['e1', 'e2', 'e3'] });
+    expect(buildDebrief(s, c, 2).eventNotes).toEqual([t('e1'), t('e2')]);
+    const linked = withLog([['decision', 'checkin:skip:toilets'], ['event', 'event:toilet_clog']], { firedEvents: ['e1', 'e2', 'e3'] });
+    const d = buildDebrief(linked, c, 2);
+    expect(d.links).toHaveLength(1);
+    expect(d.eventNotes).toEqual([t('e1')]);
   });
 
   it('buildDebrief adds event notes not already covered, capped', () => {

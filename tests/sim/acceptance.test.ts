@@ -41,6 +41,15 @@ describe('ТЗ 7.4 acceptance', () => {
   it('#4 the debrief shows at least 3 decision → consequence links', () => {
     const withThree = newbieRuns.filter((r) => r.debrief.links.length >= 3).length;
     expect(withThree / newbieRuns.length).toBeGreaterThanOrEqual(0.8);
+    for (const r of [...newbieRuns, ...expertRuns]) {
+      const consequences = r.debrief.links.map((l) => l.consequence);
+      expect(new Set(consequences).size).toBe(consequences.length);
+      for (const l of r.debrief.links) {
+        if (['injury_loaded_lines', 'injury_cleats'].includes(l.ruleId) && l.consequence.cause.startsWith('injury')) {
+          expect(l.consequence.cause).toMatch(/^injury:event:/);
+        }
+      }
+    }
   });
 
   it('#5 texts come out in both languages', () => {

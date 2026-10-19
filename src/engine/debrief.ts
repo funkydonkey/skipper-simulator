@@ -28,18 +28,51 @@ export function gradeWeek(state: GameState, boat: Boat, b: Balance): { scales: W
   };
 }
 
-export function findLinks(log: readonly LogEntry[], rules: readonly DebriefRule[], max: number): DebriefLink[] {
-  const links: DebriefLink[] = [];
-  for (const rule of [...rules].sort((a, b) => b.priority - a.priority)) {
-    if (links.length >= max) break;
-    const di = log.findIndex((e) => causeMatches(e.cause, rule.decision));
-    if (di < 0) continue;
-    const ci = log.findIndex((e, i) => i >= di && causeMatches(e.cause, rule.consequence));
-    if (ci < 0) continue;
-    const signal = rule.signal ? log.find((e, i) => i <= ci && causeMatches(e.cause, rule.signal!)) ?? null : null;
-    links.push({ ruleId: rule.id, pillar: rule.pillar, text: rule.text, decision: log[di]!, consequence: log[ci]!, signal });
+/** Decisions with these roots only explain consequences on the same day. */
+const SAME_DAY_DECISION_ROOTS = ['plan', 'barometer', 'order'];
+const SAME_DAY_SIGNAL_ROOTS = ['signal'];
+
+const root = (pattern: string): string => pattern.split(':')[0]!;
+
+/** Index of the latest entry below `end` matching pattern; restricted to `day` when the pattern root demands it. */
+function latestMatch(log: readonly LogEntry[], pattern: string, end: number, day: number, sameDayRoots: readonly string[]): number {
+  const sameDay = sameDayRoots.includes(root(pattern));
+  for (let i = end - 1; i >= 0; i--) {
+    const e = log[i]!;
+    if (sameDay && e.day !== day) continue;
+    if (causeMatches(e.cause, pattern)) return i;
   }
-  return links;
+  return -1;
+}
+
+/** Consequence-first: the first unclaimed consequence that has a matching earlier decision. */
+function linkForRule(log: readonly LogEntry[], rule: DebriefRule, claimed: ReadonlySet<number>): { link: DebriefLink; ci: number } | null {
+  for (let ci = 0; ci < log.length; ci++) {
+    if (claimed.has(ci) || !causeMatches(log[ci]!.cause, rule.consequence)) continue;
+    const day = log[ci]!.day;
+    const di = latestMatch(log, rule.decision, ci, day, SAME_DAY_DECISION_ROOTS);
+    if (di < 0) continue;
+    const si = rule.signal ? latestMatch(log, rule.signal, ci + 1, day, SAME_DAY_SIGNAL_ROOTS) : -1;
+    const signal = si >= 0 ? log[si]! : null;
+    return { link: { ruleId: rule.id, pillar: rule.pillar, text: rule.text, decision: log[di]!, consequence: log[ci]!, signal }, ci };
+  }
+  return null;
+}
+
+/**
+ * Pass 1 picks the best link per pillar (by priority), pass 2 fills the remaining slots by priority.
+ * Each log entry is the consequence of at most one link.
+ */
+export function findLinks(log: readonly LogEntry[], rules: readonly DebriefRule[], max: number): DebriefLink[] {
+  const sorted = [...rules].sort((a, b) => b.priority - a.priority);
+  const pick = (acc: { links: DebriefLink[]; claimed: Set<number> }, rule: DebriefRule, pillarPass: boolean) => {
+    if (acc.links.length >= max || acc.links.some((l) => l.ruleId === rule.id)) return acc;
+    if (pillarPass && acc.links.some((l) => l.pillar === rule.pillar)) return acc;
+    const found = linkForRule(log, rule, acc.claimed);
+    return found ? { links: [...acc.links, found.link], claimed: new Set([...acc.claimed, found.ci]) } : acc;
+  };
+  const firstPass = sorted.reduce((acc, r) => pick(acc, r, true), { links: [] as DebriefLink[], claimed: new Set<number>() });
+  return sorted.reduce((acc, r) => pick(acc, r, false), firstPass).links;
 }
 
 export function buildDebrief(state: GameState, content: Content, maxItems = 5): Debrief {
