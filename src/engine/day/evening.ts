@@ -1,11 +1,13 @@
 import { assertNoPendingEvent, assertPhase, EngineError } from '../errors';
 import { crewSensitivity, resolveDueExpectations, sayDialogue } from '../promises';
 import { applyOutcome, applyOutcomes, dailyConsumption, refillAt, zeroResourceOutcomes } from '../resources';
-import { requireBoat, requirePoint } from '../state';
+import { clamp, requireBoat, requirePoint, round1 } from '../state';
 import type { Activity, Balance, Boat, Content, DayFacts, GameState, MapPoint, Outcome } from '../types';
 import { exposure } from '../weather';
 
 export interface EveningChoice { dinner: 'cook' | 'taverna'; dialogueId?: string | null }
+
+export const tavernaOpen = (clockMin: number, b: Balance): boolean => clockMin < b.time.tavernaCloseHour * 60;
 
 function dinner(state: GameState, b: Balance, choice: EveningChoice['dinner']): { outcomes: Outcome[]; cooked: boolean; activity: Activity | null } {
   if (choice === 'taverna') {
@@ -35,7 +37,15 @@ function night(state: GameState, content: Content, boat: Boat, point: MapPoint, 
   if (facts.mooring === 'anchor' && dir && exposure(point, dir) > b.fatigue.rollyExposure) {
     s = applyOutcome(s, boat, { cause: 'night:rolly', pillar: 'weather', effect: { mood: -b.mood.rollyNight, fatigue: b.fatigue.rollyNightPenalty } });
   }
-  return applyOutcome(s, boat, { cause: 'night:sleep', pillar: 'time', effect: { fatigue: -b.fatigue.nightRecovery } });
+  return applyOutcome(s, boat, { cause: 'night:sleep', pillar: 'time', effect: { fatigue: -round1(b.fatigue.nightRecovery * sleepShare(s.clockMin, b)) } });
+}
+
+const HOURS_PER_DAY = 24;
+
+/** Share of a full night's sleep left between bedtime and the next morning; full when in before sunset. */
+export function sleepShare(clockMin: number, b: Balance): number {
+  const morning = HOURS_PER_DAY + b.start.hour;
+  return clamp((morning - clockMin / 60) / (morning - b.time.sunsetHour), 0, 1);
 }
 
 export function endDay(state: GameState, content: Content, choice: EveningChoice): GameState {
@@ -47,6 +57,7 @@ export function endDay(state: GameState, content: Content, choice: EveningChoice
   const boat = requireBoat(content, state);
   const point = requirePoint(content, state.locationId);
   if (choice.dinner === 'taverna' && !point.services.taverna) throw new EngineError('INVALID_INPUT', `No taverna at ${point.id}`);
+  if (choice.dinner === 'taverna' && !tavernaOpen(state.clockMin, b)) throw new EngineError('INVALID_INPUT', 'Taverna is closed');
   const meal = dinner(state, b, choice.dinner);
   let s = applyOutcomes(state, boat, meal.outcomes);
   const dayFacts = meal.activity ? { ...facts, activities: [...facts.activities, meal.activity] } : facts;

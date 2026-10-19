@@ -55,6 +55,12 @@ describe('weather', () => {
     expect(realWind(front, 1.4, 14, template, b)).toMatchObject({ windKn: 30.2, dir: 'NE', frontActive: true });
   });
 
+  it('realWind after midnight: no afternoon factor, but an active front stays', () => {
+    expect(realWind(calm, 1.4, 25, template, b).windKn).toBe(16.8);
+    const front = { ...calm, front: true, frontAddKn: 10, frontDir: 'NE' as const };
+    expect(realWind(front, 1.4, 25, template, b)).toMatchObject({ windKn: 26.8, dir: 'NE', frontActive: true });
+  });
+
   it('signals are visible with sea sense ≥ 2 or an opened barometer', () => {
     expect(signalsVisible(1, false, b)).toBe(false);
     expect(signalsVisible(2, false, b)).toBe(true);

@@ -6,16 +6,21 @@ const b = makeContent().balance;
 
 describe('time budget', () => {
   it('anchor fail chance: seabed, wind, briefing (ТЗ 4.5: 20–40%)', () => {
-    expect(anchorFailChance('sand', 10, false, b)).toBeCloseTo(0.2);
-    expect(anchorFailChance('rock', 10, false, b)).toBeCloseTo(0.4);
-    expect(anchorFailChance('rock', 20, false, b)).toBeCloseTo(0.5);
-    expect(anchorFailChance('sand', 10, true, b)).toBeCloseTo(0.1);
+    const day = { briefed: false, night: false };
+    expect(anchorFailChance({ ...day, seabed: 'sand', windKn: 10 }, b)).toBeCloseTo(0.2);
+    expect(anchorFailChance({ ...day, seabed: 'rock', windKn: 10 }, b)).toBeCloseTo(0.4);
+    expect(anchorFailChance({ ...day, seabed: 'rock', windKn: 20 }, b)).toBeCloseTo(0.5);
+    expect(anchorFailChance({ ...day, seabed: 'sand', windKn: 10, briefed: true }, b)).toBeCloseTo(0.1);
+  });
+
+  it('anchoring in the dark is harder by time.nightAnchorPenalty', () => {
+    expect(anchorFailChance({ seabed: 'sand', windKn: 10, briefed: false, night: true }, b)).toBeCloseTo(0.2 + b.time.nightAnchorPenalty);
   });
 
   it('anchoring: attempts 1..3, minutes within 30..60 per attempt', () => {
     let s = 5;
     for (let i = 0; i < 300; i++) {
-      const r = anchoring(s, { seabed: 'weed', windKn: 15, briefed: false }, b);
+      const r = anchoring(s, { seabed: 'weed', windKn: 15, briefed: false, night: false }, b);
       expect(r.value.attempts).toBeGreaterThanOrEqual(1);
       expect(r.value.attempts).toBeLessThanOrEqual(3);
       expect(r.value.minutes).toBeGreaterThanOrEqual(30 * r.value.attempts);
@@ -30,7 +35,7 @@ describe('time budget', () => {
       let s = 11;
       let total = 0;
       for (let i = 0; i < 1000; i++) {
-        const r = anchoring(s, { seabed, windKn, briefed }, b);
+        const r = anchoring(s, { seabed, windKn, briefed, night: false }, b);
         total += r.value.attempts;
         s = r.next;
       }
@@ -63,5 +68,8 @@ describe('time budget', () => {
   it('formatClock', () => {
     expect(formatClock(9 * 60 + 5)).toBe('09:05');
     expect(formatClock(17 * 60 + 45)).toBe('17:45');
+    expect(formatClock(119.7)).toBe('02:00');
+    expect(formatClock(26 * 60 + 8)).toBe('02:08 +1');
+    expect(formatClock(23 * 60 + 59.6)).toBe('00:00 +1');
   });
 });

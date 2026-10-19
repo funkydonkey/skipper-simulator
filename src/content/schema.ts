@@ -131,8 +131,8 @@ export const BalanceSchema: z.ZodType<Balance> = z.object({
   fuel: z.object({ motorLph: Pos, priceEurPerL: NonNeg }).strict(),
   electric: z.object({ fridgeAhPerDay: NonNeg, pumpsAhPerDay: NonNeg, electricToiletAhPerDay: NonNeg, plotterAhPerHour: NonNeg, autopilotAhPerHour: NonNeg, engineChargeAhPerHour: NonNeg, solarAhPerWattDay: NonNeg, starterStartPct: NonNeg, starterMinPct: NonNeg, zeroServiceMoodPenalty: NonNeg }).strict(),
   gas: z.object({ pctPerDay: NonNeg, exchangeEur: NonNeg, exchangeBelowPct: NonNeg, noHotFoodMoodPenalty: NonNeg }).strict(),
-  mood: z.object({ restPerHour: NonNeg, restCapHours: NonNeg, swimStop: NonNeg, tavernaDinner: NonNeg, tavernaEurPerPerson: NonNeg, overpowerPerHour: NonNeg, marinaRefused: NonNeg, rollyNight: NonNeg, injury: NonNeg }).strict(),
-  fatigue: z.object({ passagePerHour: NonNeg, maneuverError: NonNeg, nightRecovery: NonNeg, rollyNightPenalty: NonNeg, rollyExposure: Prob, checkPenaltyPerPoint: NonNeg }).strict(),
+  mood: z.object({ restPerHour: NonNeg, restCapHours: NonNeg, swimStop: NonNeg, tavernaDinner: NonNeg, tavernaEurPerPerson: NonNeg, overpowerPerHour: NonNeg, marinaRefused: NonNeg, rollyNight: NonNeg, injury: NonNeg, nightArrival: NonNeg }).strict(),
+  fatigue: z.object({ passagePerHour: NonNeg, maneuverError: NonNeg, nightRecovery: NonNeg, rollyNightPenalty: NonNeg, rollyExposure: Prob, checkPenaltyPerPoint: NonNeg, nightArrival: NonNeg }).strict(),
   sails: z.object({
     reefThresholdKn: Triple, partialGenoaBonusKn: NonNeg, breakChancePerKnOver: NonNeg, breakChanceMax: Prob, forcedReefMarginKn: NonNeg,
     reefUnderwayMin: NonNeg, reefUnderwayInjuryChance: Prob, fullPowerWindKn: Pos, minSailWindKn: NonNeg, drifterFactor: Pos,
@@ -144,6 +144,7 @@ export const BalanceSchema: z.ZodType<Balance> = z.object({
     anchorMin: Pair, anchorFailChance: Pair, seabedFailFactor: fullRecord(SEABEDS, Prob), anchorWindPenaltyKn: NonNeg,
     anchorWindPenalty: Prob, anchorBriefedReduction: Prob, anchorMaxAttempts: Int.positive(), marinaMooringMin: NonNeg,
     marinaLateRefusalChance: Prob, marinaWaitMin: NonNeg, swimStopMin: NonNeg, sunsetHour: Hour,
+    tavernaCloseHour: Hour, nightAnchorPenalty: Prob,
   }).strict(),
   promises: z.object({ keptPerStrength: NonNeg, brokenPerStrength: NonNeg, diplomatSofteningPerLevel: NonNeg }).strict(),
   checks: z.object({ base: Prob, perLevel: NonNeg, min: Prob, max: Prob }).strict(),

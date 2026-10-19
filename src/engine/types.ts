@@ -258,8 +258,8 @@ export interface Balance {
   fuel: { motorLph: number; priceEurPerL: number };
   electric: { fridgeAhPerDay: number; pumpsAhPerDay: number; electricToiletAhPerDay: number; plotterAhPerHour: number; autopilotAhPerHour: number; engineChargeAhPerHour: number; solarAhPerWattDay: number; starterStartPct: number; starterMinPct: number; zeroServiceMoodPenalty: number };
   gas: { pctPerDay: number; exchangeEur: number; exchangeBelowPct: number; noHotFoodMoodPenalty: number };
-  mood: { restPerHour: number; restCapHours: number; swimStop: number; tavernaDinner: number; tavernaEurPerPerson: number; overpowerPerHour: number; marinaRefused: number; rollyNight: number; injury: number };
-  fatigue: { passagePerHour: number; maneuverError: number; nightRecovery: number; rollyNightPenalty: number; rollyExposure: number; checkPenaltyPerPoint: number };
+  mood: { restPerHour: number; restCapHours: number; swimStop: number; tavernaDinner: number; tavernaEurPerPerson: number; overpowerPerHour: number; marinaRefused: number; rollyNight: number; injury: number; nightArrival: number };
+  fatigue: { passagePerHour: number; maneuverError: number; nightRecovery: number; rollyNightPenalty: number; rollyExposure: number; checkPenaltyPerPoint: number; nightArrival: number };
   sails: {
     reefThresholdKn: [number, number, number];
     partialGenoaBonusKn: number;
@@ -298,6 +298,8 @@ export interface Balance {
     marinaWaitMin: number;
     swimStopMin: number;
     sunsetHour: number;
+    tavernaCloseHour: number;
+    nightAnchorPenalty: number;
   };
   promises: { keptPerStrength: number; brokenPerStrength: number; diplomatSofteningPerLevel: number };
   checks: { base: number; perLevel: number; min: number; max: number };

@@ -1,4 +1,4 @@
-import type { EveningChoice } from '../engine/day/evening';
+import { tavernaOpen, type EveningChoice } from '../engine/day/evening';
 import type { MorningChoice } from '../engine/day/morning';
 import { optionAvailable } from '../engine/events';
 import { buildConditionContext } from '../engine/expr';
@@ -85,7 +85,8 @@ const available = (s: GameState, c: Content, ev: GameEvent): EventOption[] => {
   return ev.options.filter((o) => optionAvailable(o, ctx));
 };
 
-const hasTaverna = (s: GameState, c: Content): boolean => c.map.find((p) => p.id === s.locationId)?.services.taverna ?? false;
+const hasTaverna = (s: GameState, c: Content): boolean =>
+  (c.map.find((p) => p.id === s.locationId)?.services.taverna ?? false) && tavernaOpen(s.clockMin, c.balance);
 
 function reversedOrders(c: Content): Partial<Record<ManeuverKind, string[]>> {
   const orders: Partial<Record<ManeuverKind, string[]>> = {};

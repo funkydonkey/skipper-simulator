@@ -14,7 +14,7 @@ const GENOAS = ['full', 'partial'];
 const COURSES = ['direct', 'detour'];
 const REEFS = [0, 1, 2];
 
-interface DaySummary { moving: boolean; departureHour: number | null; mooring: 'anchor' | 'berth'; motor: number; sail: number; legHours: number }
+interface DaySummary { moving: boolean; departureHour: number | null; mooring: 'anchor' | 'berth'; motor: number; sail: number; legHours: number; swum: number }
 
 function invalid(msg: string): never {
   throw new EngineError('INVALID_INPUT', msg);
@@ -22,8 +22,8 @@ function invalid(msg: string): never {
 
 export function validatePlan(state: GameState, content: Content, plan: DayPlan): void {
   const t = content.balance.time;
-  if (!Number.isFinite(plan.departureHour) || plan.departureHour < t.earliestDepartureHour || plan.departureHour > t.sunsetHour) {
-    invalid(`departureHour must be within ${t.earliestDepartureHour}..${t.sunsetHour}`);
+  if (!Number.isFinite(plan.departureHour) || plan.departureHour < t.earliestDepartureHour || plan.departureHour >= t.sunsetHour) {
+    invalid(`departureHour must be within ${t.earliestDepartureHour}..${t.sunsetHour} (before sunset)`);
   }
   if (!Number.isInteger(plan.swimStops) || plan.swimStops < 0 || plan.swimStops > t.maxSwimStops) invalid(`swimStops must be 0..${t.maxSwimStops}`);
   if (!SHOWERS.includes(plan.shower)) invalid(`unknown shower discipline "${plan.shower}"`);
@@ -55,12 +55,15 @@ function logPlanDecisions(state: GameState, content: Content, plan: DayPlan): Ga
   }, s);
 }
 
-function swimStops(state: GameState, boat: Boat, n: number, b: Balance): GameState {
-  let s = state;
-  for (let i = 0; i < n; i++) {
-    s = applyOutcome(advanceClock(s, b.time.swimStopMin), boat, { cause: 'activity:swim', pillar: 'time', effect: { mood: b.mood.swimStop } });
-  }
-  return s;
+/** Swim stops that would start after sunset are skipped. Returns how many actually happened. */
+function swimStops(state: GameState, boat: Boat, n: number, b: Balance): { state: GameState; swum: number } {
+  return Array.from({ length: n }).reduce<{ state: GameState; swum: number }>((acc) => {
+    if (acc.state.clockMin >= b.time.sunsetHour * 60) {
+      return { ...acc, state: appendLog(acc.state, { kind: 'info', cause: 'activity:swim_skipped', pillar: 'time' }) };
+    }
+    const swum = applyOutcome(advanceClock(acc.state, b.time.swimStopMin), boat, { cause: 'activity:swim', pillar: 'time', effect: { mood: b.mood.swimStop } });
+    return { state: swum, swum: acc.swum + 1 };
+  }, { state, swum: 0 });
 }
 
 function checkReturn(state: GameState, content: Content, point: MapPoint): GameState {
@@ -77,7 +80,7 @@ function settleDay(state: GameState, content: Content, boat: Boat, plan: DayPlan
   let s = applyOutcome(state, boat, { cause: 'rest', pillar: 'time', effect: { mood: round1(rest * b.mood.restPerHour) } });
   if (d.moving) s = applyOutcome(s, boat, { cause: 'fatigue:passage', pillar: 'time', effect: { fatigue: round1(d.legHours * b.fatigue.passagePerHour) } });
   const activities: Activity[] = [];
-  if (plan.swimStops > 0) activities.push('swim');
+  if (d.swum > 0) activities.push('swim');
   if (point.services.beach && rest > 0) activities.push('beach');
   const arrivalKind = d.mooring === 'anchor' && point.kind !== 'bay' ? 'bay' : point.kind;
   s = {
@@ -105,7 +108,7 @@ function sail(state: GameState, content: Content, boat: Boat, plan: DayPlan): { 
   const departureHour = s.clockMin / 60;
   s = runManeuver(s, content, origin.kind === 'bay' ? 'anchor_up' : 'departure', plan.maneuverOrders);
   s = advanceClock(s, b.time.departureMin);
-  const summary: DaySummary = { moving: true, departureHour, mooring: 'anchor', motor: b.time.departureMin / 60, sail: 0, legHours: 0 };
+  const summary: DaySummary = { moving: true, departureHour, mooring: 'anchor', motor: b.time.departureMin / 60, sail: 0, legHours: 0, swum: 0 };
   let at = s.locationId;
   for (const leg of plan.legs) {
     const r = runLeg(s, content, boat, leg, at);
@@ -115,9 +118,9 @@ function sail(state: GameState, content: Content, boat: Boat, plan: DayPlan): { 
     summary.sail += r.sailHours;
     summary.legHours += r.motorHours + r.sailHours;
   }
-  s = swimStops({ ...s, locationId: at }, boat, plan.swimStops, b);
-  const arrival = arrive(s, content, boat, plan.maneuverOrders);
-  return { state: arrival.state, summary: { ...summary, mooring: arrival.mooring } };
+  const swim = swimStops({ ...s, locationId: at }, boat, plan.swimStops, b);
+  const arrival = arrive(swim.state, content, boat, plan.maneuverOrders);
+  return { state: arrival.state, summary: { ...summary, mooring: arrival.mooring, swum: swim.swum } };
 }
 
 export function planDay(state: GameState, content: Content, plan: DayPlan): GameState {
@@ -132,9 +135,10 @@ export function planDay(state: GameState, content: Content, plan: DayPlan): Game
     s = r.state;
     summary = r.summary;
   } else {
-    s = swimStops(s, boat, plan.swimStops, content.balance);
+    const swim = swimStops(s, boat, plan.swimStops, content.balance);
+    s = swim.state;
     const here = requirePoint(content, s.locationId);
-    summary = { moving: false, departureHour: null, mooring: here.kind === 'bay' ? 'anchor' : 'berth', motor: 0, sail: 0, legHours: 0 };
+    summary = { moving: false, departureHour: null, mooring: here.kind === 'bay' ? 'anchor' : 'berth', motor: 0, sail: 0, legHours: 0, swum: swim.swum };
   }
   s = settleDay(s, content, boat, plan, summary);
   const phases: EventPhase[] = summary.moving ? ['passage', 'arrival', 'evening'] : ['evening'];

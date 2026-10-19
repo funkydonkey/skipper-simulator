@@ -49,6 +49,20 @@ describe('endDay', () => {
     expect(() => endDay(evening({ locationId: 'bay_a' }), content, { dinner: 'taverna' })).toThrow(/No taverna at bay_a/);
   });
 
+  it('the taverna closes at time.tavernaCloseHour', () => {
+    const late = evening({ clockMin: content.balance.time.tavernaCloseHour * 60 });
+    expect(() => endDay(late, content, { dinner: 'taverna' })).toThrow(/Taverna is closed/);
+    expect(endDay(evening({ clockMin: 22 * 60 }), content, { dinner: 'taverna' }).phase).toBe('morning');
+  });
+
+  it('a late night recovers less fatigue', () => {
+    const tired = { ...res, fatigue: 60 };
+    const sleep = (clockMin: number) => endDay(evening({ clockMin, resources: tired }), content, { dinner: 'cook' }).log.find((e) => e.cause === 'night:sleep')!.delta!.fatigue;
+    expect(sleep(18 * 60)).toBe(-30);
+    expect(sleep(20 * 60)).toBe(-30);
+    expect(sleep(26 * 60)).toBe(-15);
+  });
+
   it('no gas → no hot food', () => {
     const s = endDay(evening({ resources: { ...res, gasPct: 5 } }), content, { dinner: 'cook' });
     expect(causes(s)).toContain('zero:gas');

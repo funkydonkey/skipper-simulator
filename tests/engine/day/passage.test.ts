@@ -73,6 +73,25 @@ describe('planDay', () => {
     expect(s.dayFacts).toMatchObject({ departureHour: null, arrivalPointKind: null, activities: ['swim'] });
   });
 
+  it('swim stops starting at or after sunset are skipped and do not count as swimming', () => {
+    const dusk = planDay(makeState({ clockMin: 19.5 * 60 }), content, plan({ legs: [], swimStops: 2 }));
+    expect(causes(dusk).filter((c) => c === 'activity:swim')).toHaveLength(1);
+    expect(causes(dusk)).toContain('activity:swim_skipped');
+    expect(dusk.dayFacts!.activities).toContain('swim');
+    const dark = planDay(makeState({ clockMin: 20 * 60 }), content, plan({ legs: [], swimStops: 2 }));
+    expect(causes(dark)).not.toContain('activity:swim');
+    expect(causes(dark).filter((c) => c === 'activity:swim_skipped')).toHaveLength(2);
+    expect(dark.clockMin).toBe(20 * 60);
+    expect(dark.dayFacts!.activities).not.toContain('swim');
+  });
+
+  it('arriving after sunset costs fatigue and mood', () => {
+    const s = planDay(makeState(), content, plan({ departureHour: 19 }));
+    const night = s.log.find((e) => e.cause === 'night:arrival')!;
+    expect(night).toMatchObject({ kind: 'effect', pillar: 'time', delta: { fatigue: content.balance.fatigue.nightArrival, mood: -content.balance.mood.nightArrival } });
+    expect(causes(planDay(makeState(), content, plan()))).not.toContain('night:arrival');
+  });
+
   it('wrong maneuver order is logged and costs fatigue', () => {
     const s = planDay(makeState(), content, plan({ maneuverOrders: { departure: ['release_lines', 'neutral', 'command_helm', 'engage_gear'] } }));
     expect(causes(s)).toEqual(expect.arrayContaining(['order:wrong:dep_test', 'maneuver:dep_test:release_before_neutral', 'fatigue:maneuver:dep_test']));
@@ -85,6 +104,7 @@ describe('planDay', () => {
     expect(() => planDay(s, content, plan({ legs: [sail('r_nowhere')] }))).toThrow(/unknown route "r_nowhere"/);
     expect(() => planDay(s, content, plan({ legs: [sail('r_bay_a_marina_b')] }))).toThrow(/does not start at base/);
     expect(() => planDay(s, content, plan({ departureHour: 3 }))).toThrow(/departureHour/);
+    expect(() => planDay(s, content, plan({ departureHour: content.balance.time.sunsetHour }))).toThrow(/departureHour/);
     expect(() => planDay(s, content, plan({ swimStops: 9 }))).toThrow(/swimStops/);
     expect(() => planDay(s, content, plan({ maneuverOrders: { departure: ['neutral'] } }))).toThrow(/4 steps/);
     expect(JSON.stringify(s)).toBe(snapshot);

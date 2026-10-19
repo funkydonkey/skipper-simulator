@@ -33,11 +33,16 @@ export function rollDayWeather(rng: number, template: WeatherTemplate, day: numb
   };
 }
 
-/** ТЗ 4.3: W_real = W_forecast × k_local + F_front. Fronts arrive in the afternoon. */
+const MIDNIGHT_HOUR = 24;
+
+/**
+ * ТЗ 4.3: W_real = W_forecast × k_local + F_front. The afternoon breeze dies at midnight;
+ * a front arrives in the afternoon and stays through the night.
+ */
 export function realWind(w: DayWeather, kLocal: number, hour: number, template: WeatherTemplate, b: Balance): RealWind {
-  const afternoon = hour >= b.weather.afternoonFromHour;
-  const diurnal = afternoon ? template.afternoonFactor : 1;
-  const frontActive = w.front && afternoon;
+  const sinceAfternoon = hour >= b.weather.afternoonFromHour;
+  const diurnal = sinceAfternoon && hour < MIDNIGHT_HOUR ? template.afternoonFactor : 1;
+  const frontActive = w.front && sinceAfternoon;
   const add = frontActive ? w.frontAddKn : 0;
   return {
     windKn: round1(w.forecastKn * diurnal * kLocal + add),

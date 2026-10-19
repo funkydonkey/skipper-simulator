@@ -4,7 +4,7 @@ import { correctOrder, evaluateManeuver, maneuverForKind } from '../maneuver';
 import { applyOutcome, applyOutcomes } from '../resources';
 import { advanceClock, requireBoat, requirePoint, requireTemplate } from '../state';
 import { anchoring, marinaArrival } from '../time';
-import type { Boat, Content, DayPlan, GameState, ManeuverKind, MapPoint } from '../types';
+import type { Balance, Boat, Content, DayPlan, GameState, ManeuverKind, MapPoint } from '../types';
 import { cautionTimeFactor, maneuverRiskFactor } from '../voices';
 import { realWind } from '../weather';
 
@@ -30,7 +30,8 @@ function anchorHere(state: GameState, content: Content, boat: Boat, point: MapPo
   const b = content.balance;
   if (!state.weather) throw new EngineError('WRONG_PHASE', 'No weather for today: call startDay first');
   const wind = realWind(state.weather, 1, state.clockMin / 60, requireTemplate(content, state.weatherTemplateId), b);
-  const r = anchoring(state.rng, { seabed: point.seabed, windKn: wind.windKn, briefed: state.flags['briefing.anchor'] === true }, b);
+  const night = state.clockMin >= b.time.sunsetHour * 60;
+  const r = anchoring(state.rng, { seabed: point.seabed, windKn: wind.windKn, briefed: state.flags['briefing.anchor'] === true, night }, b);
   let s = appendLog({ ...state, rng: r.next }, { kind: 'info', cause: `anchor:attempts:${r.value.attempts}`, pillar: 'time' });
   s = advanceClock(s, r.value.minutes * cautionTimeFactor(s.voices.caution, b));
   s = runManeuver(s, content, 'anchoring', orders);
@@ -38,12 +39,18 @@ function anchorHere(state: GameState, content: Content, boat: Boat, point: MapPo
   return { state: s, mooring: 'anchor' };
 }
 
+function nightArrival(state: GameState, boat: Boat, b: Balance): GameState {
+  if (state.clockMin < b.time.sunsetHour * 60) return state;
+  return applyOutcome(state, boat, { cause: 'night:arrival', pillar: 'time', effect: { fatigue: b.fatigue.nightArrival, mood: -b.mood.nightArrival } });
+}
+
 export function arrive(state: GameState, content: Content, boat: Boat, orders?: Orders): ArrivalResult {
   const b = content.balance;
   const point = requirePoint(content, state.locationId);
-  if (point.kind === 'bay') return anchorHere(state, content, boat, point, orders);
-  const m = marinaArrival(state.rng, { arrivalHour: state.clockMin / 60, placesGoneHour: point.placesGoneHour }, b);
-  let s = advanceClock({ ...state, rng: m.next }, m.value.waitMin);
+  const arrived = nightArrival(state, boat, b);
+  if (point.kind === 'bay') return anchorHere(arrived, content, boat, point, orders);
+  const m = marinaArrival(arrived.rng, { arrivalHour: arrived.clockMin / 60, placesGoneHour: point.placesGoneHour }, b);
+  let s = advanceClock({ ...arrived, rng: m.next }, m.value.waitMin);
   if (m.value.refused) {
     s = applyOutcome(s, boat, { cause: 'marina:refused', pillar: 'time', effect: { mood: -b.mood.marinaRefused } });
     return anchorHere(s, content, boat, point, orders);

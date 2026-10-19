@@ -5,8 +5,8 @@
   "fuel": { "motorLph": 4.5, "priceEurPerL": 1.9 },
   "electric": { "fridgeAhPerDay": 45, "pumpsAhPerDay": 10, "electricToiletAhPerDay": 12, "plotterAhPerHour": 1.5, "autopilotAhPerHour": 4, "engineChargeAhPerHour": 25, "solarAhPerWattDay": 0.3, "starterStartPct": 4, "starterMinPct": 35, "zeroServiceMoodPenalty": 15 },
   "gas": { "pctPerDay": 9, "exchangeEur": 30, "exchangeBelowPct": 30, "noHotFoodMoodPenalty": 8 },
-  "mood": { "restPerHour": 2, "restCapHours": 5, "swimStop": 6, "tavernaDinner": 8, "tavernaEurPerPerson": 35, "overpowerPerHour": 3, "marinaRefused": 8, "rollyNight": 10, "injury": 30 },
-  "fatigue": { "passagePerHour": 4, "maneuverError": 5, "nightRecovery": 30, "rollyNightPenalty": 15, "rollyExposure": 0.5, "checkPenaltyPerPoint": 0.004 },
+  "mood": { "restPerHour": 2, "restCapHours": 5, "swimStop": 6, "tavernaDinner": 8, "tavernaEurPerPerson": 35, "overpowerPerHour": 3, "marinaRefused": 8, "rollyNight": 10, "injury": 30, "nightArrival": 5 },
+  "fatigue": { "passagePerHour": 4, "maneuverError": 5, "nightRecovery": 30, "rollyNightPenalty": 15, "rollyExposure": 0.5, "checkPenaltyPerPoint": 0.004, "nightArrival": 10 },
   "sails": {
     "reefThresholdKn": [16, 22, 28],
     "partialGenoaBonusKn": 3,
@@ -44,7 +44,9 @@
     "marinaLateRefusalChance": 0.55,
     "marinaWaitMin": 45,
     "swimStopMin": 60,
-    "sunsetHour": 20
+    "sunsetHour": 20,
+    "tavernaCloseHour": 23,
+    "nightAnchorPenalty": 0.1
   },
   "promises": { "keptPerStrength": 5, "brokenPerStrength": 15, "diplomatSofteningPerLevel": 0.1 },
   "checks": { "base": 0.5, "perLevel": 0.15, "min": 0.05, "max": 0.95 },
