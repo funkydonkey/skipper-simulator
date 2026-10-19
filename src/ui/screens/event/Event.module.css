@@ -20,3 +20,8 @@
 .chips li:nth-child(4) { animation-delay: 240ms; }
 .chips li:nth-child(n + 5) { animation-delay: 320ms; }
 @keyframes chip-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 800px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .scene { position: static; }
+}

@@ -1,4 +1,4 @@
-.toggle { position: fixed; right: var(--space-4); bottom: var(--space-4); z-index: 30; box-shadow: var(--shadow); background: var(--panel); }
+.toggle { position: fixed; right: var(--space-4); bottom: calc(var(--space-4) + env(safe-area-inset-bottom)); z-index: 30; box-shadow: var(--shadow); background: var(--panel); }
 .drawer {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: 40; width: min(420px, 100vw); overflow-y: auto;
   padding: var(--space-4) var(--space-6); background: var(--paper); color: var(--ink); box-shadow: -4px 0 16px rgb(0 0 0 / 0.2);
