@@ -38,10 +38,17 @@ describe('ManeuversScreen', () => {
     expect(screen.getByRole('button', { name: step.text.ru })).toBeInTheDocument();
   });
 
-  it('goes back to the plan', async () => {
-    const r = startManeuvers();
+  it('goes back to the plan with the drafted legs and settings intact', async () => {
+    const r = renderShell({ ...gameAt('planning'), locationId: 'base_marina', clockMin: 8 * 60 });
+    r.dispatch({ type: 'draft_plan', plan: { ...toBay, departureHour: 10, swimStops: 1, legs: [{ ...leg, mode: 'sail', reefs: 1 }] } });
     await r.user.click(screen.getByRole('button', { name: 'Назад к плану' }));
     expect(r.currentScreen()).toBe('planning');
+    expect(screen.getByText(/Марина Порто-Кало \(база\) → Кала-Адзурра/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Под парусом')).toBeChecked();
+    expect(screen.getByLabelText('Рифы')).toHaveValue('1');
+    expect(screen.getByLabelText('Выход')).toHaveValue('10');
+    await r.user.click(screen.getByRole('button', { name: 'К манёврам' }));
+    expect(r.session().ui.draftPlan).toMatchObject({ departureHour: 10, swimStops: 1, legs: [{ mode: 'sail', reefs: 1 }] });
   });
 
   it('offers the last order again', async () => {

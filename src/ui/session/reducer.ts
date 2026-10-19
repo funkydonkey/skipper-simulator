@@ -5,7 +5,7 @@ import {
 import { screenKey } from './screen';
 import type { Action, ManeuverOrders, Session, UiState } from './types';
 
-export const emptyUi = (): UiState => ({ draftPlan: null, passageDay: null, outcome: null, lastOrders: {} });
+export const emptyUi = (): UiState => ({ draftPlan: null, passageDay: null, outcome: null, lastOrders: {}, editDraft: null });
 
 export function initialSession(content: Content, lang: Lang, game: GameState | null = null): Session {
   return { content, lang: game?.lang ?? lang, game, ui: emptyUi(), error: null };
@@ -22,7 +22,7 @@ function commitPlan(s: Session, game: GameState, plan: DayPlan, orders: Maneuver
     ...s,
     game: next,
     error: null,
-    ui: { ...s.ui, draftPlan: null, passageDay: plan.legs.length > 0 ? next.day : null, lastOrders: { ...s.ui.lastOrders, ...orders } },
+    ui: { ...s.ui, draftPlan: null, editDraft: null, passageDay: plan.legs.length > 0 ? next.day : null, lastOrders: { ...s.ui.lastOrders, ...orders } },
   };
 }
 
@@ -38,7 +38,8 @@ function reduce(s: Session, a: Action): Session {
   const step = (game: GameState): Session => ({ ...s, game, error: null });
   switch (a.type) {
     case 'new_game': return { ...s, game: newGame(c, { seed: a.seed, lang: s.lang }), ui: emptyUi(), error: null };
-    case 'load': return initialSession(c, a.game.lang, a.game);
+    // The language chosen in the menu wins over the one the save was made in.
+    case 'load': return initialSession(c, s.lang, { ...a.game, lang: s.lang });
     case 'to_menu': return { ...s, game: null, ui: emptyUi(), error: null };
     case 'set_lang': return { ...s, lang: a.lang, game: s.game && { ...s.game, lang: a.lang } };
     case 'assign_voices': return step(assignVoices(requireGame(s), c, a.alloc));
@@ -51,7 +52,7 @@ function reduce(s: Session, a: Action): Session {
       validatePlan(g, c, a.plan);
       return a.plan.legs.length === 0 ? commitPlan(s, g, a.plan, {}) : { ...s, error: null, ui: { ...s.ui, draftPlan: a.plan } };
     }
-    case 'cancel_draft': return { ...s, ui: { ...s.ui, draftPlan: null } };
+    case 'cancel_draft': return { ...s, ui: { ...s.ui, draftPlan: null, editDraft: s.ui.draftPlan } };
     case 'commit_plan': {
       if (!s.ui.draftPlan) throw new EngineError('WRONG_PHASE', 'No plan to commit');
       return commitPlan(s, requireGame(s), s.ui.draftPlan, a.orders);
@@ -70,7 +71,7 @@ export function sessionReducer(s: Session, a: Action): Session {
   try {
     return reduce(s, a);
   } catch (e) {
-    if (e instanceof EngineError) return { ...s, error: e.message };
+    if (e instanceof EngineError) return { ...s, error: { code: e.code, message: e.message } };
     throw e;
   }
 }
