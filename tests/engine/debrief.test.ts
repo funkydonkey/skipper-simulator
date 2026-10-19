@@ -113,4 +113,22 @@ describe('debrief', () => {
     const s2 = withLog([['event', 'event:toilet_clog']], { firedEvents: ['toilet_clog'] });
     expect(buildDebrief(s2, content).eventNotes).toEqual([content.events[0]!.debrief]);
   });
+
+  it('does not repeat an event as a note when its injury is already a link', () => {
+    const content = makeContent();
+    const rule = { id: 'inj', pillar: 'safety' as const, decision: 'checkin:skip:toilets', consequence: 'injury:event:toilet_clog', priority: 9, text: { ru: 'р', en: 'e' } };
+    const c = { ...content, debrief: [rule] };
+    const state = makeState({
+      phase: 'debrief',
+      firedEvents: ['toilet_clog'],
+      log: [
+        { day: 0, clockMin: 0, kind: 'decision', cause: 'checkin:skip:toilets' },
+        { day: 3, clockMin: 1200, kind: 'event', cause: 'event:toilet_clog' },
+        { day: 3, clockMin: 1200, kind: 'effect', cause: 'injury:event:toilet_clog:fix_self:fail' },
+      ],
+    });
+    const d = buildDebrief(state, c);
+    expect(d.links.map((l) => l.ruleId)).toEqual(['inj']);
+    expect(d.eventNotes).toEqual([]);
+  });
 });

@@ -3,11 +3,11 @@
 Collected from per-task reviews, the final whole-branch review and its re-review (2026-10-19). Engine is merged-ready; these are known, deliberately deferred items.
 
 ## Stage 2 (before/with UI)
-- Debrief `covered()` ignores `injury:event:<id>` → one incident can appear as a link and as an event note (one-line fix in `src/engine/debrief.ts`).
-- Departure can slip past sunset after a jump start or morning `time_hours` event (`validatePlan` checks only the planned hour).
+- ~~Debrief `covered()` ignores `injury:event:<id>` → one incident can appear as a link and as an event note (one-line fix in `src/engine/debrief.ts`).~~ — fixed in Stage 2 Task 2
+- ~~Departure can slip past sunset after a jump start or morning `time_hours` event (`validatePlan` checks only the planned hour).~~ — fixed in Stage 2 Task 2
 - `night:arrival` is judged before the marina queue wait (19:50 arrival + 45 min queue escapes the penalty).
 - `at_marina` becomes true again the next morning after anchoring outside a marina (dayFacts reset in `endDay`).
-- `validateOrders` silently accepts orders for maneuver kinds absent from content.
+- ~~`validateOrders` silently accepts orders for maneuver kinds absent from content.~~ — fixed in Stage 2 Task 2
 - Passage/arrival events are still resolved after the passage finishes (their `time_hours` now affect rest and the return deadline, but cannot reroute the passage). Consider splitting `planDay` per leg for the UI.
 - Event order in `events.json` acts as priority within a phase (first eligible success wins) — document for content authors or switch to weighted pick.
 - Condition grammar: `!` binds looser than comparison (`!a == b` = `!(a == b)`); one comparison per expression.
