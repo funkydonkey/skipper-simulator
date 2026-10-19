@@ -1,0 +1,10 @@
+.remaining { font-family: var(--font-hand); font-size: var(--text-xl); margin: 0 0 var(--space-4); }
+.voices { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.voice { background: var(--panel); border-radius: var(--radius); padding: var(--space-3) var(--space-4); box-shadow: var(--shadow); }
+.voice[data-fixed='true'] { opacity: 0.8; }
+.head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.stepper { display: inline-flex; align-items: center; gap: var(--space-2); }
+.level { min-width: 1.5em; text-align: center; font-size: var(--text-lg); }
+.hint { margin: var(--space-2) 0 0; color: var(--fg-soft); font-size: var(--text-sm); }
+.fixedTitle { font-size: var(--text-lg); margin: var(--space-6) 0 var(--space-3); }
+.fixed { color: var(--fg-soft); font-size: var(--text-sm); }
