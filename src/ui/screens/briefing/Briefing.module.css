@@ -1,0 +1,12 @@
+.found { font-family: var(--font-hand); font-size: var(--text-lg); margin: 0 0 var(--space-4); }
+.table { background: var(--panel); border-radius: var(--radius); padding: var(--space-3) var(--space-4); box-shadow: var(--shadow); }
+.table h2 { margin: 0 0 var(--space-2); font-size: var(--text-lg); }
+.crew { margin: 0; padding-left: var(--space-4); }
+.topics { list-style: none; padding: 0; display: grid; gap: var(--space-2); grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.topic { display: grid; gap: var(--space-1); width: 100%; text-align: left; }
+.desc { font-size: var(--text-sm); opacity: 0.85; }
+.lines { list-style: none; padding: 0; display: grid; gap: var(--space-2); }
+.bubble {
+  position: relative; margin: var(--space-1) 0 0 var(--space-6); padding: var(--space-2) var(--space-3);
+  background: var(--ochre-200); color: var(--ink); border-radius: 12px; font-family: var(--font-hand); font-size: var(--text-lg);
+}
