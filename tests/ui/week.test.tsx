@@ -32,18 +32,25 @@ async function playWeek(lang: Lang): Promise<ReturnType<typeof renderShell>> {
   vi.spyOn(Math, 'random').mockReturnValue(0.123);
   const r = renderShell(null, { lang });
   const { user } = r;
+  assertHealthy(lang);
   await user.click(button(MENU.newWeek[lang]));
+  assertHealthy(lang);
   for (const v of TRAINABLE_VOICES) {
     const raise = button(fmt(CAPTAIN.raise[lang], { voice: VOICE_NAMES[v][lang] }));
     await user.click(raise);
     await user.click(raise);
   }
+  assertHealthy(lang);
   await user.click(button(COMMON.next[lang]));
+  assertHealthy(lang);
   await user.click(button(fmt(BOAT.take[lang], { name: content.boats.find((b) => b.id === 'meltemi_40')!.name[lang] })));
+  assertHealthy(lang);
   await user.click(button(CHECKIN.finish[lang]));
+  assertHealthy(lang);
   for (const topic of content.briefing.slice(0, content.balance.briefing.slots)) {
     await user.click(screen.getByRole('button', { name: new RegExp(topic.title[lang]) }));
   }
+  assertHealthy(lang);
   await user.click(button(BRIEFING.start[lang]));
 
   for (let step = 0; step < MAX_STEPS && r.currentScreen() !== 'debrief'; step++) {
