@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { loadContentDir } from '../../src/content/load-node';
 import { parseContent } from '../../src/content/parse';
-import { finishWeek, presentEvent } from '../../src/engine';
+import { endDay, finishWeek, planDay, presentEvent, startDay } from '../../src/engine';
 import { buildConditionContext } from '../../src/engine/expr';
-import { PILLARS, type GameEvent } from '../../src/engine/types';
-import { pillarsAffected, playDay, runWeek, setupWeek, weekScore } from '../../src/sim/run';
+import { PILLARS, type GameEvent, type GameState } from '../../src/engine/types';
+import { drainEvents, pillarsAffected, playDay, runWeek, setupWeek, weekScore } from '../../src/sim/run';
 import { expert, newbie } from '../../src/sim/strategies';
 
 const loaded = await loadContentDir('content');
@@ -98,5 +98,28 @@ describe('ТЗ 7.4 acceptance', () => {
     while (s.phase === 'morning') s = playDay(s, content, newbie);
     while (restored.phase === 'morning') restored = playDay(restored, content, newbie);
     expect(finishWeek(restored, content)).toEqual(finishWeek(s, content));
+  });
+
+  it('save/load in the planning phase with an event queued continues identically', () => {
+    const finish = (from: GameState): GameState => {
+      let s = drainEvents(from, content, newbie);
+      s = drainEvents(planDay(s, content, newbie.plan(s, content)), content, newbie);
+      s = endDay(s, content, newbie.evening(s, content));
+      while (s.phase === 'morning') s = playDay(s, content, newbie);
+      return finishWeek(s, content);
+    };
+    const saved = SEEDS.map((seed) => {
+      let s = setupWeek(content, seed, newbie);
+      while (s.phase === 'morning') {
+        const planning = startDay(s, content, newbie.morning(s, content));
+        if (planning.eventQueue.length > 0) return planning;
+        s = playDay(s, content, newbie);
+      }
+      return null;
+    }).find((s): s is GameState => s !== null);
+    expect(saved).toBeDefined();
+    expect(saved!.phase).toBe('planning');
+    const restored: GameState = JSON.parse(JSON.stringify(saved));
+    expect(finish(restored)).toEqual(finish(saved!));
   });
 });
