@@ -1,9 +1,46 @@
+import type { Resources } from '../../../engine';
+import { Button } from '../../components/Button';
+import { SceneArt } from '../../components/SceneArt';
 import { ScreenFrame } from '../../components/ScreenFrame';
 import { COMMON } from '../../i18n/common';
-import { useT } from '../../session/SessionContext';
+import { useAct, useGame, useSession, useT } from '../../session/SessionContext';
+import { signed } from '../../view/format';
+import { describeEntry, isNoise } from '../../view/logbook';
+import { RESOURCE_NAMES } from '../../view/strings';
+import { sumDeltas, timeSpentHours } from './deltas';
+import styles from './Event.module.css';
+import { EVENT } from './strings';
 
-/** Stub: replaced by its owning task. */
 export function OutcomeScreen() {
-  const t = useT(COMMON);
-  return <ScreenFrame screen="outcome" title={t('stub')} subtitle="outcome" />;
+  const { content, lang } = useGame();
+  const { session } = useSession();
+  const act = useAct();
+  const t = useT(EVENT);
+  const tc = useT(COMMON);
+  const outcome = session.ui.outcome;
+  if (!outcome) return null;
+  const event = content.events.find((e) => e.id === outcome.eventId);
+  const option = event?.options.find((o) => o.id === outcome.optionId);
+  const lines = outcome.entries.filter((e) => !isNoise(e)).flatMap((e) => describeEntry(e, content, lang) ?? []);
+  const deltas = Object.entries(sumDeltas(outcome.entries)) as [keyof Resources, number][];
+  const hours = timeSpentHours(outcome.entries);
+  return (
+    <ScreenFrame screen="outcome" title={t('outcomeTitle')} subtitle={option?.text[lang]} actions={<Button onClick={() => act({ type: 'outcome_seen' })}>{tc('next')}</Button>}>
+      <div className={styles.layout}>
+        {event && <SceneArt scene={event.scene} className={styles.scene} />}
+        <div className={styles.panel}>
+          <ul className={styles.lines}>
+            {lines.map((l, i) => <li key={i} data-tone={l.tone}>{l.text}</li>)}
+          </ul>
+          <h2 className={styles.h2}>{t('changes')}</h2>
+          {deltas.length === 0 ? <p>{t('noChanges')}</p> : (
+            <ul className={styles.chips}>
+              {deltas.map(([k, v]) => <li key={k} data-sign={v > 0 ? 'plus' : 'minus'}>{RESOURCE_NAMES[k][lang]} <span className="mono">{signed(v)}</span></li>)}
+            </ul>
+          )}
+          {hours > 0 && <p className="mono">{t('timeSpent', { h: hours })}</p>}
+        </div>
+      </div>
+    </ScreenFrame>
+  );
 }
