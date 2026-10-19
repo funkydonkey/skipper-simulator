@@ -1,0 +1,4 @@
+.timeline { margin: var(--space-4) 0 0; padding: 0; list-style: none; display: grid; gap: var(--space-1); font-family: var(--font-hand); font-size: var(--text-lg); }
+.timeline li[data-tone='good'] { color: var(--ok); }
+.timeline li[data-tone='bad'] { color: var(--bad); }
+.arrived { font-size: var(--text-lg); font-weight: 700; margin-top: var(--space-4); }
