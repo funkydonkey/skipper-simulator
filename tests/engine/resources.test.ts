@@ -46,6 +46,15 @@ describe('resources', () => {
     expect(s.log.at(-1)).toMatchObject({ kind: 'signal', cause: 'signal:local_warning', pillar: 'weather' });
   });
 
+  it('an injury from a non-injury cause also logs injury:<cause> for the debrief', () => {
+    const s = applyOutcome(makeState(), boat, { cause: 'event:loaded_sheet:let_him:fail', pillar: 'safety', effect: { injury: true, mood: -30 } });
+    expect(s.log.map((e) => e.cause)).toEqual(['event:loaded_sheet:let_him:fail', 'injury:event:loaded_sheet:let_him:fail']);
+    expect(s.log.at(-1)).toMatchObject({ kind: 'effect', pillar: 'safety' });
+    expect(s.injuries).toBe(1);
+    const direct = applyOutcome(makeState(), boat, { cause: 'injury:reef_underway', pillar: 'safety', effect: { injury: true } });
+    expect(direct.log.map((e) => e.cause)).toEqual(['injury:reef_underway']);
+  });
+
   it('shared bank: service drain also drains the starter', () => {
     const s = makeState();
     expect(applyOutcome(s, boat, { cause: 'c', effect: { service_bank: -30 } }).resources.starterBankPct).toBe(100);

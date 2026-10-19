@@ -1,8 +1,10 @@
 [
-  { "id": "injury_loaded_lines", "pillar": "safety", "priority": 10, "decision": "briefing:skip:loaded_lines", "consequence": "injury",
+  { "id": "injury_loaded_lines", "pillar": "safety", "priority": 10, "decision": "briefing:skip:loaded_lines", "consequence": "injury:event:loaded_sheet",
     "text": { "ru": "На брифинге не было темы «нагруженные концы» → гость взялся за нагруженный конец и травмировался.", "en": "No briefing on loaded lines → a guest grabbed a loaded line and got hurt." } },
-  { "id": "injury_cleats", "pillar": "safety", "priority": 9, "decision": "briefing:skip:cleats", "consequence": "injury",
+  { "id": "injury_cleats", "pillar": "safety", "priority": 9, "decision": "briefing:skip:cleats", "consequence": "injury:event:line_not_cleated",
     "text": { "ru": "Экипаж не учили работать с уткой → конец хватали руками.", "en": "The crew never learned cleats → lines were grabbed by hand." } },
+  { "id": "injury_reef_underway", "pillar": "safety", "priority": 9, "decision": "briefing:skip:loaded_lines", "consequence": "injury:reef_underway",
+    "text": { "ru": "Про нагруженные концы на брифинге не говорили → при рифлении на ходу гостя травмировало шкотом.", "en": "No briefing on loaded lines → a guest got hurt by a loaded sheet while reefing underway." } },
   { "id": "maneuver_order", "pillar": "safety", "priority": 8, "decision": "order:wrong", "consequence": "maneuver",
     "text": { "ru": "Порядок команд на манёвре был нарушен → лодка поплатилась на причале.", "en": "Commands came in the wrong order → the boat paid for it at the dock." } },
   { "id": "barometer_ignored", "pillar": "weather", "priority": 8, "decision": "barometer:ignored", "consequence": "sail:break", "signal": "signal:local_warning",

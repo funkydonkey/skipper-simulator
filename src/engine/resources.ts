@@ -1,4 +1,4 @@
-import { appendLog } from './log';
+import { appendLog, causeMatches } from './log';
 import { advanceClock, clamp, round1 } from './state';
 import type { Balance, Boat, Effect, GameState, MapPoint, Outcome, Resources, ShowerDiscipline } from './types';
 
@@ -81,6 +81,9 @@ export function applyOutcome(state: GameState, boat: Boat | null, o: Outcome): G
     ...(Object.keys(delta).length ? { delta } : {}),
     ...(data ? { data } : {}),
   });
+  if (e.injury && !causeMatches(o.cause, 'injury')) {
+    s = appendLog(s, { kind: 'effect', cause: `injury:${o.cause}`, ...(o.pillar ? { pillar: o.pillar } : {}) });
+  }
   if (e.signal) s = appendLog(s, { kind: 'signal', cause: `signal:${e.signal}`, ...(o.pillar ? { pillar: o.pillar } : {}) });
   return s;
 }

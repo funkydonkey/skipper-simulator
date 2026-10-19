@@ -32,6 +32,14 @@ describe('narrative content', () => {
     expect(d('promise_taverna').contexts).toContain('evening');
   });
 
+  it('injury rules blame the specific injury cause, not any injury', () => {
+    const rule = (id: string) => content!.debrief.find((r) => r.id === id)!;
+    expect(rule('injury_loaded_lines').consequence).toBe('injury:event:loaded_sheet');
+    expect(rule('injury_cleats').consequence).toBe('injury:event:line_not_cleated');
+    expect(rule('injury_reef_underway')).toMatchObject({ pillar: 'safety', priority: 9, decision: 'briefing:skip:loaded_lines', consequence: 'injury:reef_underway' });
+    for (const r of content!.debrief) expect(r.consequence, r.id).not.toBe('injury');
+  });
+
   it('debrief rules reference known log cause roots', () => {
     for (const r of content!.debrief) {
       for (const pattern of [r.decision, r.consequence, ...(r.signal ? [r.signal] : [])]) {
