@@ -1,0 +1,6 @@
+.text { margin: 0; font-size: var(--text-lg); line-height: 1.6; cursor: default; }
+.line { transition: opacity 600ms ease; }
+.line[data-shown='false'] { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .line { transition: none; }
+}
