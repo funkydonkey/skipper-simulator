@@ -82,7 +82,7 @@ export function Coastlines({ points, proj, r }: { points: readonly MapPoint[]; p
 
 export function WaterLayer({ width, height, animate }: { width: number; height: number; animate: boolean }) {
   return (
-    <g className={styles.water}>
+    <g className={styles.water} pointerEvents="none" aria-hidden="true">
       <rect width={width} height={height} fill="url(#waves)">
         {animate && <animateTransform attributeName="transform" type="translate" from="0 0" to="48 0" dur="18s" repeatCount="indefinite" />}
       </rect>
@@ -93,7 +93,7 @@ export function WaterLayer({ width, height, animate }: { width: number; height: 
 export function Clouds({ width, height, animate }: { width: number; height: number; animate: boolean }) {
   const clouds = [{ y: 0.18, rx: 0.16, dur: 70 }, { y: 0.55, rx: 0.12, dur: 90 }, { y: 0.8, rx: 0.1, dur: 60 }];
   return (
-    <g className={styles.clouds} aria-hidden="true">
+    <g className={styles.clouds} pointerEvents="none" aria-hidden="true">
       {clouds.map((c, i) => (
         <ellipse key={i} cx={-width * c.rx} cy={height * c.y} rx={width * c.rx} ry={height * 0.05}>
           {animate && <animateTransform attributeName="transform" type="translate" from="0 0" to={`${width * (1 + 2 * c.rx)} 0`} dur={`${c.dur}s`} begin={`-${i * 20}s`} repeatCount="indefinite" />}
@@ -108,7 +108,7 @@ export function WindField({ width, height, dir }: { width: number; height: numbe
   const cols = Math.ceil(width / WIND_GRID_PX);
   const rows = Math.ceil(height / WIND_GRID_PX);
   return (
-    <g className={styles.windField} aria-hidden="true">
+    <g className={styles.windField} pointerEvents="none" aria-hidden="true">
       {Array.from({ length: cols * rows }, (_, i) => {
         const x = (i % cols) * WIND_GRID_PX + WIND_GRID_PX / 2;
         const y = Math.floor(i / cols) * WIND_GRID_PX + WIND_GRID_PX / 2;

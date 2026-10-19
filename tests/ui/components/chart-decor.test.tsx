@@ -32,4 +32,13 @@ describe('chart decor', () => {
     expect(container.querySelector('animateTransform, animateMotion, animate')).toBeNull();
     vi.unstubAllGlobals();
   });
+
+  it('keeps decor layers non-interactive so they never block point clicks', () => {
+    const { container } = renderWithSession(<ChartMap locationId="base_marina" wind={{ dir: 'NW', kn: 15 }} />);
+    for (const cls of ['water', 'clouds', 'windField']) {
+      const g = container.querySelector(`g[class*="${cls}"]`);
+      expect(g, cls).not.toBeNull();
+      expect(g!.getAttribute('pointer-events'), cls).toBe('none');
+    }
+  });
 });
