@@ -1,5 +1,6 @@
 import { DIRS, type Dir8, type MapPoint } from '../../../engine';
 import type { Projection } from '../../view/map';
+import { downwindDeg } from '../WindRose';
 import styles from './ChartMap.module.css';
 
 const VERTICES = 10;
@@ -104,7 +105,7 @@ export function Clouds({ width, height, animate }: { width: number; height: numb
 }
 
 export function WindField({ width, height, dir }: { width: number; height: number; dir: Dir8 }) {
-  const rot = (DIRS.indexOf(dir) * STEP_DEG + 180) % 360;
+  const rot = downwindDeg(dir);
   const cols = Math.ceil(width / WIND_GRID_PX);
   const rows = Math.ceil(height / WIND_GRID_PX);
   return (
@@ -112,7 +113,7 @@ export function WindField({ width, height, dir }: { width: number; height: numbe
       {Array.from({ length: cols * rows }, (_, i) => {
         const x = (i % cols) * WIND_GRID_PX + WIND_GRID_PX / 2;
         const y = Math.floor(i / cols) * WIND_GRID_PX + WIND_GRID_PX / 2;
-        return <path key={i} data-wind-arrow="" transform={`translate(${x} ${y}) rotate(${rot})`} d="M0 -14 V12 M-4 6 L0 12 L4 6" />;
+        return <path key={i} data-wind-arrow="" transform={`translate(${x} ${y}) rotate(${rot})`} d="M0 14 V-12 M-4 -6 L0 -12 L4 -6" />;
       })}
     </g>
   );

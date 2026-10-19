@@ -15,8 +15,13 @@ export function departureOptions(game: GameState, content: Content): number[] {
   return out;
 }
 
-export function initialDraft(game: GameState, content: Content): Draft {
-  return { legs: [], departureHour: departureOptions(game, content)[0] ?? content.balance.time.earliestDepartureHour, swimStops: 0, shower: 'normal', autopilot: false };
+/** A fresh draft, or the plan taken back from the maneuvers screen (`from`). */
+export function initialDraft(game: GameState, content: Content, from: DayPlan | null = null): Draft {
+  const departures = departureOptions(game, content);
+  const firstSlot = departures[0] ?? content.balance.time.earliestDepartureHour;
+  if (!from) return { legs: [], departureHour: firstSlot, swimStops: 0, shower: 'normal', autopilot: false };
+  const departureHour = departures.includes(from.departureHour) ? from.departureHour : firstSlot;
+  return { legs: [...from.legs], departureHour, swimStops: from.swimStops, shower: from.shower, autopilot: from.autopilot };
 }
 
 export function trailOf(content: Content, from: string, legs: readonly LegPlan[]): string[] {

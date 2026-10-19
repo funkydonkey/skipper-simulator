@@ -27,7 +27,7 @@ describe('sessionReducer', () => {
     const before = run(initialSession(content, 'ru'), { type: 'new_game', seed: 7 });
     const after = sessionReducer(before, { type: 'assign_voices', alloc: { sea_sense: 4 } });
     expect(after.game).toBe(before.game);
-    expect(after.error).toMatch(/sum must be/);
+    expect(after.error).toMatchObject({ code: 'INVALID_INPUT', message: expect.stringMatching(/sum must be/) });
     expect(sessionReducer(after, { type: 'dismiss_error' }).error).toBeNull();
   });
 
@@ -48,9 +48,11 @@ describe('sessionReducer', () => {
     expect(screenFor(drafted)).toBe('maneuvers');
     const back = sessionReducer(drafted, { type: 'cancel_draft' });
     expect(screenFor(back)).toBe('planning');
+    expect(back.ui.editDraft).toEqual(plan);
     const committed = sessionReducer(drafted, { type: 'commit_plan', orders: {} });
     expect(committed.game?.phase).toBe('evening');
     expect(screenFor(committed)).toBe('passage');
+    expect(sessionReducer(sessionReducer(back, { type: 'draft_plan', plan }), { type: 'commit_plan', orders: {} }).ui.editDraft).toBeNull();
     expect(screenFor(sessionReducer(committed, { type: 'passage_seen' }))).not.toBe('passage');
   });
 
@@ -94,12 +96,13 @@ describe('sessionReducer', () => {
     expect(screenFor(initialSession(content, 'ru'))).toBe('menu');
   });
 
-  it('to_menu drops the game, load restores it with its language', () => {
+  it('to_menu drops the game, load restores it in the language chosen in the menu', () => {
     const s = withGame('morning');
     const menu = sessionReducer(s, { type: 'to_menu' });
     expect(screenFor(menu)).toBe('menu');
     const loaded = sessionReducer(menu, { type: 'load', game: { ...s.game!, lang: 'en' } });
-    expect(loaded.lang).toBe('en');
+    expect(loaded.lang).toBe('ru');
+    expect(loaded.game?.lang).toBe('ru');
     expect(screenFor(loaded)).toBe('morning');
   });
 });

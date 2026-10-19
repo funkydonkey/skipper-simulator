@@ -1,5 +1,5 @@
 import type {
-  CheckpointId, Content, DayPlan, EveningChoice, GameState, Lang, LogEntry, ManeuverKind, MorningChoice, TrainableVoice,
+  CheckpointId, Content, DayPlan, EngineErrorCode, EveningChoice, GameState, Lang, LogEntry, ManeuverKind, MorningChoice, TrainableVoice,
 } from '../../engine';
 
 export type Screen =
@@ -17,14 +17,19 @@ export interface UiState {
   passageDay: number | null;
   outcome: EventOutcome | null;
   lastOrders: ManeuverOrders;
+  /** The plan taken back from the maneuvers screen: the planner reopens with it. */
+  editDraft: DayPlan | null;
 }
+
+/** An engine rejection: `code` picks the localized text, `message` is English debug detail. */
+export interface SessionError { code: EngineErrorCode; message: string }
 
 export interface Session {
   content: Content;
   lang: Lang;
   game: GameState | null;
   ui: UiState;
-  error: string | null;
+  error: SessionError | null;
 }
 
 export type ActionBody =

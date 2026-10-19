@@ -1,11 +1,11 @@
 import type { KeyboardEvent } from 'react';
-import type { Dir8 } from '../../../engine';
+import type { Dir8, MapPoint } from '../../../engine';
 import { useSession, useT } from '../../session/SessionContext';
 import { mapBounds, projection, routeBetween } from '../../view/map';
 import { useReducedMotion } from '../motion';
 import { ChartDefs, Clouds, Coastlines, WaterLayer, WindField } from './decor';
-import { WindRose } from '../WindRose';
 import styles from './ChartMap.module.css';
+import { labelPlacement } from './labels';
 import { CHART, FEATURE_NAMES } from './strings';
 import { BoatToken, PointSymbol } from './symbols';
 
@@ -13,6 +13,8 @@ const PX_PER_NM = 24;
 const GRID_NM = 5;
 const COAST_RADIUS_NM = 1.6;
 const SAIL_SECONDS_PER_LEG = 2.5;
+/** ~48 CSS px across on a 375 px phone, where the chart is drawn at ~0.6 scale. */
+const HIT_RADIUS = 40;
 
 export interface ChartMapProps {
   locationId: string;
@@ -20,11 +22,36 @@ export interface ChartMapProps {
   animateTrail?: boolean;
   reachableIds?: readonly string[];
   onPointClick?: (pointId: string) => void;
-  wind?: { dir: Dir8; kn: number; gustKn?: number } | null;
+  /** Drives the faint wind field only; the wind rose lives in the forecast panel. */
+  wind?: { dir: Dir8 } | null;
 }
 
 export function trailPath(points: readonly { x: number; y: number }[]): string {
   return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${Math.round(p.x)} ${Math.round(p.y)}`).join(' ');
+}
+
+interface ChartPointProps { point: MapPoint; name: string; at: { x: number; y: number }; chartWidth: number; onPick?: (pointId: string) => void }
+
+/** A map point; with `onPick` it is a keyboard-reachable button with a large invisible hit circle. */
+function ChartPoint({ point, name, at, chartWidth, onPick }: ChartPointProps) {
+  const label = labelPlacement(name, at.x, chartWidth);
+  const press = (e: KeyboardEvent<SVGGElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick?.(point.id); }
+  };
+  return (
+    <g
+      transform={`translate(${at.x} ${at.y})`}
+      className={styles.point}
+      data-kind={point.kind}
+      data-reachable={!!onPick}
+      {...(onPick ? { role: 'button', tabIndex: 0, 'aria-label': name, onClick: () => onPick(point.id), onKeyDown: press } : {})}
+    >
+      {onPick && <circle data-hit="" r={HIT_RADIUS} fill="transparent" pointerEvents="visible" />}
+      {onPick && <circle className={styles.halo} r="16" />}
+      <PointSymbol kind={point.kind} />
+      <text className={styles.label} x={label.x} y="4" textAnchor={label.anchor}>{name}</text>
+    </g>
+  );
 }
 
 export function ChartMap({ locationId, trail = [], animateTrail = false, reachableIds = [], onPointClick, wind }: ChartMapProps) {
@@ -38,9 +65,6 @@ export function ChartMap({ locationId, trail = [], animateTrail = false, reachab
   const trailPoints = trail.map(at);
   const here = at(locationId);
   const animate = animateTrail && !reduced && trailPoints.length > 1;
-  const press = (id: string) => (e: KeyboardEvent<SVGGElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPointClick?.(id); }
-  };
 
   return (
     <figure className={styles.chart}>
@@ -71,24 +95,9 @@ export function ChartMap({ locationId, trail = [], animateTrail = false, reachab
           );
         })}
         </g>
-        {content.map.map((p) => {
-          const s = proj.toSvg(p);
-          const clickable = reachableIds.includes(p.id);
-          return (
-            <g
-              key={p.id}
-              transform={`translate(${s.x} ${s.y})`}
-              className={styles.point}
-              data-kind={p.kind}
-              data-reachable={clickable}
-              {...(clickable ? { role: 'button', tabIndex: 0, 'aria-label': p.name[lang], onClick: () => onPointClick?.(p.id), onKeyDown: press(p.id) } : {})}
-            >
-              {clickable && <circle className={styles.halo} r="16" />}
-              <PointSymbol kind={p.kind} />
-              <text className={styles.label} x="12" y="4">{p.name[lang]}</text>
-            </g>
-          );
-        })}
+        {content.map.map((p) => (
+          <ChartPoint key={p.id} point={p} name={p.name[lang]} at={proj.toSvg(p)} chartWidth={proj.width} {...(reachableIds.includes(p.id) && onPointClick ? { onPick: onPointClick } : {})} />
+        ))}
         {trailPoints.length > 1 && <path className={styles.trail} d={trailPath(trailPoints)} />}
         <Clouds width={proj.width} height={proj.height} animate={!reduced} />
         <g className={styles.boat} aria-label={t('you')} transform={animate ? undefined : `translate(${here.x} ${here.y - 14})`}>
@@ -96,7 +105,6 @@ export function ChartMap({ locationId, trail = [], animateTrail = false, reachab
           {animate && <animateMotion dur={`${SAIL_SECONDS_PER_LEG * (trailPoints.length - 1)}s`} fill="freeze" path={trailPath(trailPoints.map((p) => ({ x: p.x, y: p.y - 14 })))} />}
         </g>
       </svg>
-      {wind && <div className={styles.rose}><WindRose dir={wind.dir} kn={wind.kn} gustKn={wind.gustKn} size={80} /></div>}
     </figure>
   );
 }

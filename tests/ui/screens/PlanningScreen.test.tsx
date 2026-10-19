@@ -41,13 +41,21 @@ describe('PlanningScreen', () => {
   it('an engine rejection shows a localized banner and keeps the screen', () => {
     const r = renderShell(atBase());
     r.dispatch({ type: 'draft_plan', plan: { departureHour: 3, legs: [], swimStops: 0, shower: 'normal', autopilot: false } });
-    expect(screen.getByRole('alert')).toHaveTextContent(/^Не получилось:/);
+    expect(screen.getByRole('alert')).toHaveTextContent(/^Не получилось: такой выбор не подходит/);
+    expect(screen.getByRole('alert')).not.toHaveTextContent(/[A-Za-z]/);
     expect(r.currentScreen()).toBe('planning');
   });
 
   it('shows a localized line instead of the preview when the engine cannot estimate', () => {
     renderShell({ ...atBase(), weather: null });
-    expect(screen.getByText(/^Не удаётся оценить этот план: /)).toBeInTheDocument();
+    expect(screen.getByText('Не удаётся оценить этот план: сейчас этого сделать нельзя')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Провести день здесь' })).toBeInTheDocument();
+  });
+
+  it('shows engine errors in English when the game is in English', () => {
+    const r = renderShell({ ...atBase(), weather: null, lang: 'en' }, { lang: 'en' });
+    expect(screen.getByText("Can't estimate this plan: this is not possible right now")).toBeInTheDocument();
+    r.dispatch({ type: 'draft_plan', plan: { departureHour: 3, legs: [], swimStops: 0, shower: 'normal', autopilot: false } });
+    expect(screen.getByRole('alert')).not.toHaveTextContent(/[А-Яа-яЁё]/);
   });
 });

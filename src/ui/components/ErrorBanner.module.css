@@ -2,5 +2,6 @@
   position: sticky; top: 0; z-index: 20;
   display: flex; gap: var(--space-3); align-items: center; justify-content: space-between;
   padding: var(--space-2) var(--space-4);
-  background: var(--bad); color: var(--accent-fg);
+  background: var(--banner-bg); color: var(--banner-fg);
 }
+.banner .dismiss { color: inherit; border-color: currentColor; }

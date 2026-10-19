@@ -3,6 +3,7 @@ import { COMMON } from '../../i18n/common';
 import { useSession, useT } from '../../session/SessionContext';
 import { logbookDays } from '../../view/logbook';
 import { Button } from '../Button';
+import { LangSwitch } from './LangSwitch';
 import styles from './Logbook.module.css';
 import { LOGBOOK } from './strings';
 
@@ -19,9 +20,10 @@ export function LogbookDrawer() {
     <>
       <Button variant="secondary" className={styles.toggle} aria-expanded={open} onClick={() => setOpen((o) => !o)}>{tc('logbook')}</Button>
       {open && (
-        <div role="dialog" aria-label={tc('logbook')} className={styles.drawer} onKeyDown={onKey} tabIndex={-1} ref={(el) => el?.focus()}>
+        <div role="dialog" aria-label={tc('logbook')} className={styles.drawer} data-surface="paper" onKeyDown={onKey} tabIndex={-1} ref={(el) => el?.focus()}>
           <header className={styles.head}>
             <h2>{tc('logbook')}</h2>
+            <LangSwitch />
             <Button variant="ghost" onClick={() => setOpen(false)}>{tc('dismiss')}</Button>
           </header>
           {days.length === 0 && <p>{t('empty')}</p>}

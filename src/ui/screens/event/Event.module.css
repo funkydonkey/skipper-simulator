@@ -23,5 +23,5 @@
 
 @media (max-width: 800px) {
   .layout { grid-template-columns: minmax(0, 1fr); }
-  .scene { position: static; }
+  .scene { position: relative; top: auto; }
 }
