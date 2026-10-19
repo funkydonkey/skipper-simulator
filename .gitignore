@@ -3,3 +3,6 @@ coverage/
 .env
 .superpowers/
 .claude/worktrees/
+dist/
+test-results/
+playwright-report/
