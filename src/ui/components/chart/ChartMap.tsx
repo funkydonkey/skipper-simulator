@@ -3,6 +3,7 @@ import type { Dir8 } from '../../../engine';
 import { useSession, useT } from '../../session/SessionContext';
 import { mapBounds, projection, routeBetween } from '../../view/map';
 import { useReducedMotion } from '../motion';
+import { ChartDefs, Clouds, Coastlines, WaterLayer, WindField } from './decor';
 import { WindRose } from '../WindRose';
 import styles from './ChartMap.module.css';
 import { CHART, FEATURE_NAMES } from './strings';
@@ -10,6 +11,7 @@ import { BoatToken, PointSymbol } from './symbols';
 
 const PX_PER_NM = 24;
 const GRID_NM = 5;
+const COAST_RADIUS_NM = 1.6;
 const SAIL_SECONDS_PER_LEG = 2.5;
 
 export interface ChartMapProps {
@@ -43,7 +45,11 @@ export function ChartMap({ locationId, trail = [], animateTrail = false, reachab
   return (
     <figure className={styles.chart}>
       <svg className={styles.svg} viewBox={`0 0 ${proj.width} ${proj.height}`} role="group" aria-label={t('title')}>
-        <rect className={styles.paper} width={proj.width} height={proj.height} />
+        <ChartDefs />
+        <rect className={styles.paper} width={proj.width} height={proj.height} filter="url(#paper)" />
+        <WaterLayer width={proj.width} height={proj.height} animate={!reduced} />
+        {wind && <WindField width={proj.width} height={proj.height} dir={wind.dir} />}
+        <Coastlines points={content.map} proj={proj} r={COAST_RADIUS_NM * PX_PER_NM} />
         <g className={styles.grid}>
           {Array.from({ length: Math.floor(proj.width / (GRID_NM * PX_PER_NM)) + 1 }, (_, i) => (
             <line key={`v${i}`} x1={i * GRID_NM * PX_PER_NM} y1={0} x2={i * GRID_NM * PX_PER_NM} y2={proj.height} />
@@ -52,6 +58,7 @@ export function ChartMap({ locationId, trail = [], animateTrail = false, reachab
             <line key={`h${i}`} x1={0} y1={i * GRID_NM * PX_PER_NM} x2={proj.width} y2={i * GRID_NM * PX_PER_NM} />
           ))}
         </g>
+        <g filter="url(#hand)">
         {content.routes.map((r) => {
           const a = at(r.from);
           const b = at(r.to);
@@ -63,6 +70,7 @@ export function ChartMap({ locationId, trail = [], animateTrail = false, reachab
             </g>
           );
         })}
+        </g>
         {content.map.map((p) => {
           const s = proj.toSvg(p);
           const clickable = reachableIds.includes(p.id);
@@ -82,6 +90,7 @@ export function ChartMap({ locationId, trail = [], animateTrail = false, reachab
           );
         })}
         {trailPoints.length > 1 && <path className={styles.trail} d={trailPath(trailPoints)} />}
+        <Clouds width={proj.width} height={proj.height} animate={!reduced} />
         <g className={styles.boat} aria-label={t('you')} transform={animate ? undefined : `translate(${here.x} ${here.y - 14})`}>
           <BoatToken />
           {animate && <animateMotion dur={`${SAIL_SECONDS_PER_LEG * (trailPoints.length - 1)}s`} fill="freeze" path={trailPath(trailPoints.map((p) => ({ x: p.x, y: p.y - 14 })))} />}
