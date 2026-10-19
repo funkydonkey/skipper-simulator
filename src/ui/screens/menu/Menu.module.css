@@ -1,0 +1,10 @@
+.scene { max-width: 720px; margin-bottom: var(--space-6); }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+.saved { margin: 0; color: var(--fg-soft); font-family: var(--font-hand); font-size: var(--text-lg); }
+.corrupt { margin: 0; color: var(--bad); }
+.lang { display: flex; gap: var(--space-2); margin-top: var(--space-6); }
+.settings { margin-top: var(--space-6); max-width: 420px; }
+.settings summary { cursor: pointer; color: var(--fg-soft); }
+.field { display: grid; gap: var(--space-1); margin-top: var(--space-3); }
+.field input { font: inherit; font-family: var(--font-mono); padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); color: var(--fg); }
+.hint { font-size: var(--text-sm); color: var(--fg-soft); }
