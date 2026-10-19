@@ -1,8 +1,10 @@
 import { assertNoPendingEvent, assertPhase, EngineError } from '../errors';
+import { appendLog } from '../log';
 import { crewSensitivity, resolveDueExpectations, sayDialogue } from '../promises';
 import { applyOutcome, applyOutcomes, dailyConsumption, refillAt, zeroResourceOutcomes } from '../resources';
 import { clamp, requireBoat, requirePoint, round1 } from '../state';
 import type { Activity, Balance, Boat, Content, DayFacts, GameState, MapPoint, Outcome } from '../types';
+import { restHours } from '../time';
 import { exposure } from '../weather';
 
 export interface EveningChoice { dinner: 'cook' | 'taverna'; dialogueId?: string | null }
@@ -48,6 +50,17 @@ export function sleepShare(clockMin: number, b: Balance): number {
   return clamp((morning - clockMin / 60) / (morning - b.time.sunsetHour), 0, 1);
 }
 
+/** Rest and the return deadline use the clock after all of today's events were resolved. */
+function rest(state: GameState, boat: Boat, b: Balance): GameState {
+  return applyOutcome(state, boat, { cause: 'rest', pillar: 'time', effect: { mood: round1(restHours(state.clockMin, b) * b.mood.restPerHour) } });
+}
+
+function checkReturn(state: GameState, point: MapPoint, b: Balance): GameState {
+  if (state.day !== b.schedule.days) return state;
+  const onTime = point.kind === 'base' && state.clockMin <= b.schedule.returnDeadlineHour * 60;
+  return appendLog({ ...state, returnedOnTime: onTime }, { kind: 'info', cause: `return:${onTime ? 'on_time' : 'late'}`, pillar: 'time' });
+}
+
 export function endDay(state: GameState, content: Content, choice: EveningChoice): GameState {
   assertPhase(state, 'evening');
   assertNoPendingEvent(state);
@@ -59,7 +72,7 @@ export function endDay(state: GameState, content: Content, choice: EveningChoice
   if (choice.dinner === 'taverna' && !point.services.taverna) throw new EngineError('INVALID_INPUT', `No taverna at ${point.id}`);
   if (choice.dinner === 'taverna' && !tavernaOpen(state.clockMin, b)) throw new EngineError('INVALID_INPUT', 'Taverna is closed');
   const meal = dinner(state, b, choice.dinner);
-  let s = applyOutcomes(state, boat, meal.outcomes);
+  let s = applyOutcomes(checkReturn(rest(state, boat, b), point, b), boat, meal.outcomes);
   const dayFacts = meal.activity ? { ...facts, activities: [...facts.activities, meal.activity] } : facts;
   const resolved = resolveDueExpectations(s.expectations, dayFacts, s.voices.diplomat, crewSensitivity(s, content), b);
   s = applyOutcomes({ ...s, expectations: resolved.expectations }, boat, resolved.outcomes);

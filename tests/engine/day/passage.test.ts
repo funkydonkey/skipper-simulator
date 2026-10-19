@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { endDay } from '../../../src/engine/day/evening';
 import { planDay } from '../../../src/engine/day/passage';
 import type { DayPlan, LegPlan } from '../../../src/engine/types';
 import { makeContent } from '../../fixtures/content';
@@ -9,6 +10,7 @@ const content = makeContent();
 const sail = (routeId: string, over: Partial<LegPlan> = {}): LegPlan => ({ routeId, mode: 'sail', reefs: 0, genoa: 'full', course: 'direct', ...over });
 const plan = (over: Partial<DayPlan> = {}): DayPlan => ({ departureHour: 9, legs: [sail('r_base_bay_a')], swimStops: 0, shower: 'normal', autopilot: false, ...over });
 const causes = (s: { log: { cause: string }[] }) => s.log.map((e) => e.cause);
+const quiet = { ...content, events: [] };
 
 describe('planDay', () => {
   it('sails to a bay, anchors, fills dayFacts, queues to evening', () => {
@@ -19,8 +21,9 @@ describe('planDay', () => {
     expect(s.clockMin).toBeGreaterThan(11 * 60 + 50);
     expect(causes(s)).toEqual(expect.arrayContaining([
       'plan:shower:normal', 'plan:depart:early', 'plan:route:easy', 'plan:mode:sail', 'plan:reefs:0',
-      'engine:start', 'order:ok:dep_test', 'leg:r_base_bay_a', 'order:ok:anchoring_test', 'rest', 'fatigue:passage',
+      'engine:start', 'order:ok:dep_test', 'leg:r_base_bay_a', 'order:ok:anchoring_test', 'fatigue:passage',
     ]));
+    expect(causes(s)).not.toContain('rest');
     expect(causes(s).some((c) => c.startsWith('anchor:attempts:'))).toBe(true);
   });
 
@@ -48,19 +51,21 @@ describe('planDay', () => {
     expect(s.dayFacts!.departureHour).toBe(12);
   });
 
-  it('busy route ending at base on the last day → on time', () => {
-    const s = planDay(makeState({ day: 6 }), content, plan({
+  it('busy route ending at base on the last day → on time (judged at endDay)', () => {
+    const p = planDay(makeState({ day: 6 }), quiet, plan({
       departureHour: 6,
       legs: [sail('r_base_bay_a'), sail('r_bay_a_marina_b'), sail('r_marina_b_base')],
     }));
-    expect(causes(s)).toContain('plan:route:busy');
+    expect(causes(p)).toContain('plan:route:busy');
+    expect(p.dayFacts!.mooring).toBe('berth');
+    expect(p.returnedOnTime).toBeNull();
+    const s = endDay(p, quiet, { dinner: 'cook' });
     expect(s.returnedOnTime).toBe(true);
     expect(causes(s)).toContain('return:on_time');
-    expect(s.dayFacts!.mooring).toBe('berth');
   });
 
   it('last day not at base → late', () => {
-    const s = planDay(makeState({ day: 6 }), content, plan());
+    const s = endDay(planDay(makeState({ day: 6 }), quiet, plan()), quiet, { dinner: 'cook' });
     expect(s.returnedOnTime).toBe(false);
     expect(causes(s)).toContain('return:late');
   });

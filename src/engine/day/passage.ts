@@ -4,7 +4,7 @@ import { appendLog } from '../log';
 import { applyOutcome } from '../resources';
 import { advanceClock, otherEnd, requireBoat, requirePoint, requireRoute, round1, round2 } from '../state';
 import { restHours } from '../time';
-import type { Activity, Balance, Boat, Content, DayPlan, EventPhase, GameState, MapPoint } from '../types';
+import type { Activity, Balance, Boat, Content, DayPlan, EventPhase, GameState } from '../types';
 import { arrive, runManeuver } from './arrival';
 import { runLeg, startEngine } from './legs';
 
@@ -66,24 +66,15 @@ function swimStops(state: GameState, boat: Boat, n: number, b: Balance): { state
   }, { state, swum: 0 });
 }
 
-function checkReturn(state: GameState, content: Content, point: MapPoint): GameState {
-  const sch = content.balance.schedule;
-  if (state.day !== sch.days) return state;
-  const onTime = point.kind === 'base' && state.clockMin <= sch.returnDeadlineHour * 60;
-  return appendLog({ ...state, returnedOnTime: onTime }, { kind: 'info', cause: `return:${onTime ? 'on_time' : 'late'}`, pillar: 'time' });
-}
-
 function settleDay(state: GameState, content: Content, boat: Boat, plan: DayPlan, d: DaySummary): GameState {
   const b = content.balance;
   const point = requirePoint(content, state.locationId);
-  const rest = restHours(state.clockMin, b);
-  let s = applyOutcome(state, boat, { cause: 'rest', pillar: 'time', effect: { mood: round1(rest * b.mood.restPerHour) } });
-  if (d.moving) s = applyOutcome(s, boat, { cause: 'fatigue:passage', pillar: 'time', effect: { fatigue: round1(d.legHours * b.fatigue.passagePerHour) } });
+  const s = d.moving ? applyOutcome(state, boat, { cause: 'fatigue:passage', pillar: 'time', effect: { fatigue: round1(d.legHours * b.fatigue.passagePerHour) } }) : state;
   const activities: Activity[] = [];
   if (d.swum > 0) activities.push('swim');
-  if (point.services.beach && rest > 0) activities.push('beach');
+  if (point.services.beach && restHours(state.clockMin, b) > 0) activities.push('beach');
   const arrivalKind = d.mooring === 'anchor' && point.kind !== 'bay' ? 'bay' : point.kind;
-  s = {
+  return {
     ...s,
     dayFacts: {
       day: s.day,
@@ -98,7 +89,6 @@ function settleDay(state: GameState, content: Content, boat: Boat, plan: DayPlan
       shower: plan.shower,
     },
   };
-  return checkReturn(s, content, point);
 }
 
 function sail(state: GameState, content: Content, boat: Boat, plan: DayPlan): { state: GameState; summary: DaySummary } {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { endDay, finishWeek } from '../../../src/engine/day/evening';
+import { resolvePendingEvent } from '../../../src/engine/events';
 import { createExpectation } from '../../../src/engine/promises';
 import type { DayFacts, GameState } from '../../../src/engine/types';
 import { makeContent } from '../../fixtures/content';
@@ -61,6 +62,23 @@ describe('endDay', () => {
     expect(sleep(18 * 60)).toBe(-30);
     expect(sleep(20 * 60)).toBe(-30);
     expect(sleep(26 * 60)).toBe(-15);
+  });
+
+  it('a passage event that costs time cuts rest and can make the last-day return late', () => {
+    const passageEvent = { ...content.events[0]!, id: 'slow_passage', trigger: { ...content.events[0]!.trigger, phase: 'passage' as const } };
+    const c = { ...content, events: [passageEvent] };
+    const restMood = (s: GameState) => s.log.find((e) => e.cause === 'rest')!.delta?.mood ?? 0;
+    const afternoon = evening({ clockMin: 14 * 60 });
+    const delayed = resolvePendingEvent({ ...afternoon, eventQueue: ['slow_passage'] }, c, 'call_base');
+    expect(delayed.clockMin).toBe(18 * 60);
+    expect(restMood(endDay(afternoon, c, { dinner: 'cook' }))).toBe(5 * content.balance.mood.restPerHour);
+    expect(restMood(endDay(delayed, c, { dinner: 'cook' }))).toBe(2 * content.balance.mood.restPerHour);
+    const lastDay = evening({ day: 6, clockMin: 14 * 60, locationId: 'base', dayFacts: facts({ day: 6 }) });
+    expect(endDay(lastDay, c, { dinner: 'cook' }).returnedOnTime).toBe(true);
+    const lateDay = resolvePendingEvent({ ...lastDay, eventQueue: ['slow_passage'] }, c, 'call_base');
+    const late = endDay(lateDay, c, { dinner: 'cook' });
+    expect(late.returnedOnTime).toBe(false);
+    expect(causes(late)).toContain('return:late');
   });
 
   it('no gas → no hot food', () => {
