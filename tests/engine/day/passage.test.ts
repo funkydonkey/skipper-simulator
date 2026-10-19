@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { endDay } from '../../../src/engine/day/evening';
-import { planDay } from '../../../src/engine/day/passage';
+import { planDay, validatePlan } from '../../../src/engine/day/passage';
 import type { DayPlan, LegPlan } from '../../../src/engine/types';
 import { makeContent } from '../../fixtures/content';
 import { deepFreeze } from '../../fixtures/freeze';
@@ -119,5 +119,22 @@ describe('planDay', () => {
   it('wrong phase or pending event (Review Focus #5)', () => {
     expect(() => planDay(makeState({ phase: 'morning' }), content, plan())).toThrow(/Expected phase planning/);
     expect(() => planDay(makeState({ eventQueue: ['toilet_clog'] }), content, plan())).toThrow(/Resolve event toilet_clog/);
+  });
+
+  it('rejects a sailing plan when the effective departure is already past sunset', () => {
+    const content = makeContent();
+    const late = makeState({ clockMin: 20 * 60 + 10 });
+    const leg = { routeId: 'r_base_bay_a', mode: 'motor' as const, reefs: 0 as const, genoa: 'full' as const, course: 'direct' as const };
+    expect(() => validatePlan(late, content, { departureHour: 9, legs: [leg], swimStops: 0, shower: 'normal', autopilot: false }))
+      .toThrow(/past sunset/);
+    expect(() => validatePlan(late, content, { departureHour: 9, legs: [], swimStops: 0, shower: 'normal', autopilot: false }))
+      .not.toThrow();
+  });
+
+  it('rejects maneuver orders for an unknown maneuver kind', () => {
+    const content = makeContent();
+    const orders = { docking: ['a', 'b'] } as unknown as Record<string, string[]>;
+    expect(() => validatePlan(makeState(), content, { departureHour: 9, legs: [], swimStops: 0, shower: 'normal', autopilot: false, maneuverOrders: orders }))
+      .toThrow(/Unknown maneuver kind "docking"/);
   });
 });

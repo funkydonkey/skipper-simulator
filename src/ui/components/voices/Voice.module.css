@@ -1,0 +1,10 @@
+.badge {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  font-variant: small-caps; letter-spacing: 0.04em; color: var(--accent);
+}
+.badge[data-false='true'] { color: var(--bad); }
+.name { font-weight: 700; }
+.level { padding: 0 var(--space-1); border: 1px solid currentColor; border-radius: 3px; font-size: var(--text-sm); }
+.line { margin: 0; padding: var(--space-2) var(--space-3); border-left: 3px solid var(--accent); background: var(--panel); }
+.line[data-false='true'] { border-left-color: var(--bad); font-style: italic; }
+.quote { margin: var(--space-1) 0 0; }

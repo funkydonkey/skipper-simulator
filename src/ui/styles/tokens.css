@@ -1,0 +1,103 @@
+:root {
+  /* palette (ТЗ 6.2): sea blue, ochre, faded red, paper */
+  --sea-900: #0f2a3d;
+  --sea-700: #1d4e6b;
+  --sea-500: #3b7ea1;
+  --sea-200: #b9d3df;
+  --ochre-500: #c8912e;
+  --ochre-200: #ecd9a8;
+  --red-500: #a8473c;
+  --paper: #f3ead6;
+  --paper-dark: #e4d6b5;
+  --ink: #2a2620;
+  --ink-soft: #5d5446;
+  --green-600: #4f7a4a;
+
+  /* semantic */
+  --bg: var(--paper);
+  --fg: var(--ink);
+  --fg-soft: var(--ink-soft);
+  --panel: #fbf6ea;
+  --line: var(--paper-dark);
+  --accent: var(--sea-700);
+  --accent-strong: var(--sea-900);
+  --accent-fg: #ffffff;
+  --focus: var(--ochre-500);
+  --ok: var(--green-600);
+  --warn: var(--ochre-500);
+  --bad: var(--red-500);
+  /* error banner: one fixed readable pair for every time of day (5.8:1) */
+  --banner-bg: var(--red-500);
+  --banner-fg: #ffffff;
+
+  /* type */
+  --font-serif: 'PT Serif', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-hand: 'Caveat', 'Segoe Print', cursive;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+
+  /* space & shape */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius: 6px;
+  --shadow: 0 2px 8px rgb(42 38 32 / 0.15);
+  --duration: 240ms;
+  --logbook-toggle-w: 8.5rem;
+  --chart-max-h: min(70vh, 720px);
+}
+
+/* ТЗ 6.2: day and night change the tone of the whole interface. */
+.app[data-daytime='dawn'] {
+  --bg: #f1e2cf;
+  --panel: #f9efe1;
+  --line: #e2cdb0;
+  --accent: #2d5f7c;
+}
+.app[data-daytime='dusk'] {
+  --bg: #e6c9a4;
+  --panel: #f1dcbd;
+  --line: #d4b48b;
+  --fg-soft: #6a4e3a;
+  --accent: #8a4a33;
+  --accent-strong: #6b3423;
+  --chart-paper: #efd9b6;
+}
+.app[data-daytime='night'] {
+  --bg: #13212d;
+  --fg: #e9e1cf;
+  --fg-soft: #a99f8a;
+  --panel: #1c2f3e;
+  --line: #2c4456;
+  --accent: #d9a441;
+  --accent-strong: #ecd9a8;
+  --accent-fg: #13212d;
+  --focus: #ecd9a8;
+  --chart-paper: #22384a;
+  --shadow: 0 2px 10px rgb(0 0 0 / 0.45);
+  /* light tones: >= 4.5:1 on --bg, --panel and --chart-paper */
+  --ok: #8fbf86;
+  --warn: #e7b85a;
+  --bad: #e08a7c;
+}
+
+/* Paper surfaces (the logbook) keep day ink whatever the time of day. */
+[data-surface='paper'] {
+  --fg: var(--ink);
+  --fg-soft: var(--ink-soft);
+  --line: var(--paper-dark);
+  --accent: var(--sea-700);
+  --accent-strong: var(--sea-900);
+  --accent-fg: #ffffff;
+  --focus: var(--ochre-500);
+  --ok: var(--green-600);
+  --warn: var(--ochre-500);
+  --bad: var(--red-500);
+}

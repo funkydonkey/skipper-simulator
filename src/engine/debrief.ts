@@ -78,7 +78,8 @@ export function findLinks(log: readonly LogEntry[], rules: readonly DebriefRule[
 export function buildDebrief(state: GameState, content: Content, maxItems = 5): Debrief {
   const graded = gradeWeek(state, requireBoat(content, state), content.balance);
   const links = findLinks(state.log, content.debrief, maxItems);
-  const covered = (eventId: string): boolean => links.some((l) => causeMatches(l.consequence.cause, `event:${eventId}`));
+  const covered = (eventId: string): boolean =>
+    links.some((l) => causeMatches(l.consequence.cause, `event:${eventId}`) || causeMatches(l.consequence.cause, `injury:event:${eventId}`));
   const eventNotes = state.firedEvents
     .filter((id) => !covered(id))
     .map((id) => content.events.find((e) => e.id === id)?.debrief)

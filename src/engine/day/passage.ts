@@ -5,7 +5,7 @@ import { maneuverForKind, validateOrder } from '../maneuver';
 import { applyOutcome } from '../resources';
 import { advanceClock, otherEnd, requireBoat, requirePoint, requireRoute, round1, round2 } from '../state';
 import { restHours } from '../time';
-import type { Activity, Balance, Boat, Content, DayPlan, EventPhase, GameState, ManeuverKind } from '../types';
+import { MANEUVER_KINDS, type Activity, type Balance, type Boat, type Content, type DayPlan, type EventPhase, type GameState, type ManeuverKind } from '../types';
 import { arrive, runManeuver } from './arrival';
 import { runLeg, startEngine } from './legs';
 
@@ -23,6 +23,7 @@ function invalid(msg: string): never {
 
 function validateOrders(content: Content, plan: DayPlan): void {
   for (const [kind, order] of Object.entries(plan.maneuverOrders ?? {}) as [ManeuverKind, string[]][]) {
+    if (!(MANEUVER_KINDS as readonly string[]).includes(kind)) invalid(`Unknown maneuver kind "${kind}"`);
     const m = maneuverForKind(content, kind);
     const problem = m ? validateOrder(m, order) : null;
     if (problem) invalid(problem);
@@ -33,6 +34,9 @@ export function validatePlan(state: GameState, content: Content, plan: DayPlan):
   const t = content.balance.time;
   if (!Number.isFinite(plan.departureHour) || plan.departureHour < t.earliestDepartureHour || plan.departureHour >= t.sunsetHour) {
     invalid(`departureHour must be within ${t.earliestDepartureHour}..${t.sunsetHour} (before sunset)`);
+  }
+  if (plan.legs.length > 0 && Math.max(plan.departureHour, state.clockMin / 60) >= t.sunsetHour) {
+    invalid('Too late to leave today: it is already past sunset');
   }
   if (!Number.isInteger(plan.swimStops) || plan.swimStops < 0 || plan.swimStops > t.maxSwimStops) invalid(`swimStops must be 0..${t.maxSwimStops}`);
   if (!SHOWERS.includes(plan.shower)) invalid(`unknown shower discipline "${plan.shower}"`);

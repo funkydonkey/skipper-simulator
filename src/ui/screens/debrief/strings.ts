@@ -1,0 +1,27 @@
+import { dict } from '../../i18n/t';
+
+export const DEBRIEF = dict({
+  title: { ru: 'Разбор недели', en: 'Week debrief' },
+  subtitle: { ru: 'Бортжурнал с пометками капитана-наставника', en: 'The logbook, annotated by a mentor skipper' },
+  safety: { ru: 'Безопасность', en: 'Safety' },
+  crew: { ru: 'Экипаж', en: 'Crew' },
+  boat: { ru: 'Лодка', en: 'Boat' },
+  schedule: { ru: 'Расписание', en: 'Schedule' },
+  gradeGood: { ru: 'Оценка: хорошо', en: 'Grade: good' },
+  gradeOk: { ru: 'Оценка: так себе', en: 'Grade: so-so' },
+  gradeBad: { ru: 'Оценка: плохо', en: 'Grade: bad' },
+  noInjuries: { ru: 'Никто не пострадал', en: 'Nobody got hurt' },
+  injuries: { ru: 'Травм: {n}', en: 'Injuries: {n}' },
+  mood: { ru: 'Настроение в конце: {n}/100', en: 'Final mood: {n}/100' },
+  deposit: { ru: 'Депозит: вернули {returned} €, удержали {loss} €', en: 'Deposit: €{returned} back, €{loss} kept' },
+  onTime: { ru: 'Вернулись вовремя', en: 'Back on time' },
+  late: { ru: 'Опоздали к сдаче', en: 'Late for handover' },
+  links: { ru: 'Что решило неделю', en: 'What decided the week' },
+  decision: { ru: 'Решение', en: 'Decision' },
+  consequence: { ru: 'Последствие', en: 'Consequence' },
+  signal: { ru: 'Сигнал, который был', en: 'The sign that was there' },
+  stamp: { ru: 'день {day}, {clock}', en: 'day {day}, {clock}' },
+  notes: { ru: 'Ещё заметки на полях', en: 'More notes in the margin' },
+  replay: { ru: 'Сыграть ту же неделю', en: 'Replay the same week' },
+  newWeek: { ru: 'Новая неделя', en: 'New week' },
+});

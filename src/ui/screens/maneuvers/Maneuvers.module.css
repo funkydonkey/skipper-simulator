@@ -1,0 +1,15 @@
+.episode { background: var(--panel); border-radius: var(--radius); padding: var(--space-4); box-shadow: var(--shadow); margin-bottom: var(--space-4); }
+.head { display: flex; gap: var(--space-4); align-items: center; }
+.head h2 { margin: 0; font-size: var(--text-lg); }
+.fallback { margin: var(--space-1) 0 0; color: var(--fg-soft); font-style: italic; }
+.picker { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-top: var(--space-3); }
+.picker h3 { font-size: var(--text-md); margin: 0 0 var(--space-2); color: var(--fg-soft); }
+.pool { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.pool button, .order button { width: 100%; text-align: left; }
+.order { margin: 0; padding-left: var(--space-6); display: grid; gap: var(--space-2); font-family: var(--font-hand); font-size: var(--text-lg); }
+.sketch { width: 160px; height: 80px; flex: none; }
+.water { fill: var(--sea-200); }
+.quay { fill: var(--paper-dark); stroke: var(--fg-soft); }
+.hull { fill: var(--paper); stroke: var(--fg); stroke-width: 1.5; }
+.line { stroke: var(--ochre-500); stroke-width: 2; }
+.anchor { fill: none; stroke: var(--fg); stroke-width: 2; }

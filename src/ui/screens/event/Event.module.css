@@ -1,0 +1,27 @@
+.layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+.scene { position: sticky; top: var(--space-4); }
+.panel { display: grid; gap: var(--space-4); }
+.voices { display: grid; gap: var(--space-2); }
+.options { margin: 0; padding-left: var(--space-6); display: grid; gap: var(--space-2); }
+.option { width: 100%; text-align: left; }
+.odds { color: var(--fg-soft); font-size: var(--text-sm); }
+.na { font-style: italic; }
+.lines { margin: 0; padding-left: var(--space-4); display: grid; gap: var(--space-1); }
+.lines li[data-tone='good'] { color: var(--ok); }
+.lines li[data-tone='bad'] { color: var(--bad); }
+.h2 { font-size: var(--text-lg); margin: 0; }
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.chips li { padding: var(--space-1) var(--space-3); border-radius: 999px; background: var(--panel); border: 1px solid var(--line); }
+.chips li[data-sign='minus'] { border-color: var(--bad); }
+.chips li[data-sign='plus'] { border-color: var(--ok); }
+.chips li { animation: chip-in 260ms ease-out both; }
+.chips li:nth-child(2) { animation-delay: 80ms; }
+.chips li:nth-child(3) { animation-delay: 160ms; }
+.chips li:nth-child(4) { animation-delay: 240ms; }
+.chips li:nth-child(n + 5) { animation-delay: 320ms; }
+@keyframes chip-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 800px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .scene { position: relative; top: auto; }
+}

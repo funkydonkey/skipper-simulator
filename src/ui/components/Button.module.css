@@ -1,0 +1,16 @@
+.button {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color var(--duration), color var(--duration), border-color var(--duration);
+}
+.button:disabled { opacity: 0.45; cursor: not-allowed; }
+.button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.primary { background: var(--accent); color: var(--accent-fg); }
+.primary:not(:disabled):hover { background: var(--accent-strong); }
+.secondary { background: transparent; color: var(--accent); border-color: var(--accent); }
+.ghost { background: transparent; color: var(--fg-soft); }
+.ghost:not(:disabled):hover { color: var(--fg); }

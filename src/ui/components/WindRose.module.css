@@ -1,0 +1,7 @@
+.rose { margin: 0; display: inline-grid; justify-items: center; gap: var(--space-1); }
+.ring { fill: var(--panel); stroke: var(--fg-soft); stroke-width: 1; }
+.tick { stroke: var(--fg-soft); stroke-width: 1; }
+.north { font-family: var(--font-hand); font-size: 14px; fill: var(--fg); }
+.shaft { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
+.head { fill: var(--accent); }
+.caption { font-size: var(--text-sm); }
