@@ -26,6 +26,9 @@
   --ok: var(--green-600);
   --warn: var(--ochre-500);
   --bad: var(--red-500);
+  /* error banner: one fixed readable pair for every time of day (5.8:1) */
+  --banner-bg: var(--red-500);
+  --banner-fg: #ffffff;
 
   /* type */
   --font-serif: 'PT Serif', Georgia, serif;
@@ -47,6 +50,8 @@
   --radius: 6px;
   --shadow: 0 2px 8px rgb(42 38 32 / 0.15);
   --duration: 240ms;
+  --logbook-toggle-w: 8.5rem;
+  --chart-max-h: min(70vh, 720px);
 }
 
 /* ТЗ 6.2: day and night change the tone of the whole interface. */
@@ -77,4 +82,22 @@
   --focus: #ecd9a8;
   --chart-paper: #22384a;
   --shadow: 0 2px 10px rgb(0 0 0 / 0.45);
+  /* light tones: >= 4.5:1 on --bg, --panel and --chart-paper */
+  --ok: #8fbf86;
+  --warn: #e7b85a;
+  --bad: #e08a7c;
+}
+
+/* Paper surfaces (the logbook) keep day ink whatever the time of day. */
+[data-surface='paper'] {
+  --fg: var(--ink);
+  --fg-soft: var(--ink-soft);
+  --line: var(--paper-dark);
+  --accent: var(--sea-700);
+  --accent-strong: var(--sea-900);
+  --accent-fg: #ffffff;
+  --focus: var(--ochre-500);
+  --ok: var(--green-600);
+  --warn: var(--ochre-500);
+  --bad: var(--red-500);
 }

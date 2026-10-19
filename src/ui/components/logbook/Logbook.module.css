@@ -1,11 +1,16 @@
-.toggle { position: fixed; right: var(--space-4); bottom: calc(var(--space-4) + env(safe-area-inset-bottom)); z-index: 30; box-shadow: var(--shadow); background: var(--panel); }
+.toggle { width: var(--logbook-toggle-w); position: fixed; right: var(--space-4); bottom: calc(var(--space-4) + env(safe-area-inset-bottom)); z-index: 30; box-shadow: var(--shadow); background: var(--panel); }
 .drawer {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: 40; width: min(420px, 100vw); overflow-y: auto;
   padding: var(--space-4) var(--space-6); background: var(--paper); color: var(--ink); box-shadow: -4px 0 16px rgb(0 0 0 / 0.2);
   font-family: var(--font-hand); font-size: var(--text-lg);
 }
 .drawer:focus { outline: none; }
-.head { display: flex; justify-content: space-between; align-items: center; }
+/* Phone: level with the sticky actions bar, inside its reserved right gutter (ScreenFrame .actions). */
+@media (max-width: 600px) {
+  .toggle { bottom: calc(var(--space-3) + env(safe-area-inset-bottom)); }
+}
+.head { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: space-between; align-items: center; }
+.langs { display: flex; gap: var(--space-1); }
 .head h2 { margin: 0; font-family: var(--font-serif); }
 .day { margin: var(--space-4) 0 var(--space-1); border-bottom: 1px solid var(--line); }
 .lines { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-1); }

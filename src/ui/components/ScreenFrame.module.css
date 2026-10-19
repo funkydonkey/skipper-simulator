@@ -6,7 +6,8 @@
 .withSide { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--space-6); align-items: start; }
 .content { min-width: 0; }
 .side { background: var(--panel); border-radius: var(--radius); padding: var(--space-4); box-shadow: var(--shadow); }
-.actions { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-6); }
+/* Right gutter reserved for the fixed Logbook toggle (Logbook.module.css), so it never covers an action. */
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-6); padding-right: calc(var(--logbook-toggle-w) + var(--space-2)); }
 
 @media (max-width: 900px) {
   .withSide { grid-template-columns: minmax(0, 1fr); }
@@ -14,6 +15,6 @@
 @media (max-width: 600px) {
   .frame { padding: var(--space-4) var(--space-4) calc(var(--space-8) + 56px); }
   .title { font-size: var(--text-xl); }
-  .actions { position: sticky; bottom: 0; background: var(--bg); padding: var(--space-3) 0; margin-top: var(--space-4); }
+  .actions { position: sticky; bottom: 0; background: var(--bg); padding: var(--space-3) calc(var(--logbook-toggle-w) + var(--space-2)) var(--space-3) 0; margin-top: var(--space-4); }
   .actions > * { flex: 1 1 auto; }
 }
