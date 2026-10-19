@@ -36,4 +36,9 @@ describe('CaptainScreen', () => {
     expect(screen.getByText('Гордость')).toBeInTheDocument();
     expect(screen.getAllByText('не прокачивается')).toHaveLength(2);
   });
+
+  it('shows an icon next to every voice', () => {
+    const { container } = renderShell(gameAt('captain'));
+    expect(container.querySelectorAll('li svg').length).toBeGreaterThanOrEqual(8);
+  });
 });

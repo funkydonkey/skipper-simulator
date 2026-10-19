@@ -14,3 +14,9 @@
 .chips li { padding: var(--space-1) var(--space-3); border-radius: 999px; background: var(--panel); border: 1px solid var(--line); }
 .chips li[data-sign='minus'] { border-color: var(--bad); }
 .chips li[data-sign='plus'] { border-color: var(--ok); }
+.chips li { animation: chip-in 260ms ease-out both; }
+.chips li:nth-child(2) { animation-delay: 80ms; }
+.chips li:nth-child(3) { animation-delay: 160ms; }
+.chips li:nth-child(4) { animation-delay: 240ms; }
+.chips li:nth-child(n + 5) { animation-delay: 320ms; }
+@keyframes chip-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
