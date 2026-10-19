@@ -20,6 +20,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # never deploy untested code: same gates as CI before the build
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run validate-content
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
