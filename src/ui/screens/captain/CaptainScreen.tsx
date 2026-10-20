@@ -5,9 +5,9 @@ import { ScreenFrame } from '../../components/ScreenFrame';
 import { VoiceIcon } from '../../components/voices/icons';
 import { COMMON } from '../../i18n/common';
 import { VOICE_HINTS, VOICE_NAMES } from '../../i18n/glossary';
+import { fmt } from '../../i18n/t';
 import { useAct, useGame, useT } from '../../session/SessionContext';
 import styles from './Captain.module.css';
-import { fmt } from '../../i18n/t';
 import { CAPTAIN, PERK_UI, PERKS } from './strings';
 
 type Alloc = Record<TrainableVoice, number>;

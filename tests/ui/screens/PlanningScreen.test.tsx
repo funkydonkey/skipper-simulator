@@ -21,8 +21,8 @@ describe('PlanningScreen', () => {
     await r.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
     await r.user.click(screen.getByLabelText('Под парусом'));
     expect(screen.getByText(/Грунт: /)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Якорь не встанет · \d+%$/ })).toBeInTheDocument();
-    expect(screen.queryByText(/Марина откажет/)).toBeNull();
+    expect(screen.getByRole('button', { name: /^Якорь не возьмёт \(за попытку\) · \d+%$/ })).toBeInTheDocument();
+    expect(screen.queryByText(/Марина может отказать/)).toBeNull();
     expect(screen.queryByText(/Риск порвать парус/)).toBeNull();
   });
 

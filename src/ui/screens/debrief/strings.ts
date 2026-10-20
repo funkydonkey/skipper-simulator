@@ -26,8 +26,8 @@ export const DEBRIEF = dict({
   voices: { ru: 'Голоса недели', en: 'Voices of the week' },
   levelRange: { ru: 'уровень {from} → {to}', en: 'level {from} → {to}' },
   xpFrom: { ru: 'Опыт:', en: 'XP:' },
-  impactRiskCut: { ru: 'снизила риск на {n} п.п. в {k} бросках', en: 'cut risk by {n} pp over {k} rolls' },
-  impactRiskUp: { ru: 'подняла риск на {n} п.п. в {k} бросках', en: 'raised risk by {n} pp over {k} rolls' },
+  impactRiskCut: { ru: 'риск ниже на {n} п.п. за бросок (бросков: {k})', en: 'risk {n} pp lower per roll (rolls: {k})' },
+  impactRiskUp: { ru: 'риск выше на {n} п.п. за бросок (бросков: {k})', en: 'risk {n} pp higher per roll (rolls: {k})' },
   impactChecks: { ru: 'проверки: {n} из {m}', en: 'checks: {n} of {m}' },
   impactSaved: { ru: 'сэкономил {n} €', en: 'saved €{n}' },
   impactFront: { ru: 'предупредило о фронте, дни: {days}', en: 'warned of a front, days: {days}' },
@@ -42,3 +42,6 @@ export const XP_ROOTS: Readonly<Record<string, LocalizedText>> = {
   'order:wrong': { ru: 'ошибки в манёврах', en: 'maneuver mistakes' },
   'order:ok': { ru: 'чистые манёвры', en: 'clean maneuvers' },
 };
+
+/** Label for an xp root without its own entry in XP_ROOTS. */
+export const XP_ROOT_OTHER: LocalizedText = { ru: 'прочее', en: 'other' };

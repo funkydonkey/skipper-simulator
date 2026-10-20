@@ -7,9 +7,9 @@ import { clearSave } from '../../session/save';
 import { useAct, useGame, useSession, useT } from '../../session/SessionContext';
 import styles from './Debrief.module.css';
 import { GradeMark } from './GradeMark';
-import { VoicesBlock } from './VoicesBlock';
 import { LinkCard } from './LinkCard';
 import { DEBRIEF } from './strings';
+import { VoicesBlock } from './VoicesBlock';
 
 const SEED_RANGE = 2 ** 31;
 

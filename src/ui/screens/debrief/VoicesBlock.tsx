@@ -3,7 +3,7 @@ import { VoiceIcon } from '../../components/voices/icons';
 import { VOICE_NAMES } from '../../i18n/glossary';
 import { makeT, type TFn } from '../../i18n/t';
 import styles from './Debrief.module.css';
-import { DEBRIEF, XP_ROOTS } from './strings';
+import { DEBRIEF, XP_ROOT_OTHER, XP_ROOTS } from './strings';
 
 const TOP_XP = 3;
 
@@ -18,11 +18,25 @@ function impactText(i: VoiceImpact, t: TFn<keyof typeof DEBRIEF>): string | null
   }
 }
 
+const xpRootLabel = (cause: string, lang: Lang): string => (Object.hasOwn(XP_ROOTS, cause) ? XP_ROOTS[cause]! : XP_ROOT_OTHER)[lang];
+
+/** XP grouped by its readable label (unknown roots fold into «other»), biggest first, top three. */
+function topSources(xp: VoiceReport['xp'], lang: Lang): Array<{ label: string; xp: number }> {
+  const byLabel = xp.reduce((acc, s) => {
+    const label = xpRootLabel(s.cause, lang);
+    return acc.set(label, (acc.get(label) ?? 0) + s.xp);
+  }, new Map<string, number>());
+  return [...byLabel].map(([label, n]) => ({ label, xp: n })).sort((a, b) => b.xp - a.xp).slice(0, TOP_XP);
+}
+
 export function VoicesBlock({ voices, lang }: { voices: VoiceReport[]; lang: Lang }) {
   const t = makeT(DEBRIEF, lang);
   const cards = voices.flatMap((v) => {
-    const sources = [...v.xp].sort((a, b) => b.xp - a.xp).slice(0, TOP_XP);
-    const impacts = v.impacts.flatMap((i) => impactText(i, t) ?? []);
+    const sources = topSources(v.xp, lang);
+    const impacts = v.impacts.flatMap((i) => {
+      const text = impactText(i, t);
+      return text === null ? [] : [{ kind: i.kind, text }];
+    });
     return sources.length + impacts.length === 0 && v.startLevel === v.endLevel ? [] : [{ v, sources, impacts }];
   });
   if (cards.length === 0) return null;
@@ -35,9 +49,9 @@ export function VoicesBlock({ voices, lang }: { voices: VoiceReport[]; lang: Lan
             <strong className={styles.voiceName}><VoiceIcon voice={v.voice} /> {VOICE_NAMES[v.voice][lang]}</strong>
             <span className={styles.voiceLevel}>{t('levelRange', { from: v.startLevel, to: v.endLevel })}</span>
             {sources.length > 0 && (
-              <p className={styles.voiceLine}>{t('xpFrom')} {sources.map((s) => `+${s.xp} ${XP_ROOTS[s.cause]?.[lang] ?? s.cause}`).join('; ')}</p>
+              <p className={styles.voiceLine}>{t('xpFrom')} {sources.map((s) => `+${s.xp} ${s.label}`).join('; ')}</p>
             )}
-            {impacts.map((text) => <p key={text} className={styles.voiceLine}>{text}</p>)}
+            {impacts.map((i) => <p key={i.kind} className={styles.voiceLine}>{i.text}</p>)}
           </li>
         ))}
       </ul>

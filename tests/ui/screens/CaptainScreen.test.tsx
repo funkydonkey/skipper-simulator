@@ -55,6 +55,12 @@ describe('CaptainScreen', () => {
   it('shows signed percent values for perks', async () => {
     const r = renderShell(gameAt('captain'));
     await r.user.click(raise('order'));
-    expect(screen.getByText('Риск травмы −10%')).toBeInTheDocument();
+    expect(screen.getByText('Риск травм и поломок парусов −10%')).toBeInTheDocument();
+  });
+
+  it('words the diplomat perk without a double negative', async () => {
+    const r = renderShell(gameAt('captain'));
+    await r.user.click(raise('diplomat'));
+    expect(screen.getByText('Сорванное обещание: обида −10%')).toBeInTheDocument();
   });
 });
