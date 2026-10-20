@@ -57,6 +57,13 @@ export function failureEventIds(content: Content): Set<string> {
   return new Set(content.systems.flatMap((d) => d.failures.flatMap((f) => (f.event ? [f.event] : []))));
 }
 
+/** A failure event already waiting, or already fired while `once` (default), cannot be queued again. */
+function eventBlocked(state: GameState, content: Content, eventId: string): boolean {
+  if (state.eventQueue.includes(eventId)) return true;
+  const once = content.events.find((e) => e.id === eventId)?.trigger.once;
+  return once !== false && state.firedEvents.includes(eventId);
+}
+
 function rollFailure(state: GameState, content: Content, def: SystemDef, f: SystemFailure): { state: GameState; hit: boolean } {
   const ctx = buildConditionContext(state, content);
   const r = rollChance(state.rng, f.chance, ctx);
@@ -79,6 +86,7 @@ export function rollFailures(state: GameState, content: Content, phase: EventPha
     for (const f of def.failures) {
       const sys = s.systems[def.id];
       if (!sys || sys.broken || f.phase !== phase) continue;
+      if (f.event !== undefined && eventBlocked(s, content, f.event)) continue;
       if (f.when !== undefined && !evaluateCondition(f.when, buildConditionContext(s, content))) continue;
       const r = rollFailure(s, content, def, f);
       s = r.state;

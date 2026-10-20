@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { endDay } from '../../src/engine/day/evening';
 import { planDay } from '../../src/engine/day/passage';
 import { eligibleEvents, queueEvent } from '../../src/engine/events';
 import { buildConditionContext } from '../../src/engine/expr';
@@ -98,6 +99,30 @@ describe('rollFailures', () => {
   });
 });
 
+describe('failure events respect queue and once', () => {
+  const evFailure = failure({ id: 'ev', effect: undefined, event: 'toilet_clog', xp: undefined, phase: 'evening' });
+  const c = withSys([evFailure]);
+
+  it('does not roll while the event is queued', () => {
+    const s = onBoat({ eventQueue: ['toilet_clog'] });
+    const r = rollFailures(s, c, 'evening');
+    expect(r.queuedEvent).toBeUndefined();
+    expect(r.state.rng).toBe(s.rng);
+  });
+
+  it('does not roll once the once-event has fired', () => {
+    const s = onBoat({ firedEvents: ['toilet_clog'] });
+    const r = rollFailures(s, c, 'evening');
+    expect(r.queuedEvent).toBeUndefined();
+    expect(r.state.rng).toBe(s.rng);
+  });
+
+  it('still rolls for a fired event that is not once', () => {
+    const repeat = { ...c, events: c.events.map((e) => ({ ...e, trigger: { ...e.trigger, once: false } })) };
+    expect(rollFailures(onBoat({ firedEvents: ['toilet_clog'] }), repeat, 'evening').queuedEvent).toBe('toilet_clog');
+  });
+});
+
 describe('queueEvent with failure events', () => {
   const evFailure = failure({ id: 'ev', effect: undefined, event: 'toilet_clog', xp: undefined, phase: 'evening' });
 
@@ -149,11 +174,24 @@ describe('wear in the day flow', () => {
     expect(s.systems.engine_cooling!.wear).toBe(s.dayFacts!.motorHours);
   });
 
-  it('maxWindKn is the maximum over legs', () => {
-    const two = { ...plan, legs: [plan.legs[0]!, { ...plan.legs[0]!, routeId: 'r_bay_a_marina_b' }] };
-    const one = planDay(makeState(), quiet, plan).dayFacts!.maxWindKn;
-    const both = planDay(makeState(), quiet, two).dayFacts!.maxWindKn;
-    expect(both).toBeGreaterThanOrEqual(one);
+  it('maxWindKn is exactly the strongest leg wind, not the last or the sum', () => {
+    const l = plan.legs[0]!;
+    const three = { ...plan, legs: [l, { ...l, routeId: 'r_bay_a_marina_b' }, { ...l, routeId: 'r_marina_b_base' }] };
+    const s = planDay(makeState(), quiet, three);
+    const winds = s.log.filter((e) => e.cause.startsWith('leg:')).map((e) => e.data!.windKn as number);
+    expect(winds).toHaveLength(3);
+    expect(new Set(winds).size).toBeGreaterThan(1);
+    expect(s.dayFacts!.maxWindKn).toBe(Math.max(...winds));
+    const single = planDay(makeState(), quiet, plan);
+    expect(single.dayFacts!.maxWindKn).toBe(single.log.find((e) => e.cause.startsWith('leg:'))!.data!.windKn);
+  });
+
+  it('adds anchoring wear on anchoring and night wear at endDay', () => {
+    const c = { ...quiet, systems: [...quiet.systems, testSys([], { anchoring: 2, night: 3 })] };
+    const s = planDay(onBoat(), c, plan);
+    expect(s.systems.test_sys!.wear).toBe(2);
+    const done = endDay(s, c, { dinner: 'cook' });
+    expect(done.systems.test_sys!.wear).toBe(5);
   });
 
   it('day.* keys read dayFacts, 0 without it', () => {
