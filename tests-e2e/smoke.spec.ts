@@ -108,3 +108,66 @@ test('from the menu to the day planner without horizontal scroll', async ({ page
     await expect(page.getByRole('button', { name: 'К манёврам' })).toBeInViewport();
   }
 });
+
+/** Clicks the first maneuver-pool button (an `li` that is not inside an `ol`) of each kind section until every pool is empty. */
+async function fillManeuverPools(page: Page): Promise<void> {
+  const clickFirstPoolButton = () => page.evaluate(() => {
+    for (const section of document.querySelectorAll<HTMLElement>('section[data-kind]')) {
+      for (const li of section.querySelectorAll('li')) {
+        if (li.closest('ol')) continue;
+        const b = li.querySelector('button');
+        if (b) { b.click(); return true; }
+      }
+    }
+    return false;
+  });
+  for (let i = 0; i < 50 && (await clickFirstPoolButton()); i++) await page.waitForTimeout(20);
+}
+
+test('the week ends in a debrief with the voices block, without horizontal scroll', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.addInitScript(() => {
+    localStorage.setItem('skipper.lang', 'ru');
+    Math.random = () => 0.123;
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Новая неделя' }).click();
+  for (const voice of ['Морское чутьё', 'Осторожность', 'Порядок', 'Механик', 'Дипломат', 'Экономист']) {
+    await page.getByRole('button', { name: `Прибавить: ${voice}` }).click();
+    await page.getByRole('button', { name: `Прибавить: ${voice}` }).click();
+  }
+  await page.getByRole('button', { name: 'Дальше' }).click();
+  await page.getByRole('button', { name: 'Взять «Мельтеми 40»' }).click();
+  await page.getByRole('button', { name: 'Закончить приёмку' }).click();
+  const topics = page.locator('[data-screen="briefing"] ul li button');
+  for (let i = 0; i < 4; i++) await topics.nth(i).click();
+  await page.getByRole('button', { name: 'Начать неделю' }).click();
+
+  const heading = page.getByRole('heading', { name: 'Голоса недели' });
+  for (let step = 0; step < 400 && (await screenName(page)) !== 'debrief'; step++) {
+    switch (await screenName(page)) {
+      case 'morning': await page.getByRole('button', { name: 'Начать день' }).click(); break;
+      case 'planning': {
+        const here = await page.getByRole('button', { name: 'Провести день здесь' }).count();
+        const target = page.locator('[data-screen="planning"] g[role="button"]').first();
+        if (here === 0 || (await target.count()) === 0) await page.getByRole('button', { name: 'Провести день здесь' }).click();
+        else {
+          await target.click();
+          await page.getByRole('button', { name: 'К манёврам' }).click();
+        }
+        break;
+      }
+      case 'maneuvers':
+        await fillManeuverPools(page);
+        await page.getByRole('button', { name: 'Готово' }).click();
+        break;
+      case 'event': await page.locator('[data-screen="event"] ol button:not([disabled])').first().click(); break;
+      case 'evening': await page.getByRole('button', { name: 'Отбой' }).click(); break;
+      case 'return': await page.getByRole('button', { name: 'Сдать лодку' }).click(); break;
+      default: await page.getByRole('button', { name: 'Дальше' }).click();
+    }
+  }
+  expect(await screenName(page)).toBe('debrief');
+  await expect(heading).toBeVisible();
+  await noHorizontalScroll(page, 'debrief');
+});

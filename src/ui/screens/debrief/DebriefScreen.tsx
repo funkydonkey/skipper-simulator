@@ -7,6 +7,7 @@ import { clearSave } from '../../session/save';
 import { useAct, useGame, useSession, useT } from '../../session/SessionContext';
 import styles from './Debrief.module.css';
 import { GradeMark } from './GradeMark';
+import { VoicesBlock } from './VoicesBlock';
 import { LinkCard } from './LinkCard';
 import { DEBRIEF } from './strings';
 
@@ -48,6 +49,7 @@ export function DebriefScreen() {
           </section>
         ))}
       </div>
+      <VoicesBlock voices={d.voices} lang={lang} />
       <h2 className={styles.h2}>{t('links')}</h2>
       <div className={styles.links}>{d.links.map((l) => <LinkCard key={l.ruleId} link={l} />)}</div>
       {d.eventNotes.length > 0 && (

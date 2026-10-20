@@ -14,3 +14,8 @@
 .step { margin: var(--space-1) 0; }
 .stamp { color: var(--fg-soft); font-size: var(--text-sm); }
 .notes { padding-left: var(--space-4); font-family: var(--font-hand); font-size: var(--text-lg); }
+.voices { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.voice { background: var(--panel); border-radius: var(--radius); padding: var(--space-3) var(--space-4); box-shadow: var(--shadow); display: grid; gap: var(--space-1); min-width: 0; overflow-wrap: anywhere; }
+.voiceName { font-size: var(--text-lg); }
+.voiceLevel { color: var(--fg-soft); font-size: var(--text-sm); }
+.voiceLine { margin: 0; font-size: var(--text-sm); }
