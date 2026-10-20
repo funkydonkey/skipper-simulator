@@ -50,6 +50,7 @@ export function validateConditions(c: Content): ContentError[] {
         if (m.per && !known.has(m.per)) errors.push({ file: 'cross', path: `${path}.per`, message: `Unknown identifier "${m.per}"` });
       });
     }
+    ev.voices.forEach((l, j) => { if (l.when) check(l.when, `events[${i}].voices[${j}].when`); });
     ev.options.forEach((o, j) => (o.requires ?? []).forEach((src, k) => check(src, `events[${i}].options[${j}].requires[${k}]`)));
   });
   c.maneuvers.forEach((m, i) => m.errors.forEach((e, j) => {

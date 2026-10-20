@@ -45,7 +45,7 @@ describe('voices', () => {
       { voice: 'sea_sense' as const, min_level: 3, text: { ru: 'b', en: 'b' } },
       { voice: 'pride' as const, min_level: 1, text: { ru: 'c', en: 'c' } },
     ];
-    expect(audibleLines(lines, makeState().voices).map((l) => l.text.ru)).toEqual(['a', 'c']);
+    expect(audibleLines(lines, makeState().voices, {}).map((l) => l.text.ru)).toEqual(['a', 'c']);
   });
 
   it('resourceReadout: mechanic sees exact numbers', () => {

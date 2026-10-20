@@ -70,7 +70,7 @@ export function presentEvent(event: GameEvent, state: GameState, ctx: CondContex
     id: event.id,
     scene: event.scene,
     text: event.text[lang],
-    voices: audibleLines(event.voices, state.voices).map((l) => ({ voice: l.voice, text: l.text[lang] })),
+    voices: audibleLines(event.voices, state.voices, ctx).map((l) => ({ voice: l.voice, text: l.text[lang] })),
     options: event.options.map((o) => ({
       id: o.id,
       text: o.text[lang],

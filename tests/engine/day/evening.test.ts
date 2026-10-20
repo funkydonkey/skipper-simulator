@@ -45,7 +45,7 @@ describe('endDay', () => {
   it('taverna dinner costs money, lifts mood and keeps a taverna promise', () => {
     const promise = createExpectation(content.dialogues.find((d) => d.id === 'promise_taverna')!, 'evening', 0)!;
     const s = endDay(evening({ expectations: [promise] }), content, { dinner: 'taverna' });
-    expect(s.log.find((e) => e.cause === 'activity:taverna')!.delta).toMatchObject({ moneyEur: -140 });
+    expect(s.log.find((e) => e.cause === 'activity:taverna')!.delta).toMatchObject({ moneyEur: -126 });
     expect(causes(s)).toContain('promise:promise_taverna:kept');
     expect(() => endDay(evening({ locationId: 'bay_a' }), content, { dinner: 'taverna' })).toThrow(/No taverna at bay_a/);
   });

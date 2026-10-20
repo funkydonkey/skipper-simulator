@@ -1,6 +1,6 @@
 {
   "start": { "moneyEur": 6000, "mood": 70, "fatigue": 10, "gasPct": 100, "serviceBankPct": 100, "starterBankPct": 100, "hour": 8, "crewSize": 4 },
-  "voices": { "points": 12, "maxLevel": 4, "prideLevel": 2, "crewVoiceLevel": 2, "seaSenseSignalLevel": 2, "mechanicExactLevel": 2, "cautionRiskPerLevel": 0.08, "cautionTimePerLevel": 0.05, "orderRiskPerLevel": 0.1, "xpToLevel": [6, 10, 15, 21], "xpExempt": ["pride", "crew_voice", "economist"], "checkXp": { "success": 1, "fail": 3 }, "maneuverErrorXp": 3, "cleanManeuverXp": 1 },
+  "voices": { "points": 12, "maxLevel": 4, "prideLevel": 2, "crewVoiceLevel": 2, "seaSenseSignalLevel": 2, "seaSenseChanceLevel": 3, "seaSenseTimingLevel": 4, "economistDiscountPerLevel": 0.05, "mechanicExactLevel": 2, "cautionRiskPerLevel": 0.08, "cautionTimePerLevel": 0.05, "orderRiskPerLevel": 0.1, "xpToLevel": [6, 10, 15, 21], "xpExempt": ["pride", "crew_voice", "economist"], "checkXp": { "success": 1, "fail": 3 }, "maneuverErrorXp": 3, "cleanManeuverXp": 1 },
   "water": { "perPersonPerDayL": { "strict": 15, "normal": 25, "loose": 40 }, "zeroMoodPenalty": 25 },
   "fuel": { "motorLph": 4.5, "priceEurPerL": 1.9 },
   "electric": { "fridgeAhPerDay": 45, "pumpsAhPerDay": 10, "electricToiletAhPerDay": 12, "plotterAhPerHour": 1.5, "autopilotAhPerHour": 4, "engineChargeAhPerHour": 25, "solarAhPerWattDay": 0.3, "starterStartPct": 4, "starterMinPct": 35, "zeroServiceMoodPenalty": 15 },

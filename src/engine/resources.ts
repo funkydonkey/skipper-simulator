@@ -1,6 +1,7 @@
 import { EngineError } from './errors';
 import { appendLog, causeMatches } from './log';
 import { advanceClock, clamp, round1 } from './state';
+import { priceFor } from './perks';
 import { grantXp } from './xp';
 import type { Balance, Boat, Effect, GameState, MapPoint, Outcome, Resources, ShowerDiscipline } from './types';
 
@@ -87,6 +88,9 @@ export function applyOutcome(state: GameState, boat: Boat | null, o: Outcome, b?
   if (e.injury && !causeMatches(o.cause, 'injury')) {
     s = appendLog(s, { kind: 'effect', cause: `injury:${o.cause}`, ...(o.pillar ? { pillar: o.pillar } : {}) });
   }
+  if (o.saved && o.saved > 0) {
+    s = appendLog(s, { kind: 'info', cause: 'voice:economist:saved', ...(o.pillar ? { pillar: o.pillar } : {}), data: { eur: o.saved, for: o.cause } });
+  }
   if (e.signal) s = appendLog(s, { kind: 'signal', cause: `signal:${e.signal}`, ...(o.pillar ? { pillar: o.pillar } : {}) });
   if (e.xp) {
     if (!b) throw new EngineError('INVALID_INPUT', `Outcome ${o.cause} carries xp: pass the balance to applyOutcome`);
@@ -135,8 +139,15 @@ export function refillAt(state: GameState, boat: Boat, point: MapPoint, b: Balan
   const water = boat.waterTankL - r.waterL;
   if (point.services.water && water > 0) out.push({ cause: 'refill:water', pillar: 'boat', effect: { water } });
   const fuel = round1(boat.fuelTankL - r.fuelL);
-  if (point.services.fuel && fuel > 0) out.push({ cause: 'refill:fuel', pillar: 'boat', effect: { fuel, money: -round1(fuel * b.fuel.priceEurPerL) } });
-  if (point.services.gas && r.gasPct < b.gas.exchangeBelowPct) out.push({ cause: 'refill:gas', pillar: 'boat', effect: { gas: 100 - r.gasPct, money: -b.gas.exchangeEur } });
+  const level = state.voices.economist;
+  if (point.services.fuel && fuel > 0) {
+    const price = priceFor(round1(fuel * b.fuel.priceEurPerL), level, b);
+    out.push({ cause: 'refill:fuel', pillar: 'boat', effect: { fuel, money: -price.eur }, saved: price.savedEur });
+  }
+  if (point.services.gas && r.gasPct < b.gas.exchangeBelowPct) {
+    const price = priceFor(b.gas.exchangeEur, level, b);
+    out.push({ cause: 'refill:gas', pillar: 'boat', effect: { gas: 100 - r.gasPct, money: -price.eur }, saved: price.savedEur });
+  }
   return out;
 }
 

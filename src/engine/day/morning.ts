@@ -21,6 +21,7 @@ export function startDay(state: GameState, content: Content, choice: MorningChoi
   if (w.front) {
     s = appendLog(s, { kind: 'signal', cause: 'signal:front', pillar: 'weather', data: { barometerTrendHpa: w.barometerTrendHpa, frontAddKn: w.frontAddKn, seen: visible } });
   }
+  if (w.front && visible && !choice.openBarometer) s = appendLog(s, { kind: 'info', cause: 'voice:sea_sense:front_seen', pillar: 'weather' });
   if (choice.dialogueId) s = sayDialogue(s, content, choice.dialogueId, 'morning');
   s = queueEvent(s, content, 'morning');
   return { ...s, phase: 'planning' };

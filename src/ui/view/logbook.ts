@@ -115,6 +115,12 @@ const DESCRIBE: Record<string, Describer> = {
   },
   levelup: ([voice = ''], e, _c, lang) => say('levelUp', lang, { voice: VOICE_NAMES[voice as keyof typeof VOICE_NAMES]?.[lang] ?? voice, from: num(e, 'from'), to: num(e, 'to') }, 'good'),
   xp: () => null,
+  voice: ([voice, what], e, _c, lang) => {
+    if (voice === 'economist' && what === 'saved') return say('economistSaved', lang, { eur: num(e, 'eur') }, 'good');
+    if (voice === 'sea_sense' && what === 'front_seen') return say('seaSenseFront', lang);
+    if (voice === 'diplomat' && what === 'softened') return say('diplomatSoftened', lang, { mood: num(e, 'mood') }, 'good');
+    return say('unknown', lang, { cause: e.cause });
+  },
   return: ([what], e, _c, lang) => {
     if (what === 'late_fee') return say('lateFee', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0) }, 'bad');
     return what === 'on_time' ? say('returnOnTime', lang, {}, 'good') : say('returnLate', lang, {}, 'bad');

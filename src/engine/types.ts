@@ -70,7 +70,8 @@ export interface Effect {
   xp?: Partial<Record<TrainableVoice, number>>;
 }
 
-export interface Outcome { cause: string; pillar?: Pillar; effect: Effect }
+/** `saved`: euros the economist took off a money spend; logged as a separate info entry. */
+export interface Outcome { cause: string; pillar?: Pillar; effect: Effect; saved?: number }
 
 export type LogKind = 'decision' | 'effect' | 'event' | 'signal' | 'info' | 'roll';
 export interface LogEntry {
@@ -201,7 +202,7 @@ export interface Dialogue {
 }
 
 export interface EventTrigger { phase: EventPhase; conditions: string[]; chance: ChanceInput; once?: boolean }
-export interface VoiceLine { voice: VoiceId; min_level: number; text: LocalizedText }
+export interface VoiceLine { voice: VoiceId; min_level: number; text: LocalizedText; when?: string }
 export interface VoiceCheck { voice: VoiceId; difficulty: number }
 /** Either `check + success + fail`, or `effects`. Option[0] is the instinctive newbie choice. */
 export interface EventOption {
@@ -260,7 +261,7 @@ export interface DebriefRule {
 
 export interface Balance {
   start: { moneyEur: number; mood: number; fatigue: number; gasPct: number; serviceBankPct: number; starterBankPct: number; hour: number; crewSize: number };
-  voices: { points: number; maxLevel: number; prideLevel: number; crewVoiceLevel: number; seaSenseSignalLevel: number; mechanicExactLevel: number; cautionRiskPerLevel: number; cautionTimePerLevel: number; orderRiskPerLevel: number; xpToLevel: number[]; xpExempt: VoiceId[]; checkXp: { success: number; fail: number }; maneuverErrorXp: number; cleanManeuverXp: number };
+  voices: { points: number; maxLevel: number; prideLevel: number; crewVoiceLevel: number; seaSenseSignalLevel: number; seaSenseChanceLevel: number; seaSenseTimingLevel: number; economistDiscountPerLevel: number; mechanicExactLevel: number; cautionRiskPerLevel: number; cautionTimePerLevel: number; orderRiskPerLevel: number; xpToLevel: number[]; xpExempt: VoiceId[]; checkXp: { success: number; fail: number }; maneuverErrorXp: number; cleanManeuverXp: number };
   water: { perPersonPerDayL: Record<ShowerDiscipline, number>; zeroMoodPenalty: number };
   fuel: { motorLph: number; priceEurPerL: number };
   electric: { fridgeAhPerDay: number; pumpsAhPerDay: number; electricToiletAhPerDay: number; plotterAhPerHour: number; autopilotAhPerHour: number; engineChargeAhPerHour: number; solarAhPerWattDay: number; starterStartPct: number; starterMinPct: number; zeroServiceMoodPenalty: number };

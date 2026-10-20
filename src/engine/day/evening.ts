@@ -1,5 +1,6 @@
 import { assertNoPendingEvent, assertPhase, EngineError } from '../errors';
 import { appendLog } from '../log';
+import { priceFor } from '../perks';
 import { crewSensitivity, resolveDueExpectations, sayDialogue } from '../promises';
 import { applyOutcome, applyOutcomes, dailyConsumption, refillAt, zeroResourceOutcomes } from '../resources';
 import { clamp, requireBoat, requirePoint, round1 } from '../state';
@@ -14,8 +15,9 @@ export const tavernaOpen = (clockMin: number, b: Balance): boolean => clockMin <
 
 function dinner(state: GameState, b: Balance, choice: EveningChoice['dinner']): { outcomes: Outcome[]; cooked: boolean; activity: Activity | null } {
   if (choice === 'taverna') {
-    const effect = { money: -state.crew.length * b.mood.tavernaEurPerPerson, mood: b.mood.tavernaDinner };
-    return { outcomes: [{ cause: 'activity:taverna', pillar: 'promises', effect }], cooked: false, activity: 'taverna' };
+    const bill = priceFor(state.crew.length * b.mood.tavernaEurPerPerson, state.voices.economist, b);
+    const effect = { money: -bill.eur, mood: b.mood.tavernaDinner };
+    return { outcomes: [{ cause: 'activity:taverna', pillar: 'promises', effect, saved: bill.savedEur }], cooked: false, activity: 'taverna' };
   }
   if (state.resources.gasPct < b.gas.pctPerDay) {
     return { outcomes: [{ cause: 'zero:gas', pillar: 'boat', effect: { mood: -b.gas.noHotFoodMoodPenalty } }], cooked: false, activity: null };
@@ -77,6 +79,7 @@ export function endDay(state: GameState, content: Content, choice: EveningChoice
   const dayFacts = meal.activity ? { ...facts, activities: [...facts.activities, meal.activity] } : facts;
   const resolved = resolveDueExpectations(s.expectations, dayFacts, s.voices.diplomat, crewSensitivity(s, content), b);
   s = applyOutcomes({ ...s, expectations: resolved.expectations }, boat, resolved.outcomes);
+  for (const { mood } of resolved.softened) s = appendLog(s, { kind: 'info', cause: 'voice:diplomat:softened', pillar: 'promises', data: { mood } });
   if (choice.dialogueId) s = sayDialogue(s, content, choice.dialogueId, 'evening');
   s = applyLevelUps(s, b);
   s = night(s, content, boat, point, facts, meal.cooked);

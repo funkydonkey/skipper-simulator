@@ -127,7 +127,7 @@ export const GameEventSchema: z.ZodType<GameEvent> = z.object({
   id: Id, pillar: z.enum(PILLARS),
   trigger: z.object({ phase: z.enum(EVENT_PHASES), conditions: z.array(z.string().min(1)), chance: ChanceInputSchema, once: z.boolean().optional() }).strict(),
   scene: Id, text: Text,
-  voices: z.array(z.object({ voice: z.enum(VOICES), min_level: Int.min(0), text: Text }).strict()),
+  voices: z.array(z.object({ voice: z.enum(VOICES), min_level: Int.min(0), text: Text, when: z.string().min(1).optional() }).strict()),
   options: z.array(OptionSchema).min(2),
   debrief: Text,
 }).strict();
@@ -151,7 +151,7 @@ const Triple = z.tuple([z.number(), z.number(), z.number()]);
 
 export const BalanceSchema: z.ZodType<Balance> = z.object({
   start: z.object({ moneyEur: NonNeg, mood: NonNeg, fatigue: NonNeg, gasPct: NonNeg, serviceBankPct: NonNeg, starterBankPct: NonNeg, hour: Hour, crewSize: Int.positive() }).strict(),
-  voices: z.object({ points: Int.positive(), maxLevel: Int.positive(), prideLevel: Int.min(0), crewVoiceLevel: Int.min(0), seaSenseSignalLevel: Int.min(0), mechanicExactLevel: Int.min(0), cautionRiskPerLevel: NonNeg, cautionTimePerLevel: NonNeg, orderRiskPerLevel: NonNeg, xpToLevel: z.array(Int.positive()).min(1), xpExempt: z.array(z.enum(VOICES)), checkXp: z.object({ success: NonNeg, fail: NonNeg }).strict(), maneuverErrorXp: NonNeg, cleanManeuverXp: NonNeg }).strict(),
+  voices: z.object({ points: Int.positive(), maxLevel: Int.positive(), prideLevel: Int.min(0), crewVoiceLevel: Int.min(0), seaSenseSignalLevel: Int.min(0), seaSenseChanceLevel: Int.min(0), seaSenseTimingLevel: Int.min(0), economistDiscountPerLevel: NonNeg, mechanicExactLevel: Int.min(0), cautionRiskPerLevel: NonNeg, cautionTimePerLevel: NonNeg, orderRiskPerLevel: NonNeg, xpToLevel: z.array(Int.positive()).min(1), xpExempt: z.array(z.enum(VOICES)), checkXp: z.object({ success: NonNeg, fail: NonNeg }).strict(), maneuverErrorXp: NonNeg, cleanManeuverXp: NonNeg }).strict(),
   water: z.object({ perPersonPerDayL: fullRecord(SHOWERS, NonNeg), zeroMoodPenalty: NonNeg }).strict(),
   fuel: z.object({ motorLph: Pos, priceEurPerL: NonNeg }).strict(),
   electric: z.object({ fridgeAhPerDay: NonNeg, pumpsAhPerDay: NonNeg, electricToiletAhPerDay: NonNeg, plotterAhPerHour: NonNeg, autopilotAhPerHour: NonNeg, engineChargeAhPerHour: NonNeg, solarAhPerWattDay: NonNeg, starterStartPct: NonNeg, starterMinPct: NonNeg, zeroServiceMoodPenalty: NonNeg }).strict(),

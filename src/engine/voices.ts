@@ -1,6 +1,6 @@
 import { evaluateChance, rollChance } from './chance';
 import { EngineError } from './errors';
-import type { CondContext } from './expr';
+import { evaluateCondition, type CondContext } from './expr';
 import { checkSpec } from './odds';
 import type { RngResult } from './rng';
 import { TRAINABLE_VOICES, type Balance, type ChanceValue, type TrainableVoice, type VoiceCheck, type VoiceId, type VoiceLine } from './types';
@@ -43,8 +43,8 @@ export function rollCheck(rng: number, check: VoiceCheck, ctx: CondContext, b: B
   return { value: { success: r.value.hit, odds: r.value.odds }, next: r.next };
 }
 
-export function audibleLines(lines: readonly VoiceLine[], voices: Record<VoiceId, number>): VoiceLine[] {
-  return lines.filter((l) => voices[l.voice] >= l.min_level);
+export function audibleLines(lines: readonly VoiceLine[], voices: Record<VoiceId, number>, ctx: CondContext): VoiceLine[] {
+  return lines.filter((l) => voices[l.voice] >= l.min_level && (l.when === undefined || evaluateCondition(l.when, ctx)));
 }
 
 export function resourceReadout(value: number, unit: string, approxStep: number, mechanicLevel: number, b: Balance): string {

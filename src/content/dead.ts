@@ -31,6 +31,7 @@ function readIdentifiers(c: Content): Set<string> {
         if (m.per) reads.add(m.per);
       }
     }
+    ev.voices.forEach((l) => { if (l.when) expr(l.when); });
     ev.options.forEach((o) => (o.requires ?? []).forEach(expr));
   }
   for (const m of c.maneuvers) for (const e of m.errors) if (e.mitigatedBy) reads.add(e.mitigatedBy);

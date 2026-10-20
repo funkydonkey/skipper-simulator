@@ -2,6 +2,7 @@ import { EngineError } from '../errors';
 import { buildConditionContext } from '../expr';
 import { appendLog } from '../log';
 import { correctOrder, evaluateManeuver, maneuverForKind } from '../maneuver';
+import { priceFor } from '../perks';
 import { applyOutcome, applyOutcomes } from '../resources';
 import { advanceClock, requireBoat, requirePoint } from '../state';
 import { anchoring, marinaArrival } from '../time';
@@ -74,6 +75,9 @@ export function arrive(state: GameState, content: Content, boat: Boat, orders?: 
   }
   s = advanceClock(s, b.time.marinaMooringMin * cautionTimeFactor(s.voices.caution, b));
   s = runManeuver(s, content, 'mooring', orders);
-  if (point.priceEur > 0) s = applyOutcome(s, boat, { cause: 'marina:fee', pillar: 'boat', effect: { money: -point.priceEur } });
+  if (point.priceEur > 0) {
+    const fee = priceFor(point.priceEur, s.voices.economist, b);
+    s = applyOutcome(s, boat, { cause: 'marina:fee', pillar: 'boat', effect: { money: -fee.eur }, saved: fee.savedEur });
+  }
   return { state: s, mooring: 'berth' };
 }
