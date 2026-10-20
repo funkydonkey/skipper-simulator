@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { LogEntry } from '../../../src/engine';
 import { runWeek } from '../../../src/sim/run';
 import { expert, newbie } from '../../../src/sim/strategies';
-import { describeEntry, isNoise, logbookDays } from '../../../src/ui/view/logbook';
+import { describeEntry, isLogbookOnly, isNoise, logbookDays } from '../../../src/ui/view/logbook';
 import { content } from '../fixtures';
 
 const entry = (cause: string, extra: Partial<LogEntry> = {}): LogEntry => ({ day: 2, clockMin: 600, kind: 'decision', cause, ...extra });
@@ -98,6 +98,13 @@ describe('logbook', () => {
       expect(describeEntry(entry('voice:diplomat:softened', { data: { mood: 2 } }), content, lang)!.text).toContain('2');
       expect(describeEntry(entry('voice:sea_sense:front_seen'), content, lang)!.text.length).toBeGreaterThan(5);
     }
+  });
+
+  it('flags xp and non-check rolls as logbook-only', () => {
+    expect(isLogbookOnly(entry('xp:order:x'))).toBe(true);
+    expect(isLogbookOnly(entry('roll:front:2'))).toBe(true);
+    expect(isLogbookOnly(entry('roll:check:a:b'))).toBe(false);
+    expect(isLogbookOnly(entry('levelup:order:2'))).toBe(false);
   });
 
   it('marks good and bad outcomes', () => {

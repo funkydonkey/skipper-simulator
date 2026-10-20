@@ -23,7 +23,7 @@ export function EventScreen() {
         <div className={styles.panel}>
           <Typewriter text={view.text} />
           <div className={styles.voices}>
-            {view.voices.map((v) => <VoiceLine key={v.voice} voice={v.voice} text={v.text} />)}
+            {view.voices.map((v, i) => <VoiceLine key={`${i}:${v.voice}`} voice={v.voice} text={v.text} />)}
           </div>
           <ol className={styles.options}>
             {view.options.map((o, i) => {

@@ -172,6 +172,12 @@ export function isNoise(e: LogEntry): boolean {
   return root === 'signal' && e.data?.seen === false;
 }
 
+/** Lines for the in-flow screens (passage, outcome): the logbook keeps xp and non-check rolls, these screens skip them. */
+export function isLogbookOnly(e: LogEntry): boolean {
+  const [root = '', what] = e.cause.split(':');
+  return root === 'xp' || (root === 'roll' && what !== 'check');
+}
+
 export function dayLines(log: readonly LogEntry[], day: number, content: Content, lang: Lang): LogLine[] {
   return log.filter((e) => e.day === day && !isNoise(e)).flatMap((e) => describeEntry(e, content, lang) ?? []);
 }

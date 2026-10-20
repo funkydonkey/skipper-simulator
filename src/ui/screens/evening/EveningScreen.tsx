@@ -44,12 +44,12 @@ export function EveningScreen() {
           <h2 className={styles.growthTitle}>{t('learned')}</h2>
           <ul className={styles.growthList}>
             {growth.map((g) => (
-              <li key={g.voice}>
+              <li key={`xp:${g.voice}`}>
                 <strong>+{g.xp} {VOICE_NAMES[g.voice][lang]}</strong>
                 {g.causes.length > 0 && <span className={styles.muted}> — {g.causes.join('; ')}</span>}
               </li>
             ))}
-            {levelUps.map((u) => <li key={u.voice} className={styles.levelUp}>{levelUpText(u.voice, u.from, u.to, lang)}</li>)}
+            {levelUps.map((u) => <li key={`up:${u.voice}`} className={styles.levelUp}>{levelUpText(u.voice, u.from, u.to, lang)}</li>)}
           </ul>
         </section>
       )}

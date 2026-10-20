@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { GameState } from '../../../src/engine';
 import { gameAt } from '../fixtures';
 import { renderShell } from '../render';
@@ -39,7 +39,10 @@ describe('EveningScreen', () => {
       voiceXp: { ...base.voiceXp, mechanic: 10 },
       log: [xpEntry(base, 'xp:mechanic:order:wrong:anchoring:x', 3), { ...xpEntry(base, 'xp:order:order:ok:anchoring', 1), day: base.day + 5 }],
     };
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
     renderShell(game);
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
     expect(screen.getByText('Чему научил день')).toBeInTheDocument();
     expect(screen.getByText(/\+3 Механик/)).toBeInTheDocument();
     expect(screen.queryByText(/\+1 Порядок/)).not.toBeInTheDocument();

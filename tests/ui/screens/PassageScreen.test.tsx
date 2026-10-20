@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { todayTrail } from '../../../src/ui/screens/passage/timeline';
+import type { LogEntry } from '../../../src/engine';
+import { passageLines, todayTrail } from '../../../src/ui/screens/passage/timeline';
 import { content, gameAt } from '../fixtures';
 import { renderShell } from '../render';
 
@@ -17,5 +18,17 @@ describe('PassageScreen', () => {
     expect(screen.queryByText(/^Событие:/)).toBeNull();
     await r.user.click(screen.getByRole('button', { name: 'Дальше' }));
     expect(['evening', 'event']).toContain(r.currentScreen());
+  });
+
+  it('keeps xp and non-check rolls out of the passage timeline', () => {
+    const base = gameAt('planning');
+    const e = (cause: string, extra: Partial<LogEntry> = {}): LogEntry => ({ day: base.day, clockMin: 600, kind: 'info', cause, ...extra });
+    const odds = { value: 0.3, parts: [{ source: 'base', delta: 0.3 }] };
+    const game = {
+      ...base,
+      log: [e('plan:depart', { data: { hour: 9 } }), e('xp:order:order:ok:x', { data: { xp: 1 } }), e('roll:front:1', { kind: 'roll', odds, data: { hit: true } }), e('rest', { delta: { mood: 1 } })],
+    };
+    const causes = passageLines(game, content, 'ru').map((l) => l.cause);
+    expect(causes).toEqual(['rest']);
   });
 });
