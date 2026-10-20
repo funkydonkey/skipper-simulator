@@ -1,7 +1,10 @@
+import { evaluateChance, rollChance } from './chance';
 import { EngineError } from './errors';
-import { chance, type RngResult } from './rng';
+import { buildConditionContext, evaluateCondition, type CondContext } from './expr';
+import { injurySpec } from './odds';
+import type { RngResult } from './rng';
 import { round1 } from './state';
-import type { Balance, Content, Effect, Maneuver, ManeuverKind, Outcome } from './types';
+import type { Balance, ChanceValue, Content, Effect, GameState, Maneuver, ManeuverError, ManeuverKind, Outcome } from './types';
 
 const NUMERIC_EFFECT_KEYS = ['mood', 'fatigue', 'money', 'water', 'fuel', 'service_bank', 'starter_bank', 'gas', 'time_hours', 'mood_per_day'] as const;
 
@@ -29,30 +32,42 @@ export function scaleEffect(e: Effect, factor: number): Effect {
   return scaled;
 }
 
+export interface ManeuverRoll { cause: string; hit: boolean; odds: ChanceValue }
+
+/** Context: caution/order voices and the errors' mitigation flags (see buildConditionContext). */
 export function evaluateManeuver(
   rng: number,
   m: Maneuver,
   order: readonly string[],
-  flags: Record<string, boolean>,
-  riskFactor: number,
+  ctx: CondContext,
   b: Balance,
-): RngResult<{ errors: string[]; outcomes: Outcome[] }> {
+): RngResult<{ errors: string[]; outcomes: Outcome[]; rolls: ManeuverRoll[] }> {
   const invalid = validateOrder(m, order);
   if (invalid) throw new EngineError('INVALID_INPUT', invalid);
   const errors: string[] = [];
   const outcomes: Outcome[] = [];
+  const rolls: ManeuverRoll[] = [];
   let next = rng;
   for (const err of m.errors) {
     if (order.indexOf(err.wrongIf.first) >= order.indexOf(err.wrongIf.then)) continue;
-    const mitigated = err.mitigatedBy !== undefined && flags[err.mitigatedBy] === true;
-    const factor = mitigated ? b.safety.mitigationFactor : 1;
-    const roll = chance(next, err.injuryChance * riskFactor * factor);
+    // Same condition as injurySpec's mitigation mod: the effect and the injury chance are scaled together.
+    const mitigated = err.mitigatedBy !== undefined && evaluateCondition(err.mitigatedBy, ctx);
+    const roll = rollChance(next, injurySpec(err.injuryChance, err.mitigatedBy, b), ctx);
     next = roll.next;
     errors.push(err.id);
-    outcomes.push({ cause: `maneuver:${m.id}:${err.id}`, pillar: 'safety', effect: mitigated ? scaleEffect(err.effect, factor) : err.effect });
-    if (roll.value) {
+    rolls.push({ cause: `roll:injury:maneuver:${m.id}:${err.id}`, hit: roll.value.hit, odds: roll.value.odds });
+    outcomes.push({ cause: `maneuver:${m.id}:${err.id}`, pillar: 'safety', effect: mitigated ? scaleEffect(err.effect, b.safety.mitigationFactor) : err.effect });
+    if (roll.value.hit) {
       outcomes.push({ cause: `injury:maneuver:${m.id}:${err.id}`, pillar: 'safety', effect: { injury: true, mood: -b.mood.injury } });
     }
   }
-  return { value: { errors, outcomes }, next };
+  return { value: { errors, outcomes, rolls }, next };
+}
+
+/** Injury odds of the maneuver's most dangerous error, as the captain stands now. Null if nothing can hurt. */
+export function maneuverRisk(state: GameState, content: Content, kind: ManeuverKind): ChanceValue | null {
+  const m = maneuverForKind(content, kind);
+  const worst = m?.errors.reduce<ManeuverError | null>((a, e) => (e.injuryChance > (a?.injuryChance ?? 0) ? e : a), null);
+  if (!worst) return null;
+  return evaluateChance(injurySpec(worst.injuryChance, worst.mitigatedBy, content.balance), buildConditionContext(state, content));
 }

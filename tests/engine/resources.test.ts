@@ -89,13 +89,13 @@ describe('resources', () => {
   });
 
   it('refillAt marina: water free, fuel paid, gas exchanged when low', () => {
-    const s = makeState({ resources: { ...makeState().resources, waterL: 100, fuelL: 140, gasPct: 20 } });
+    const s = makeState({ voices: { ...makeState().voices, economist: 0 }, resources: { ...makeState().resources, waterL: 100, fuelL: 140, gasPct: 20 } });
     const marina = content.map.find((p) => p.id === 'marina_b')!;
     const out = refillAt(s, boat, marina, b);
     expect(out).toEqual([
       { cause: 'refill:water', pillar: 'boat', effect: { water: 200 } },
-      { cause: 'refill:fuel', pillar: 'boat', effect: { fuel: 10, money: -19 } },
-      { cause: 'refill:gas', pillar: 'boat', effect: { gas: 80, money: -30 } },
+      { cause: 'refill:fuel', pillar: 'boat', effect: { fuel: 10, money: -19 }, saved: 0 },
+      { cause: 'refill:gas', pillar: 'boat', effect: { gas: 80, money: -30 }, saved: 0 },
     ]);
     expect(refillAt(s, boat, content.map.find((p) => p.id === 'bay_a')!, b)).toEqual([]);
   });
@@ -107,5 +107,11 @@ describe('resources', () => {
       { cause: 'zero:service', pillar: 'boat', effect: { mood: -15 } },
     ]);
     expect(zeroResourceOutcomes(makeState(), b)).toEqual([]);
+  });
+});
+
+describe('applyOutcome xp', () => {
+  it('throws when an outcome carries xp but no balance was passed', () => {
+    expect(() => applyOutcome(makeState(), null, { cause: 'x', effect: { xp: { order: 1 } } })).toThrow(/pass the balance/);
   });
 });

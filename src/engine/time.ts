@@ -1,40 +1,42 @@
-import { chance, nextRange, type RngResult } from './rng';
+import { rollChance } from './chance';
+import type { CondContext } from './expr';
+import { anchorFailSpec, marinaRefusalSpec } from './odds';
+import { nextRange, type RngResult } from './rng';
 import { clamp } from './state';
-import type { Balance, Seabed } from './types';
+import type { Balance, ChanceValue } from './types';
 
-export interface AnchorInput { seabed: Seabed; windKn: number; briefed: boolean; night: boolean }
+/** `hit` = the anchor dragged on that attempt. */
+export interface AnchorRoll { hit: boolean; odds: ChanceValue }
 
-export function anchorFailChance(i: AnchorInput, b: Balance): number {
-  const [lo, hi] = b.time.anchorFailChance;
-  const base = lo + (hi - lo) * b.time.seabedFailFactor[i.seabed];
-  const wind = i.windKn >= b.time.anchorWindPenaltyKn ? b.time.anchorWindPenalty : 0;
-  const brief = i.briefed ? b.time.anchorBriefedReduction : 0;
-  const night = i.night ? b.time.nightAnchorPenalty : 0;
-  return clamp(base + wind + night - brief, 0, 0.95);
-}
-
-export function anchoring(rng: number, i: AnchorInput, b: Balance): RngResult<{ attempts: number; minutes: number; held: boolean }> {
-  const fail = anchorFailChance(i, b);
+/** Context: `place.seabed`, `wind` (kLocal 1), `night`, `briefing.anchor` (see buildConditionContext). */
+export function anchoring(
+  rng: number, ctx: CondContext, b: Balance,
+): RngResult<{ attempts: number; minutes: number; held: boolean; rolls: AnchorRoll[] }> {
+  const spec = anchorFailSpec(b);
+  const rolls: AnchorRoll[] = [];
   let next = rng;
   let minutes = 0;
   for (let attempt = 1; attempt <= b.time.anchorMaxAttempts; attempt++) {
     const dur = nextRange(next, b.time.anchorMin[0], b.time.anchorMin[1]);
-    const roll = chance(dur.next, fail);
+    const roll = rollChance(dur.next, spec, ctx);
     next = roll.next;
     minutes += dur.value;
-    if (!roll.value) return { value: { attempts: attempt, minutes: Math.round(minutes), held: true }, next };
+    rolls.push(roll.value);
+    if (!roll.value.hit) return { value: { attempts: attempt, minutes: Math.round(minutes), held: true, rolls }, next };
   }
-  return { value: { attempts: b.time.anchorMaxAttempts, minutes: Math.round(minutes), held: false }, next };
+  return { value: { attempts: b.time.anchorMaxAttempts, minutes: Math.round(minutes), held: false, rolls }, next };
 }
 
+/** Sets `marina.late` on the given context for the refusal roll. */
 export function marinaArrival(
   rng: number,
   i: { arrivalHour: number; placesGoneHour: number | null },
+  ctx: CondContext,
   b: Balance,
-): RngResult<{ refused: boolean; waitMin: number }> {
+): RngResult<{ refused: boolean; waitMin: number; odds: ChanceValue }> {
   const late = i.placesGoneHour !== null && i.arrivalHour > i.placesGoneHour;
-  const roll = chance(rng, late ? b.time.marinaLateRefusalChance : 0);
-  return { value: { refused: roll.value, waitMin: late ? b.time.marinaWaitMin : 0 }, next: roll.next };
+  const roll = rollChance(rng, marinaRefusalSpec(b), { ...ctx, 'marina.late': late });
+  return { value: { refused: roll.value.hit, waitMin: late ? b.time.marinaWaitMin : 0, odds: roll.value.odds }, next: roll.next };
 }
 
 export function restHours(clockMin: number, b: Balance): number {

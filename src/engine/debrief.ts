@@ -1,10 +1,11 @@
 import { causeMatches } from './log';
 import { requireBoat } from './state';
+import { voiceReport, type VoiceReport } from './voice-report';
 import type { Balance, Boat, Content, DebriefRule, GameState, Grade, LocalizedText, LogEntry, Pillar } from './types';
 
 export interface DebriefLink { ruleId: string; pillar: Pillar; text: LocalizedText; decision: LogEntry; consequence: LogEntry; signal: LogEntry | null }
 export interface WeekScales { safety: Grade; crew: Grade; boat: Grade; schedule: Grade }
-export interface Debrief { scales: WeekScales; depositLossEur: number; depositReturnedEur: number; links: DebriefLink[]; eventNotes: LocalizedText[] }
+export interface Debrief { scales: WeekScales; depositLossEur: number; depositReturnedEur: number; links: DebriefLink[]; eventNotes: LocalizedText[]; voices: VoiceReport[] }
 
 export function depositLoss(damages: readonly string[], b: Balance): number {
   return damages.reduce((sum, d) => sum + (b.deposit.damageCostEur[d] ?? b.deposit.defaultDamageEur), 0);
@@ -85,5 +86,5 @@ export function buildDebrief(state: GameState, content: Content, maxItems = 5): 
     .map((id) => content.events.find((e) => e.id === id)?.debrief)
     .filter((t): t is LocalizedText => t !== undefined)
     .slice(0, Math.max(0, maxItems - links.length));
-  return { ...graded, links, eventNotes };
+  return { ...graded, links, eventNotes, voices: voiceReport(state) };
 }

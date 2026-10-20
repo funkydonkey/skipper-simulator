@@ -8,6 +8,7 @@ import { BOAT } from '../../src/ui/screens/boat/strings';
 import { BRIEFING } from '../../src/ui/screens/briefing/strings';
 import { CAPTAIN } from '../../src/ui/screens/captain/strings';
 import { CHECKIN } from '../../src/ui/screens/checkin/strings';
+import { DEBRIEF } from '../../src/ui/screens/debrief/strings';
 import { EVENING } from '../../src/ui/screens/evening/strings';
 import { MANEUVERS } from '../../src/ui/screens/maneuvers/strings';
 import { MENU } from '../../src/ui/screens/menu/strings';
@@ -28,7 +29,10 @@ function assertHealthy(lang: Lang): void {
   if (lang === 'en') expect(text).not.toMatch(/[А-Яа-яЁё]/);
 }
 
-async function playWeek(lang: Lang): Promise<ReturnType<typeof renderShell>> {
+interface Week { r: ReturnType<typeof renderShell>; eveningXpLines: number }
+
+async function playWeek(lang: Lang): Promise<Week> {
+  let eveningXpLines = 0;
   vi.spyOn(Math, 'random').mockReturnValue(0.123);
   const r = renderShell(null, { lang });
   const { user } = r;
@@ -87,22 +91,26 @@ async function playWeek(lang: Lang): Promise<ReturnType<typeof renderShell>> {
         await user.click(option!);
         break;
       }
-      case 'evening': await user.click(button(EVENING.sleep[lang])); break;
+      case 'evening':
+        eveningXpLines += screen.queryAllByText(/^\+\d+ /).length;
+        await user.click(button(EVENING.sleep[lang])); break;
       case 'return': await user.click(button(RETURN.handover[lang])); break;
       default: throw new Error(`Dead end on screen ${r.currentScreen()}`);
     }
   }
-  return r;
+  return { r, eveningXpLines };
 }
 
 describe('a whole week in the browser UI', () => {
   afterEach(() => vi.restoreAllMocks());
 
   it.each(['ru', 'en'] as const)('plays from the menu to the debrief without dead ends (%s)', async (lang) => {
-    const r = await playWeek(lang);
+    const { r, eveningXpLines } = await playWeek(lang);
     expect(r.currentScreen()).toBe('debrief');
     expect(screen.getAllByLabelText(/^(Оценка|Grade):/)).toHaveLength(4);
     expect(r.session().game!.phase).toBe('debrief');
+    expect(eveningXpLines, 'the evening screen showed an XP line during the week').toBeGreaterThan(0);
+    expect(screen.getByRole('heading', { name: DEBRIEF.voices[lang] })).toBeInTheDocument();
     assertHealthy(lang);
   }, 120_000);
 });

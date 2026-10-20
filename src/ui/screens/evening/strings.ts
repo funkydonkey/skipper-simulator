@@ -16,5 +16,6 @@ export const EVENING = dict({
   say: { ru: 'Что сказать на завтра', en: 'What to say about tomorrow' },
   sayNothing: { ru: 'Ничего не обещать', en: 'Promise nothing' },
   heard: { ru: 'Экипаж услышал: «{heard}»', en: 'The crew heard: "{heard}"' },
+  learned: { ru: 'Чему научил день', en: 'What today taught you' },
   sleep: { ru: 'Отбой', en: 'Lights out' },
 });

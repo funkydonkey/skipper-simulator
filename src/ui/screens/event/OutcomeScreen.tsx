@@ -5,7 +5,7 @@ import { ScreenFrame } from '../../components/ScreenFrame';
 import { COMMON } from '../../i18n/common';
 import { useAct, useGame, useSession, useT } from '../../session/SessionContext';
 import { signed } from '../../view/format';
-import { describeEntry, isNoise } from '../../view/logbook';
+import { describeEntry, isLogbookOnly, isNoise } from '../../view/logbook';
 import { RESOURCE_NAMES } from '../../view/strings';
 import { sumDeltas, timeSpentHours } from './deltas';
 import styles from './Event.module.css';
@@ -21,7 +21,7 @@ export function OutcomeScreen() {
   if (!outcome) return null;
   const event = content.events.find((e) => e.id === outcome.eventId);
   const option = event?.options.find((o) => o.id === outcome.optionId);
-  const lines = outcome.entries.filter((e) => !isNoise(e)).flatMap((e) => describeEntry(e, content, lang) ?? []);
+  const lines = outcome.entries.filter((e) => !isNoise(e) && !isLogbookOnly(e)).flatMap((e) => describeEntry(e, content, lang) ?? []);
   const deltas = Object.entries(sumDeltas(outcome.entries)) as [keyof Resources, number][];
   const hours = timeSpentHours(outcome.entries);
   return (

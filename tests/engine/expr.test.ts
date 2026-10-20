@@ -79,6 +79,15 @@ describe('expr', () => {
     expect(CONTEXT_KEYS).toContain('moored_berth');
   });
 
+  it('night, place.seabed and marina.late feed the chance specs', () => {
+    const content = makeContent();
+    const sunset = content.balance.time.sunsetHour * 60;
+    expect(buildConditionContext(makeState({ clockMin: sunset - 1 }), content)).toMatchObject({ night: false, 'place.seabed': 'sand', 'marina.late': false });
+    expect(buildConditionContext(makeState({ clockMin: sunset, locationId: 'marina_b' }), content)).toMatchObject({ night: true, 'place.seabed': 'mud' });
+    expect(CONTEXT_KEYS).toEqual(expect.arrayContaining(['night', 'place.seabed', 'marina.late']));
+    expect(evaluateCondition("place.seabed == 'mud' && !marina.late", buildConditionContext(makeState({ locationId: 'marina_b' }), content))).toBe(true);
+  });
+
   it('wind and gust are the real wind now: afternoon factor and an active front included', () => {
     const content = makeContent();
     const front = { ...makeState().weather!, front: true, frontAddKn: 10 };

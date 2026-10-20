@@ -46,19 +46,19 @@ export function resolveDueExpectations(
   diplomatLevel: number,
   sensitivity: number,
   b: Balance,
-): { expectations: Expectation[]; outcomes: Outcome[] } {
+): { expectations: Expectation[]; outcomes: Outcome[]; softened: Array<{ mood: number }> } {
   const outcomes: Outcome[] = [];
+  const softened: Array<{ mood: number }> = [];
   const expectations = exps.map((e) => {
     if (e.status !== 'open' || e.dueDay !== facts.day) return e;
     const status = judgeExpectation(e, facts);
-    outcomes.push({
-      cause: `promise:${e.dialogueId}:${status}`,
-      pillar: 'promises',
-      effect: { mood: expectationMoodDelta(e.strength, status, diplomatLevel, sensitivity, b) },
-    });
+    const mood = expectationMoodDelta(e.strength, status, diplomatLevel, sensitivity, b);
+    outcomes.push({ cause: `promise:${e.dialogueId}:${status}`, pillar: 'promises', effect: { mood } });
+    const spared = round1(mood - expectationMoodDelta(e.strength, status, 0, sensitivity, b));
+    if (status === 'broken' && spared > 0) softened.push({ mood: spared });
     return { ...e, status };
   });
-  return { expectations, outcomes };
+  return { expectations, outcomes, softened };
 }
 
 export function sayDialogue(state: GameState, content: Content, dialogueId: string, context: DialogueContext): GameState {

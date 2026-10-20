@@ -42,10 +42,32 @@ describe('endDay', () => {
     expect(broken.expectations[0]!.status).toBe('broken');
   });
 
+  it('a diplomat softens a broken promise and endDay logs how much', () => {
+    const early = createExpectation(content.dialogues[0]!, 'briefing', 0)!;
+    const late = facts({ departureHour: 10 });
+    const plain = endDay(evening({ expectations: [early], dayFacts: late, voices: { ...makeState().voices, diplomat: 0 } }), content, { dinner: 'cook' });
+    const soft = endDay(evening({ expectations: [early], dayFacts: late, voices: { ...makeState().voices, diplomat: 2 } }), content, { dinner: 'cook' });
+    const hurt = (st: GameState) => st.log.find((e) => e.cause === 'promise:early_try:broken')!.delta!.mood!;
+    const spared = Math.round((hurt(soft) - hurt(plain)) * 10) / 10;
+    expect(spared).toBeGreaterThan(0);
+    expect(soft.log).toContainEqual(expect.objectContaining({ kind: 'info', cause: 'voice:diplomat:softened', pillar: 'promises', data: { mood: spared } }));
+    expect(causes(plain)).not.toContain('voice:diplomat:softened');
+  });
+
+  it('an economist logs the saving on overnight fuel and gas refills', () => {
+    const thrifty = { ...makeState().voices, economist: 2 };
+    const full = endDay(evening({ voices: { ...thrifty, economist: 0 }, resources: { ...res, fuelL: 50, gasPct: 10 } }), content, { dinner: 'cook' });
+    expect(causes(full)).not.toContain('voice:economist:saved');
+    const s = endDay(evening({ voices: thrifty, resources: { ...res, fuelL: 50, gasPct: 10 } }), content, { dinner: 'cook' });
+    const saved = s.log.filter((e) => e.cause === 'voice:economist:saved');
+    expect(saved.map((e) => e.data?.for)).toEqual(expect.arrayContaining(['refill:fuel', 'refill:gas']));
+    for (const e of saved) expect(Number(e.data?.eur)).toBeGreaterThan(0);
+  });
+
   it('taverna dinner costs money, lifts mood and keeps a taverna promise', () => {
     const promise = createExpectation(content.dialogues.find((d) => d.id === 'promise_taverna')!, 'evening', 0)!;
     const s = endDay(evening({ expectations: [promise] }), content, { dinner: 'taverna' });
-    expect(s.log.find((e) => e.cause === 'activity:taverna')!.delta).toMatchObject({ moneyEur: -140 });
+    expect(s.log.find((e) => e.cause === 'activity:taverna')!.delta).toMatchObject({ moneyEur: -126 });
     expect(causes(s)).toContain('promise:promise_taverna:kept');
     expect(() => endDay(evening({ locationId: 'bay_a' }), content, { dinner: 'taverna' })).toThrow(/No taverna at bay_a/);
   });

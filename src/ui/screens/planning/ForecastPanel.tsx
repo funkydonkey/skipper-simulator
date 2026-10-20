@@ -1,15 +1,17 @@
+import { forecastInsight } from '../../../engine';
 import { WindRose } from '../../components/WindRose';
 import { VoiceLine } from '../../components/voices/VoiceLine';
 import { useGame, useT } from '../../session/SessionContext';
-import { signed } from '../../view/format';
+import { formatHour, signed } from '../../view/format';
 import styles from './Planning.module.css';
 import { PLANNING } from './strings';
 
 export function ForecastPanel() {
-  const { game } = useGame();
+  const { game, content } = useGame();
   const t = useT(PLANNING);
   const w = game.weather;
   if (!w) return null;
+  const insight = forecastInsight(game, content);
   return (
     <section className={styles.forecast}>
       <h2>{t('forecast')}</h2>
@@ -26,6 +28,8 @@ export function ForecastPanel() {
           <p className={styles.muted}>{t('noBarometer')}</p>
         </>
       )}
+      {insight.frontChance !== null && <p className={styles.insight}>{t('insightChance', { pct: Math.round(insight.frontChance * 100) })}</p>}
+      {insight.frontFromHour !== null && <p className={styles.insight}>{t('insightFrom', { time: formatHour(insight.frontFromHour) })}</p>}
     </section>
   );
 }

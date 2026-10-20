@@ -6,6 +6,7 @@ export const MENU = dict({
   continue: { ru: 'Продолжить', en: 'Continue' },
   savedAt: { ru: 'День {day} · сохранено {when}', en: 'Day {day} · saved {when}' },
   corrupt: { ru: 'Сохранение повреждено', en: 'The save is damaged' },
+  legacySave: { ru: 'Сохранение от старой версии несовместимо — начни новую неделю', en: 'Your save is from an older version and can\'t be loaded — start a new week' },
   deleteSave: { ru: 'Удалить сохранение', en: 'Delete save' },
   settings: { ru: 'Настройки', en: 'Settings' },
   seed: { ru: 'Seed недели', en: 'Week seed' },

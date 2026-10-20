@@ -1,7 +1,9 @@
+import { evaluateChance, rollChance } from './chance';
 import { EngineError } from './errors';
-import { chance, type RngResult } from './rng';
-import { clamp } from './state';
-import { TRAINABLE_VOICES, type Balance, type TrainableVoice, type VoiceId, type VoiceLine } from './types';
+import { evaluateCondition, type CondContext } from './expr';
+import { checkSpec } from './odds';
+import type { RngResult } from './rng';
+import { TRAINABLE_VOICES, type Balance, type ChanceValue, type TrainableVoice, type VoiceCheck, type VoiceId, type VoiceLine } from './types';
 
 export function validateAllocation(alloc: Partial<Record<string, number>>, b: Balance): string[] {
   const errors: string[] = [];
@@ -31,30 +33,23 @@ export function initialVoices(alloc: Partial<Record<TrainableVoice, number>>, b:
   };
 }
 
-export function checkChance(level: number, difficulty: number, fatigue: number, b: Balance): number {
-  const raw = b.checks.base + (level - difficulty) * b.checks.perLevel - fatigue * b.fatigue.checkPenaltyPerPoint;
-  return clamp(raw, b.checks.min, b.checks.max);
+/** Context needs `voice.<check.voice>` and `fatigue` (see buildConditionContext). */
+export function checkChance(check: VoiceCheck, ctx: CondContext, b: Balance): ChanceValue {
+  return evaluateChance(checkSpec(check, b), ctx);
 }
 
-export function rollCheck(rng: number, level: number, difficulty: number, fatigue: number, b: Balance): RngResult<{ success: boolean; chance: number }> {
-  const p = checkChance(level, difficulty, fatigue, b);
-  const r = chance(rng, p);
-  return { value: { success: r.value, chance: p }, next: r.next };
+export function rollCheck(rng: number, check: VoiceCheck, ctx: CondContext, b: Balance): RngResult<{ success: boolean; odds: ChanceValue }> {
+  const r = rollChance(rng, checkSpec(check, b), ctx);
+  return { value: { success: r.value.hit, odds: r.value.odds }, next: r.next };
 }
 
-export function audibleLines(lines: readonly VoiceLine[], voices: Record<VoiceId, number>): VoiceLine[] {
-  return lines.filter((l) => voices[l.voice] >= l.min_level);
+export function audibleLines(lines: readonly VoiceLine[], voices: Record<VoiceId, number>, ctx: CondContext): VoiceLine[] {
+  return lines.filter((l) => voices[l.voice] >= l.min_level && (l.when === undefined || evaluateCondition(l.when, ctx)));
 }
 
 export function resourceReadout(value: number, unit: string, approxStep: number, mechanicLevel: number, b: Balance): string {
   if (mechanicLevel >= b.voices.mechanicExactLevel) return `${Math.round(value)}${unit}`;
   return `~${Math.round(value / approxStep) * approxStep}${unit}`;
-}
-
-export function maneuverRiskFactor(voices: Record<VoiceId, number>, b: Balance): number {
-  const caution = 1 - voices.caution * b.voices.cautionRiskPerLevel;
-  const order = 1 - voices.order * b.voices.orderRiskPerLevel;
-  return Math.max(0, caution * order);
 }
 
 export function cautionTimeFactor(cautionLevel: number, b: Balance): number {

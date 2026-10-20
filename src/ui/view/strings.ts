@@ -1,4 +1,4 @@
-import type { LocalizedText, Resources, ShowerDiscipline } from '../../engine';
+import type { LocalizedText, Resources, Seabed, ShowerDiscipline } from '../../engine';
 import { dict } from '../i18n/t';
 
 const t = (ru: string, en: string): LocalizedText => ({ ru, en });
@@ -94,11 +94,58 @@ export const LOG = dict({
   eventHappened: { ru: 'Событие: {text}', en: 'Event: {text}' },
   eventOption: { ru: 'Решение: {option}', en: 'Decision: {option}' },
   chose: { ru: 'Выбрали: {option}', en: 'Chose: {option}' },
+  economistSaved: { ru: 'Экономист сэкономил {eur} €', en: 'The Economist saved {eur} €' },
+  seaSenseFront: { ru: 'Чутьё моря: днём придёт фронт', en: 'Sea Sense: a front is coming this afternoon' },
+  diplomatSoftened: { ru: 'Дипломат смягчил удар: +{mood} к настроению', en: 'The Diplomat softened the blow: +{mood} mood' },
+  levelUp: { ru: '⬆ {voice} {from} → {to}', en: '⬆ {voice} {from} → {to}' },
   checkPassed: { ru: 'Проверка «{voice}» удалась (шанс {chance}%)', en: '{voice} check passed ({chance}% chance)' },
   checkFailed: { ru: 'Проверка «{voice}» провалилась (шанс {chance}%)', en: '{voice} check failed ({chance}% chance)' },
+  xp: { ru: '+{xp} {voice} — {cause}', en: '+{xp} {voice} — {cause}' },
+  xpPlain: { ru: '+{xp} {voice}', en: '+{xp} {voice}' },
+  xpCheck: { ru: 'проверка: {option}', en: 'check: {option}' },
+  xpManeuverWrong: { ru: 'ошибка в манёвре «{title}»', en: 'mistake in "{title}"' },
+  xpManeuverOk: { ru: 'чистый манёвр «{title}»', en: 'clean "{title}"' },
+  rollFrontHit: { ru: 'Фронт пришёл (шанс {chance}%)', en: 'The front came (chance {chance}%)' },
+  rollFrontMiss: { ru: 'Фронт обошёл стороной (шанс {chance}%)', en: 'The front passed by (chance {chance}%)' },
+  rollAnchorHit: { ru: 'Якорь не схватил, попытка {n} (шанс {chance}%)', en: 'The anchor did not bite, attempt {n} ({chance}% chance)' },
+  rollAnchorMiss: { ru: 'Якорь схватил, попытка {n} (шанс сорваться {chance}%)', en: 'The anchor bit, attempt {n} ({chance}% chance to drag)' },
+  rollMarinaHit: { ru: 'В марине мест нет (шанс {chance}%)', en: 'No berths in the marina ({chance}% chance)' },
+  rollMarinaMiss: { ru: 'В марине место нашлось (шанс отказа {chance}%)', en: 'The marina had a berth ({chance}% chance of refusal)' },
+  rollSailHit: { ru: 'Парус не выдержал (шанс {chance}%)', en: 'The sail gave way ({chance}% chance)' },
+  rollSailMiss: { ru: 'Парус выдержал (шанс порвать {chance}%)', en: 'The sail held ({chance}% chance to tear)' },
+  rollInjuryHit: { ru: 'Травма (шанс {chance}%)', en: 'Someone got hurt ({chance}% chance)' },
+  rollInjuryMiss: { ru: 'Обошлось без травмы (шанс {chance}%)', en: 'No injury ({chance}% chance)' },
   returnOnTime: { ru: 'Вернулись на базу вовремя', en: 'Back at base on time' },
   returnLate: { ru: 'Не успели на базу к сроку', en: 'Missed the base deadline' },
   lateFee: { ru: 'Штраф за опоздание: {eur} €', en: 'Late return fee: €{eur}' },
   depositCharged: { ru: 'С депозита удержали: {what}', en: 'Deducted from the deposit: {what}' },
   unknown: { ru: 'Запись: {cause}', en: 'Entry: {cause}' },
 });
+
+export const CHANCE_PARTS = dict({
+  base: { ru: 'база', en: 'base' },
+  clamp: { ru: 'предел', en: 'limit' },
+  difficulty: { ru: 'сложность', en: 'difficulty' },
+  fatigue: { ru: 'усталость', en: 'fatigue' },
+  mitigation: { ru: 'страховка', en: 'safeguards' },
+  seabed: { ru: 'грунт', en: 'seabed' },
+  wind: { ru: 'ветер', en: 'wind' },
+  night: { ru: 'темнота', en: 'darkness' },
+  briefing: { ru: 'брифинг', en: 'briefing' },
+  late: { ru: 'опоздание', en: 'arriving late' },
+  drama: { ru: 'драма', en: 'drama' },
+  checkin: { ru: 'приёмка', en: 'check-in' },
+  worn: { ru: 'износ', en: 'wear' },
+  unknown: { ru: 'прочее', en: 'other' },
+});
+
+export const CHANCE_UI = dict({
+  entry: { ru: '{label} {delta}', en: '{label} {delta}' },
+});
+
+export const SEABED_NAMES: Readonly<Record<Seabed, LocalizedText>> = {
+  sand: t('песок', 'sand'),
+  mud: t('ил', 'mud'),
+  weed: t('водоросли', 'weed'),
+  rock: t('камень', 'rock'),
+};

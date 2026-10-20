@@ -23,6 +23,26 @@ describe('previewPlan', () => {
     expect(p.fuelNeededL).toBeGreaterThan(0);
   });
 
+  it('shows the odds the captain faces: sail break per leg, anchor drag at a bay, refusal at a marina', () => {
+    const b = content.balance;
+    const sail: LegPlan = { ...motor('r_base_bay_a'), mode: 'sail' };
+    const toBay = previewPlan(makeState(), content, plan([sail]));
+    expect(toBay.destinationSeabed).toBe('sand');
+    expect(toBay.marinaRefusal).toBeNull();
+    expect(toBay.anchorFail!.value).toBeCloseTo(b.time.anchorFailChance[0], 12);
+    expect(toBay.legs[0]!.breakChance.value).toBeGreaterThanOrEqual(0);
+    expect(previewPlan(makeState(), content, plan([motor('r_base_bay_a')])).legs[0]!.breakChance.value).toBe(0);
+    const briefed = previewPlan(makeState({ flags: { 'briefing.anchor': true } }), content, plan([sail]));
+    expect(briefed.anchorFail!.value).toBeCloseTo(b.time.anchorFailChance[0] - b.time.anchorBriefedReduction, 12);
+    const early = previewPlan(makeState({ locationId: 'bay_a' }), content, plan([motor('r_bay_a_marina_b')], 8));
+    expect(early).toMatchObject({ destinationSeabed: 'mud', anchorFail: null, marinaLate: false });
+    expect(early.marinaRefusal!.value).toBe(0);
+    const late = previewPlan(makeState({ locationId: 'bay_a', clockMin: 16 * 60 }), content, plan([motor('r_bay_a_marina_b')], 16));
+    expect(late.marinaLate).toBe(true);
+    expect(late.marinaRefusal!.value).toBe(b.time.marinaLateRefusalChance);
+    expect(previewPlan(makeState(), content, plan([]))).toMatchObject({ marinaRefusal: null, anchorFail: null, destinationSeabed: 'sand' });
+  });
+
   it('never departs before the current clock', () => {
     const p = previewPlan(makeState({ clockMin: 11 * 60 }), content, plan([motor('r_base_bay_a')], 9));
     expect(p.departureMin).toBe(11 * 60);

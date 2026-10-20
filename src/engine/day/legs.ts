@@ -1,11 +1,12 @@
+import { rollChance } from '../chance';
 import { EngineError } from '../errors';
+import { buildConditionContext } from '../expr';
 import { appendLog } from '../log';
+import { injurySpec, sailBreakSpec } from '../odds';
 import { applyOutcome } from '../resources';
-import { chance } from '../rng';
 import { bearingDeg, dirToDeg, planLeg, type LegResult } from '../sailing';
 import { advanceClock, otherEnd, requirePoint, requireRoute, requireTemplate, round1 } from '../state';
-import type { Boat, Content, GameState, LegPlan } from '../types';
-import { maneuverRiskFactor } from '../voices';
+import type { Boat, Content, GameState, LegPlan, Route } from '../types';
 import { realWind } from '../weather';
 
 export interface LegRun { state: GameState; to: string; motorHours: number; sailHours: number }
@@ -30,22 +31,24 @@ export function startEngine(state: GameState, content: Content, boat: Boat): Gam
   return applyOutcome(s, boat, { cause: 'engine:start', pillar: 'boat', effect: { starter_bank: -b.electric.starterStartPct } });
 }
 
-function sailRisks(state: GameState, content: Content, boat: Boat, res: LegResult): { state: GameState; extraMin: number } {
+const REEF_MITIGATION_FLAG = 'briefing.loaded_lines';
+
+function sailRisks(state: GameState, content: Content, boat: Boat, route: Route, res: LegResult): { state: GameState; extraMin: number } {
   const b = content.balance;
-  const risk = maneuverRiskFactor(state.voices, b);
+  const ctx = buildConditionContext(state, content);
   let s = state;
   if (res.overpowered) {
     const mood = -round1(b.mood.overpowerPerHour * res.hours * (1 + avgSeasickness(s, content)));
     s = applyOutcome(s, boat, { cause: 'sail:overpowered', pillar: 'weather', effect: { mood } });
   }
-  const brk = chance(s.rng, res.breakChance * risk);
-  s = { ...s, rng: brk.next };
-  if (brk.value) s = applyOutcome(s, boat, { cause: 'sail:break', pillar: 'weather', effect: { damage: 'sail_torn' } });
+  const brk = rollChance(s.rng, sailBreakSpec(res.breakChance, b), ctx);
+  s = appendLog({ ...s, rng: brk.next }, { kind: 'roll', cause: `roll:sail_break:${route.id}`, pillar: 'weather', odds: brk.value.odds, data: { hit: brk.value.hit } });
+  if (brk.value.hit) s = applyOutcome(s, boat, { cause: 'sail:break', pillar: 'weather', effect: { damage: 'sail_torn' } });
   if (!res.forcedReef) return { state: s, extraMin: 0 };
-  const mitigation = s.flags['briefing.loaded_lines'] ? b.safety.mitigationFactor : 1;
-  const inj = chance(s.rng, b.sails.reefUnderwayInjuryChance * risk * mitigation);
-  s = applyOutcome({ ...s, rng: inj.next }, boat, { cause: 'sail:reef_underway', pillar: 'safety', effect: { fatigue: b.fatigue.maneuverError } });
-  if (inj.value) s = applyOutcome(s, boat, { cause: 'injury:reef_underway', pillar: 'safety', effect: { injury: true, mood: -b.mood.injury } });
+  const inj = rollChance(s.rng, injurySpec(b.sails.reefUnderwayInjuryChance, REEF_MITIGATION_FLAG, b), ctx);
+  s = appendLog({ ...s, rng: inj.next }, { kind: 'roll', cause: `roll:injury:reef:${route.id}`, pillar: 'safety', odds: inj.value.odds, data: { hit: inj.value.hit } });
+  s = applyOutcome(s, boat, { cause: 'sail:reef_underway', pillar: 'safety', effect: { fatigue: b.fatigue.maneuverError } });
+  if (inj.value.hit) s = applyOutcome(s, boat, { cause: 'injury:reef_underway', pillar: 'safety', effect: { injury: true, mood: -b.mood.injury } });
   return { state: s, extraMin: b.sails.reefUnderwayMin };
 }
 
@@ -74,7 +77,7 @@ export function runLeg(state: GameState, content: Content, boat: Boat, leg: LegP
     s = applyOutcome(s, boat, { cause: 'consumption:fuel', pillar: 'boat', effect: { fuel: -round1(res.hours * b.fuel.motorLph) } });
     if (s.resources.fuelL <= 0) s = applyOutcome(s, boat, { cause: 'zero:fuel', pillar: 'boat', effect: {} });
   } else {
-    const risks = sailRisks(s, content, boat, res);
+    const risks = sailRisks(s, content, boat, route, res);
     s = risks.state;
     extraMin = risks.extraMin;
   }

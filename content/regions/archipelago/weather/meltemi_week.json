@@ -1,0 +1,13 @@
+{
+  "id": "meltemi_week",
+  "name": { "ru": "Неделя мельтеми", "en": "Meltemi week" },
+  "afternoonFactor": 1.25,
+  "days": [
+    { "day": 1, "windKn": 12, "gustKn": 18, "dir": "NW", "frontChance": 0.05, "barometerHpa": 1014 },
+    { "day": 2, "windKn": 14, "gustKn": 20, "dir": "NW", "frontChance": 0.1, "barometerHpa": 1013 },
+    { "day": 3, "windKn": 16, "gustKn": 24, "dir": "NW", "frontChance": 0.45, "barometerHpa": 1010 },
+    { "day": 4, "windKn": 15, "gustKn": 22, "dir": "NW", "frontChance": 0.4, "barometerHpa": 1009 },
+    { "day": 5, "windKn": 13, "gustKn": 19, "dir": "NW", "frontChance": 0.15, "barometerHpa": 1012 },
+    { "day": 6, "windKn": 14, "gustKn": 21, "dir": "NW", "frontChance": 0.2, "barometerHpa": 1013 }
+  ]
+}

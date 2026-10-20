@@ -1,23 +1,26 @@
+import { rollChance } from './chance';
 import { EngineError } from './errors';
 import { buildConditionContext, evaluateAll, type CondContext } from './expr';
 import { appendLog } from './log';
+import { eventTriggerSpec } from './odds';
 import { sayDialogue } from './promises';
 import { applyOutcomes } from './resources';
-import { chance, type RngResult } from './rng';
+import type { RngResult } from './rng';
 import { requireBoat, requireEvent } from './state';
-import type { Balance, Content, EventOption, EventPhase, GameEvent, GameState, Outcome, Pillar, VoiceId } from './types';
+import { grantXp } from './xp';
+import { TRAINABLE_VOICES, type Balance, ChanceValue, Content, EventOption, EventPhase, GameEvent, GameState, Outcome, TrainableVoice, VoiceId } from './types';
 import { audibleLines, checkChance, rollCheck } from './voices';
+
+export { pillarWeight } from './odds';
+
+const isTrainable = (v: VoiceId): v is TrainableVoice => (TRAINABLE_VOICES as readonly string[]).includes(v);
 
 export interface EventView {
   id: string;
   scene: string;
   text: string;
   voices: Array<{ voice: VoiceId; text: string }>;
-  options: Array<{ id: string; text: string; available: boolean; chance: number | null }>;
-}
-
-export function pillarWeight(day: number, pillar: Pillar, b: Balance): number {
-  return b.drama.pillarWeightByDay[String(day)]?.[pillar] ?? 1;
+  options: Array<{ id: string; text: string; available: boolean; chance: ChanceValue | null }>;
 }
 
 export function eligibleEvents(content: Content, state: GameState, phase: EventPhase, ctx: CondContext): GameEvent[] {
@@ -31,9 +34,9 @@ export function eligibleEvents(content: Content, state: GameState, phase: EventP
 export function rollEvent(rng: number, content: Content, state: GameState, phase: EventPhase, ctx: CondContext): RngResult<GameEvent | null> {
   let next = rng;
   for (const e of eligibleEvents(content, state, phase, ctx)) {
-    const r = chance(next, Math.min(1, e.trigger.chance * pillarWeight(state.day, e.pillar, content.balance)));
+    const r = rollChance(next, eventTriggerSpec(e, state.day, content.balance), ctx);
     next = r.next;
-    if (r.value) return { value: e, next };
+    if (r.value.hit) return { value: e, next };
   }
   return { value: null, next };
 }
@@ -47,13 +50,13 @@ export function resolveOption(
   state: GameState,
   ctx: CondContext,
   b: Balance,
-): RngResult<{ outcomes: Outcome[]; check: { success: boolean; chance: number } | null }> {
+): RngResult<{ outcomes: Outcome[]; check: { success: boolean; odds: ChanceValue } | null }> {
   const o = event.options.find((x) => x.id === optionId);
   if (!o) throw new EngineError('NOT_FOUND', `Option "${optionId}" not found in event ${event.id}`);
   if (!optionAvailable(o, ctx)) throw new EngineError('INVALID_INPUT', `Option "${optionId}" is not available now`);
   const cause = `event:${event.id}:${o.id}`;
   if (o.check) {
-    const r = rollCheck(rng, state.voices[o.check.voice], o.check.difficulty, state.resources.fatigue, b);
+    const r = rollCheck(rng, o.check, ctx, b);
     const tag = r.value.success ? 'success' : 'fail';
     const effect = (r.value.success ? o.success : o.fail) ?? {};
     return { value: { outcomes: [{ cause: `${cause}:${tag}`, pillar: event.pillar, effect }], check: r.value }, next: r.next };
@@ -67,12 +70,12 @@ export function presentEvent(event: GameEvent, state: GameState, ctx: CondContex
     id: event.id,
     scene: event.scene,
     text: event.text[lang],
-    voices: audibleLines(event.voices, state.voices).map((l) => ({ voice: l.voice, text: l.text[lang] })),
+    voices: audibleLines(event.voices, state.voices, ctx).map((l) => ({ voice: l.voice, text: l.text[lang] })),
     options: event.options.map((o) => ({
       id: o.id,
       text: o.text[lang],
       available: optionAvailable(o, ctx),
-      chance: o.check ? checkChance(state.voices[o.check.voice], o.check.difficulty, state.resources.fatigue, b) : null,
+      chance: o.check ? checkChance(o.check, ctx, b) : null,
     })),
   };
 }
@@ -94,10 +97,20 @@ export function resolvePendingEvent(state: GameState, content: Content, optionId
   const ev = requireEvent(content, id);
   const r = resolveOption(state.rng, ev, optionId, state, buildConditionContext(state, content), content.balance);
   let s: GameState = appendLog({ ...state, rng: r.next, eventQueue: state.eventQueue.slice(1) }, { kind: 'decision', cause: `choice:${ev.id}:${optionId}`, pillar: ev.pillar });
-  if (r.value.check) {
-    s = appendLog(s, { kind: 'check', cause: `check:${ev.id}:${optionId}`, pillar: ev.pillar, data: { success: r.value.check.success, chance: r.value.check.chance } });
+  const check = r.value.check;
+  if (check) {
+    s = appendLog(s, {
+      kind: 'roll', cause: `roll:check:${ev.id}:${optionId}`, pillar: ev.pillar, odds: check.odds,
+      data: { hit: check.success, success: check.success, chance: check.odds.value },
+    });
   }
-  s = applyOutcomes(s, requireBoat(content, s), r.value.outcomes);
+  const option = ev.options.find((x) => x.id === optionId);
+  if (check && option?.check) {
+    const xp = option.xp ?? (check.success ? content.balance.voices.checkXp.success : content.balance.voices.checkXp.fail);
+    const voice = option.check.voice;
+    if (isTrainable(voice)) s = grantXp(s, { [voice]: xp }, `roll:check:${ev.id}:${optionId}`, content.balance);
+  }
+  s = applyOutcomes(s, requireBoat(content, s), r.value.outcomes, content.balance);
   const context = ev.trigger.phase === 'morning' ? 'morning' : 'evening';
   for (const o of r.value.outcomes) if (o.effect.promise) s = sayDialogue(s, content, o.effect.promise, context);
   return s;

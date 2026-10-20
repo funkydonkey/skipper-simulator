@@ -21,12 +21,56 @@ describe('save slot', () => {
     storage.setItem(SAVE_KEY, '{not json');
     expect(readSave(storage, content).kind).toBe('corrupt');
     const game = gameAt('morning');
-    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...game, version: 2 } }));
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...game, version: 1 } }));
     expect(readSave(storage, content).kind).toBe('corrupt');
     storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...game, boatId: 'ghost_boat' } }));
     expect(readSave(storage, content).kind).toBe('corrupt');
     clearSave(storage);
     expect(readSave(storage, content).kind).toBe('none');
+  });
+
+  it('reports a legacy v1 slot once and removes it', () => {
+    const storage = memoryStorage();
+    storage.setItem('skipper.save.v1', '{"anything":1}');
+    expect(readSave(storage, content)).toEqual({ kind: 'legacy' });
+    expect(storage.getItem('skipper.save.v1')).toBeNull();
+    expect(readSave(storage, content).kind).toBe('none');
+  });
+
+  it('prefers a v2 slot over a legacy one', () => {
+    const storage = memoryStorage();
+    storage.setItem('skipper.save.v1', '{}');
+    writeSave(storage, gameAt('morning'), NOW);
+    expect(readSave(storage, content).kind).toBe('ok');
+    expect(storage.getItem('skipper.save.v1'), 'the legacy key is cleared even when a v2 slot exists').toBeNull();
+  });
+
+  it('round-trips expectations, weather, dayFacts, voiceXp and roll odds', () => {
+    const storage = memoryStorage();
+    const base = gameAt('morning');
+    const game = {
+      ...base,
+      expectations: [{ id: 'x1', dialogueId: 'd', spec: { kind: 'depart_by' as const, hour: 9 }, strength: 2, createdDay: 1, dueDay: 2, status: 'open' as const }],
+      weather: { day: 1, forecastKn: 10, forecastGustKn: 14, forecastDir: 'NW' as const, barometerHpa: 1012, front: false, frontAddKn: 0, frontDir: 'N' as const, barometerTrendHpa: -1, signalsVisible: true },
+      dayFacts: { day: 1, departureHour: 9, arrivalHour: null, arrivalPointKind: null, mooring: null, activities: ['swim' as const], motorHours: 1, sailHours: 2, autopilotHours: 0, shower: 'normal' as const },
+      log: [{ day: 1, clockMin: 540, kind: 'roll' as const, cause: 'c', odds: { value: 0.3, parts: [
+        { source: 'base', delta: 0.3 }, { source: 'wind', delta: 0.1, kind: 'add' as const }, { source: 'voice.caution', delta: -0.1, kind: 'mul' as const, factor: 0.75 },
+      ] } }],
+    };
+    writeSave(storage, game, NOW);
+    expect(readSave(storage, content)).toEqual({ kind: 'ok', savedAt: NOW.toISOString(), game });
+  });
+
+  it.each([
+    ['malformed expectation', (g: object) => ({ ...g, expectations: [{ id: 'x' }] })],
+    ['malformed weather', (g: object) => ({ ...g, weather: { day: 1 } })],
+    ['malformed dayFacts', (g: object) => ({ ...g, dayFacts: 'nope' })],
+    ['missing voiceXp', (g: object) => ({ ...g, voiceXp: { order: 1 } })],
+    ['malformed odds', (g: object) => ({ ...g, log: [{ day: 1, clockMin: 0, kind: 'roll', cause: 'c', odds: { value: 1, parts: [{ source: 1 }] } }] })],
+  ])('rejects a v2 slot with %s as corrupt', (_n, mutate) => {
+    const storage = memoryStorage();
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: mutate(gameAt('morning')) }));
+    expect(readSave(storage, content).kind).toBe('corrupt');
   });
 
   it('survives storage that throws (private mode, quota)', () => {

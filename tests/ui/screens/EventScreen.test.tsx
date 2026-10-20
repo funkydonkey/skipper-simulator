@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { buildConditionContext, presentEvent } from '../../../src/engine';
 import { content, gameAt, withEvent } from '../fixtures';
 import { renderShell } from '../render';
 
@@ -14,6 +15,32 @@ describe('EventScreen', () => {
     expect(screen.getByText(checkEvent.text.ru.split(/(?<=[.!?…])\s/)[0]!.trim(), { exact: false })).toBeInTheDocument();
     for (const o of checkEvent.options) expect(screen.getByRole('button', { name: esc(o.text.ru) })).toBeInTheDocument();
     expect(screen.getAllByText(/\d+%/).length).toBeGreaterThan(0);
+  });
+
+  it('shows each check as a badge with the engine odds and a breakdown on tap', async () => {
+    const game = withEvent(gameAt('evening'), checkEvent.id);
+    const view = presentEvent(checkEvent, game, buildConditionContext(game, content), content.balance);
+    const idx = view.options.findIndex((o) => o.chance !== null);
+    const pct = Math.round(view.options[idx]!.chance!.value * 100);
+    const r = renderShell(game);
+    const badge = screen.getAllByRole('button', { expanded: false }).find((b) => b.textContent?.endsWith(`· ${pct}%`))!;
+    expect(badge).toBeDefined();
+    await r.user.click(badge);
+    expect(badge).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText(/^база \d+%$/)).toBeVisible();
+    expect(r.currentScreen()).toBe('event');
+  });
+
+  it('describes each check option with its odds badge', () => {
+    const game = withEvent(gameAt('evening'), checkEvent.id);
+    const view = presentEvent(checkEvent, game, buildConditionContext(game, content), content.balance);
+    renderShell(game);
+    for (const [i, o] of checkEvent.options.entries()) {
+      const option = screen.getByRole('button', { name: esc(o.text.ru) });
+      const chance = view.options[i]!.chance;
+      if (o.check && chance !== null) expect(option).toHaveAccessibleDescription(new RegExp(`· ${Math.round(chance.value * 100)}%$`));
+      else expect(option).not.toHaveAttribute('aria-describedby');
+    }
   });
 
   it('resolves a choice, shows its outcome, then returns to the evening', async () => {

@@ -76,7 +76,7 @@ function scoreEffect(e: Effect | undefined): number {
 
 function scoreOption(o: EventOption, s: GameState, c: Content): number {
   if (!o.check) return scoreEffect(o.effects);
-  const p = checkChance(s.voices[o.check.voice], o.check.difficulty, s.resources.fatigue, c.balance);
+  const p = checkChance(o.check, buildConditionContext(s, c), c.balance).value;
   return p * scoreEffect(o.success) + (1 - p) * scoreEffect(o.fail);
 }
 

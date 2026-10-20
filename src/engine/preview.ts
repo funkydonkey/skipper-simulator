@@ -1,8 +1,11 @@
+import { evaluateChance } from './chance';
 import { EngineError } from './errors';
+import { buildConditionContext, type CondContext } from './expr';
+import { anchorFailSpec, marinaRefusalSpec, sailBreakSpec } from './odds';
 import { bearingDeg, dirToDeg, planLeg } from './sailing';
 import { otherEnd, requireBoat, requirePoint, requireRoute, requireTemplate, round1 } from './state';
 import { restHours } from './time';
-import type { Content, DayPlan, DayWeather, Dir8, GameState, LegPlan, MapPoint, PointOfSail, RouteFeature } from './types';
+import type { ChanceValue, Content, DayPlan, DayWeather, Dir8, GameState, LegPlan, MapPoint, PointOfSail, RouteFeature, Seabed } from './types';
 import { cautionTimeFactor } from './voices';
 import { realWind } from './weather';
 
@@ -21,6 +24,8 @@ export interface LegPreview {
   hours: number;
   overpowered: boolean;
   forcedReef: boolean;
+  /** Odds of tearing a sail on this leg (0 under motor). */
+  breakChance: ChanceValue;
 }
 
 export interface PlanPreview {
@@ -34,9 +39,14 @@ export interface PlanPreview {
   marinaLate: boolean;
   fuelNeededL: number;
   restHours: number;
+  /** Refusal odds at a destination marina or quay; null for a bay or when staying. */
+  marinaRefusal: ChanceValue | null;
+  /** Per-attempt anchor-drag odds at a destination bay; null otherwise. */
+  anchorFail: ChanceValue | null;
+  destinationSeabed: Seabed;
 }
 
-interface Ctx { state: GameState; content: Content; weather: DayWeather; seesLocal: boolean }
+interface Ctx { state: GameState; content: Content; weather: DayWeather; seesLocal: boolean; cond: CondContext }
 
 function legPreview(ctx: Ctx, leg: LegPlan, from: string, clockMin: number): LegPreview {
   const { content, state } = ctx;
@@ -57,6 +67,7 @@ function legPreview(ctx: Ctx, leg: LegPlan, from: string, clockMin: number): Leg
     windKn: wind.windKn, windDir: wind.dir, localEffectKnown: ctx.seesLocal,
     pos: res.pos, speedKn: res.speedKn, hours: res.hours,
     overpowered: leg.mode === 'sail' && res.overpowered, forcedReef: leg.mode === 'sail' && res.forcedReef,
+    breakChance: evaluateChance(sailBreakSpec(leg.mode === 'sail' ? res.breakChance : 0, b), ctx.cond),
   };
 }
 
@@ -78,17 +89,30 @@ function mooringMinutes(dest: MapPoint, late: boolean, state: GameState, content
   return base * cautionTimeFactor(state.voices.caution, content.balance);
 }
 
+/** Odds the captain can foresee at the destination, on arrival at `clockMin`. */
+function arrivalOdds(ctx: Ctx, dest: MapPoint, clockMin: number, marinaLate: boolean): Pick<PlanPreview, 'marinaRefusal' | 'anchorFail'> {
+  const b = ctx.content.balance;
+  if (dest.kind !== 'bay') {
+    return { marinaRefusal: evaluateChance(marinaRefusalSpec(b), { ...ctx.cond, 'marina.late': marinaLate }), anchorFail: null };
+  }
+  const wind = realWind(ctx.weather, 1, clockMin / 60, requireTemplate(ctx.content, ctx.state.weatherTemplateId), b);
+  const night = clockMin >= b.time.sunsetHour * 60;
+  return { marinaRefusal: null, anchorFail: evaluateChance(anchorFailSpec(b), { ...ctx.cond, 'place.seabed': dest.seabed, wind: wind.windKn, night }) };
+}
+
 /** What the captain can foresee for a plan. Pure: no RNG, no state change. */
 export function previewPlan(state: GameState, content: Content, plan: DayPlan): PlanPreview {
   if (!state.weather) throw new EngineError('WRONG_PHASE', 'No weather for today: call startDay first');
   const b = content.balance;
   const weather = { ...state.weather, front: state.weather.front && state.weather.signalsVisible };
-  const ctx: Ctx = { state, content, weather, seesLocal: state.voices.sea_sense >= b.voices.seaSenseSignalLevel };
+  const seesLocal = state.voices.sea_sense >= b.voices.seaSenseSignalLevel;
+  const ctx: Ctx = { state, content, weather, seesLocal, cond: buildConditionContext(state, content) };
   if (plan.legs.length === 0) {
     const swims = swimsBeforeSunset(state.clockMin, plan.swimStops, content);
     return {
       legs: [], departureMin: null, arrivalMin: null, destinationId: state.locationId, swimStops: swims.count,
       arrivalAfterSunset: false, marinaLate: false, fuelNeededL: 0, restHours: restHours(swims.clockMin, b),
+      marinaRefusal: null, anchorFail: null, destinationSeabed: requirePoint(content, state.locationId).seabed,
     };
   }
   const departureMin = Math.max(state.clockMin, Math.round(plan.departureHour * 60));
@@ -112,5 +136,7 @@ export function previewPlan(state: GameState, content: Content, plan: DayPlan): 
     marinaLate,
     fuelNeededL: round1(motorHours * b.fuel.motorLph),
     restHours: restHours(arrivalMin, b),
+    ...arrivalOdds(ctx, dest, swims.clockMin, marinaLate),
+    destinationSeabed: dest.seabed,
   };
 }

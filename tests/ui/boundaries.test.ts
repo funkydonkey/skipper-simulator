@@ -16,7 +16,7 @@ describe('module boundaries', () => {
   });
 
   it('UI imports content only through src/content/parse.ts', () => {
-    const offenders = files('src/ui').filter((f) => /from '(\.\.\/)+content\/(?!parse'|\w+\.json')/.test(readFileSync(f, 'utf8')));
+    const offenders = files('src/ui').filter((f) => /from '(\.\.\/)+content\/(?!parse'|[\w/-]+\.json')/.test(readFileSync(f, 'utf8')));
     expect(offenders).toEqual([]);
   });
 

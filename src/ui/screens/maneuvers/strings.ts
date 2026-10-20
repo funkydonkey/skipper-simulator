@@ -4,6 +4,7 @@ export const MANEUVERS = dict({
   title: { ru: 'Команды на манёвры', en: 'Commands for the maneuvers' },
   subtitle: { ru: 'В каком порядке вы отдадите команды? Нажимайте шаги по очереди.', en: 'In what order will you give the commands? Tap the steps one by one.' },
   fallback: { ru: 'Если в марине не будет мест', en: 'If the marina has no berths' },
+  risk: { ru: 'Если ошибёшься — риск травмы до', en: 'If you get it wrong — injury risk up to' },
   pool: { ru: 'Шаги', en: 'Steps' },
   order: { ru: 'Ваш порядок', en: 'Your order' },
   remove: { ru: 'Убрать: {step}', en: 'Remove: {step}' },

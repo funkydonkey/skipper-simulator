@@ -66,11 +66,14 @@ export interface Effect {
   signal?: string;
   /** Dialogue id: creates an expectation (handled by events flow, Task 12). */
   promise?: string;
+  /** Extra voice XP, granted by `grantXp` (exempt voices and voices at max level are skipped). */
+  xp?: Partial<Record<TrainableVoice, number>>;
 }
 
-export interface Outcome { cause: string; pillar?: Pillar; effect: Effect }
+/** `saved`: euros the economist took off a money spend; logged as a separate info entry. */
+export interface Outcome { cause: string; pillar?: Pillar; effect: Effect; saved?: number }
 
-export type LogKind = 'decision' | 'effect' | 'event' | 'signal' | 'check' | 'info';
+export type LogKind = 'decision' | 'effect' | 'event' | 'signal' | 'info' | 'roll';
 export interface LogEntry {
   day: number;
   clockMin: number;
@@ -79,6 +82,8 @@ export interface LogEntry {
   pillar?: Pillar;
   delta?: Partial<Record<keyof Resources, number>>;
   data?: Record<string, string | number | boolean>;
+  /** Chance of a `roll` entry, with its per-source breakdown. */
+  odds?: ChanceValue;
 }
 
 // ---------- content ----------
@@ -132,7 +137,6 @@ export interface MapPoint {
   x: number;
   y: number;
   seabed: Seabed;
-  depthM: number;
   /** 0 = fully exposed to wind FROM this direction, 1 = fully sheltered. */
   shelter: Record<Dir8, number>;
   priceEur: number;
@@ -197,8 +201,8 @@ export interface Dialogue {
   expectation: ExpectationSpec;
 }
 
-export interface EventTrigger { phase: EventPhase; conditions: string[]; chance: number; once?: boolean }
-export interface VoiceLine { voice: VoiceId; min_level: number; text: LocalizedText }
+export interface EventTrigger { phase: EventPhase; conditions: string[]; chance: ChanceInput; once?: boolean }
+export interface VoiceLine { voice: VoiceId; min_level: number; text: LocalizedText; when?: string }
 export interface VoiceCheck { voice: VoiceId; difficulty: number }
 /** Either `check + success + fail`, or `effects`. Option[0] is the instinctive newbie choice. */
 export interface EventOption {
@@ -209,6 +213,8 @@ export interface EventOption {
   success?: Effect;
   fail?: Effect;
   effects?: Effect;
+  /** Overrides the default check XP (balance.voices.checkXp) for the checked voice. */
+  xp?: number;
 }
 export interface GameEvent {
   id: string;
@@ -230,6 +236,8 @@ export interface ManeuverError {
   injuryChance: number;
   /** Flag (e.g. `briefing.loaded_lines`) that scales effect and injury chance by balance.safety.mitigationFactor. */
   mitigatedBy?: string;
+  /** Overrides balance.voices.maneuverErrorXp for this error. */
+  xp?: number;
   text: LocalizedText;
 }
 export interface Maneuver {
@@ -253,7 +261,7 @@ export interface DebriefRule {
 
 export interface Balance {
   start: { moneyEur: number; mood: number; fatigue: number; gasPct: number; serviceBankPct: number; starterBankPct: number; hour: number; crewSize: number };
-  voices: { points: number; maxLevel: number; prideLevel: number; crewVoiceLevel: number; seaSenseSignalLevel: number; mechanicExactLevel: number; cautionRiskPerLevel: number; cautionTimePerLevel: number; orderRiskPerLevel: number };
+  voices: { points: number; maxLevel: number; prideLevel: number; crewVoiceLevel: number; seaSenseSignalLevel: number; seaSenseChanceLevel: number; seaSenseTimingLevel: number; economistDiscountPerLevel: number; mechanicExactLevel: number; cautionRiskPerLevel: number; cautionTimePerLevel: number; orderRiskPerLevel: number; xpToLevel: number[]; xpExempt: VoiceId[]; checkXp: { success: number; fail: number }; maneuverErrorXp: number; cleanManeuverXp: number };
   water: { perPersonPerDayL: Record<ShowerDiscipline, number>; zeroMoodPenalty: number };
   fuel: { motorLph: number; priceEurPerL: number };
   electric: { fridgeAhPerDay: number; pumpsAhPerDay: number; electricToiletAhPerDay: number; plotterAhPerHour: number; autopilotAhPerHour: number; engineChargeAhPerHour: number; solarAhPerWattDay: number; starterStartPct: number; starterMinPct: number; zeroServiceMoodPenalty: number };
@@ -312,9 +320,14 @@ export interface Balance {
   deposit: { damageCostEur: Record<string, number>; defaultDamageEur: number };
   grading: { crewGoodMood: number; crewOkMood: number; boatOkLossEur: number };
   drama: { pillarWeightByDay: Record<string, Partial<Record<Pillar, number>>> };
+  simTargets: { levelGain: Record<'newbie' | 'expert', [number, number]>; weekInjuryRate: Record<'newbie' | 'expert', [number, number]>; zeroFireAllow: string[] };
 }
 
+/** Region pack header plus its world; Content exposes the header as `region` and the world as `map`/`routes`. */
+export interface Region { id: string; name: LocalizedText; map: MapPoint[]; routes: Route[] }
+
 export interface Content {
+  region: { id: string; name: LocalizedText };
   boats: Boat[];
   map: MapPoint[];
   routes: Route[];
@@ -388,7 +401,7 @@ export interface DayFacts {
 }
 
 export interface GameState {
-  version: 1;
+  version: 2;
   seed: number;
   rng: number;
   lang: Lang;
@@ -399,6 +412,7 @@ export interface GameState {
   locationId: string;
   boatId: string | null;
   voices: Record<VoiceId, number>;
+  voiceXp: Record<TrainableVoice, number>;
   resources: Resources;
   flags: Record<string, boolean>;
   damages: string[];
@@ -413,3 +427,18 @@ export interface GameState {
   dayFacts: DayFacts | null;
   returnedOnTime: boolean | null;
 }
+
+export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn'] as const;
+export type ChanceLabel = (typeof CHANCE_LABELS)[number];
+/**
+ * add: value += add * scale. mul: always a delta factor, value *= (1 + mul * scale); write deltas such as (weight - 1).
+ * scale is ctx[per] (a numeric context key, e.g. 'voice.caution', 'fatigue'), or 1 without `per`.
+ * All add mods apply before all mul mods. `if` gates the mod.
+ */
+export interface ChanceMod { if?: string; per?: string; add?: number; mul?: number; label?: ChanceLabel }
+export interface ChanceSpec { base: number; mods?: ChanceMod[]; min?: number; max?: number }
+export type ChanceInput = number | ChanceSpec;
+/** source: a ChanceLabel, or the `per` key (e.g. 'voice.caution') when no label is given. */
+/** One step of a chance. `add` parts move it by `delta`; `mul` parts scale it by `factor` (delta = value * (factor - 1)). Base and clamp have no kind. */
+export interface ChancePart { source: string; delta: number; kind?: 'add' | 'mul'; factor?: number }
+export interface ChanceValue { value: number; parts: ChancePart[] }

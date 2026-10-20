@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import type { ManeuverKind } from '../../../engine';
+import { maneuverRisk, type ManeuverKind } from '../../../engine';
 import { Button } from '../../components/Button';
+import { ChanceBadge } from '../../components/ChanceBadge';
 import { ScreenFrame } from '../../components/ScreenFrame';
 import { useAct, useGame, useSession, useT } from '../../session/SessionContext';
 import type { ManeuverOrders } from '../../session/types';
@@ -36,12 +37,15 @@ export function ManeuversScreen() {
         </>
       )}
     >
-      {specs.map((s, i) => (
+      {specs.map((s, i) => {
+        const risk = maneuverRisk(game, content, s.kind);
+        return (
         <section key={s.kind} className={styles.episode} data-kind={s.kind}>
           <header className={styles.head}>
             <ManeuverSketch kind={s.kind} />
             <div>
               <h2>{s.maneuver.title[lang]}</h2>
+              {risk && <div className={styles.risk}>{t('risk')} <ChanceBadge odds={risk} voices={game.voices} /></div>}
               {s.fallback && <p className={styles.fallback}>{t('fallback')}</p>}
             </div>
           </header>
@@ -53,7 +57,8 @@ export function ManeuversScreen() {
             {...(session.ui.lastOrders[s.kind] ? { lastOrder: session.ui.lastOrders[s.kind] } : {})}
           />
         </section>
-      ))}
+        );
+      })}
     </ScreenFrame>
   );
 }

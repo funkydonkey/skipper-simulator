@@ -42,6 +42,15 @@ export function validateConditions(c: Content): ContentError[] {
   };
   c.events.forEach((ev, i) => {
     ev.trigger.conditions.forEach((src, j) => check(src, `events[${i}].trigger.conditions[${j}]`));
+    const chance = ev.trigger.chance;
+    if (typeof chance !== 'number') {
+      (chance.mods ?? []).forEach((m, j) => {
+        const path = `events[${i}].trigger.chance.mods[${j}]`;
+        if (m.if) check(m.if, `${path}.if`);
+        if (m.per && !known.has(m.per)) errors.push({ file: 'cross', path: `${path}.per`, message: `Unknown identifier "${m.per}"` });
+      });
+    }
+    ev.voices.forEach((l, j) => { if (l.when) check(l.when, `events[${i}].voices[${j}].when`); });
     ev.options.forEach((o, j) => (o.requires ?? []).forEach((src, k) => check(src, `events[${i}].options[${j}].requires[${k}]`)));
   });
   c.maneuvers.forEach((m, i) => m.errors.forEach((e, j) => {

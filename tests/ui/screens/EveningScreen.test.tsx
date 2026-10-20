@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type { GameState } from '../../../src/engine';
 import { gameAt } from '../fixtures';
 import { renderShell } from '../render';
 
@@ -21,5 +22,30 @@ describe('EveningScreen', () => {
     await r.user.click(screen.getByRole('button', { name: 'Отбой' }));
     expect(r.currentScreen()).toBe('morning');
     expect(r.session().game!.day).toBe(2);
+  });
+
+  const xpEntry = (game: GameState, cause: string, xp: number) => ({ day: game.day, clockMin: 600, kind: 'info' as const, cause, data: { xp } });
+
+  it('hides the growth block when nothing was learned', () => {
+    renderShell({ ...gameAt('evening'), log: [] });
+    expect(screen.queryByText('Чему научил день')).not.toBeInTheDocument();
+  });
+
+  it('shows today\'s xp by voice and previews the level-up', () => {
+    const base = gameAt('evening');
+    const game: GameState = {
+      ...base,
+      voices: { ...base.voices, mechanic: 1 },
+      voiceXp: { ...base.voiceXp, mechanic: 10 },
+      log: [xpEntry(base, 'xp:mechanic:order:wrong:anchoring:x', 3), { ...xpEntry(base, 'xp:order:order:ok:anchoring', 1), day: base.day + 5 }],
+    };
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    renderShell(game);
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
+    expect(screen.getByText('Чему научил день')).toBeInTheDocument();
+    expect(screen.getByText(/\+3 Механик/)).toBeInTheDocument();
+    expect(screen.queryByText(/\+1 Порядок/)).not.toBeInTheDocument();
+    expect(screen.getByText('⬆ Механик 1 → 2')).toBeInTheDocument();
   });
 });

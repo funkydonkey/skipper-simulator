@@ -8,3 +8,7 @@
 .expect h2 { font-size: var(--text-lg); margin: 0 0 var(--space-2); }
 .expect ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .bubble { display: inline-block; padding: var(--space-2) var(--space-3); background: var(--ochre-200); color: var(--ink); border-radius: 12px; font-family: var(--font-hand); font-size: var(--text-lg); }
+.growth { background: var(--panel); border-radius: var(--radius); padding: var(--space-3) var(--space-4); box-shadow: var(--shadow); margin: var(--space-4) 0; }
+.growthTitle { font-size: var(--text-lg); margin: 0 0 var(--space-2); }
+.growthList { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); overflow-wrap: anywhere; }
+.levelUp { color: var(--ok); font-weight: 700; }

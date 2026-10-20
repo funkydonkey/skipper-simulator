@@ -16,6 +16,24 @@ describe('PlanningScreen', () => {
     expect(screen.queryByText(/Приход около/)).toBeNull();
   });
 
+  it('previews seabed and anchor odds for a bay, and sail damage risk under sail', async () => {
+    const r = renderShell(atBase());
+    await r.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+    await r.user.click(screen.getByLabelText('Под парусом'));
+    expect(screen.getByText(/Грунт: /)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Якорь не возьмёт \(за попытку\) · \d+%$/ })).toBeInTheDocument();
+    expect(screen.queryByText(/Марина может отказать/)).toBeNull();
+    expect(screen.queryByText(/Риск порвать парус/)).toBeNull();
+  });
+
+  it('shows the sail damage risk when the wind is strong', async () => {
+    const base = atBase();
+    const r = renderShell({ ...base, weather: { ...base.weather!, forecastKn: 30, forecastGustKn: 36 } });
+    await r.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+    await r.user.click(screen.getByLabelText('Под парусом'));
+    expect(screen.getByText(/Риск порвать парус/)).toBeInTheDocument();
+  });
+
   it('a stay day goes straight to the evening', async () => {
     const r = renderShell(atBase());
     await r.user.click(screen.getByRole('button', { name: 'Провести день здесь' }));
@@ -57,5 +75,19 @@ describe('PlanningScreen', () => {
     expect(screen.getByText("Can't estimate this plan: this is not possible right now")).toBeInTheDocument();
     r.dispatch({ type: 'draft_plan', plan: { departureHour: 3, legs: [], swimStops: 0, shower: 'normal', autopilot: false } });
     expect(screen.getByRole('alert')).not.toHaveTextContent(/[А-Яа-яЁё]/);
+  });
+
+  it('shows Sea Sense forecast insight by level', () => {
+    const base = atBase();
+    const withSense = (level: number, front: boolean) => ({ ...base, voices: { ...base.voices, sea_sense: level }, weather: { ...base.weather!, front } });
+    const low = renderShell(withSense(2, true));
+    expect(screen.queryByText(/Чутьё: /)).toBeNull();
+    low.unmount();
+    const mid = renderShell(withSense(3, true));
+    expect(screen.getByText(/^Чутьё: шанс фронта \d+%$/)).toBeInTheDocument();
+    expect(screen.queryByText(/Чутьё: фронт после/)).toBeNull();
+    mid.unmount();
+    renderShell(withSense(4, true));
+    expect(screen.getByText('Чутьё: фронт после 13:00')).toBeInTheDocument();
   });
 });

@@ -40,6 +40,7 @@ export function MenuScreen() {
           {t('continue')}
         </Button>
         {save.kind === 'ok' && <p className={styles.saved}>{t('savedAt', { day: save.game.day, when })}</p>}
+        {save.kind === 'legacy' && <p className={styles.corrupt}>{t('legacySave')}</p>}
         {save.kind === 'corrupt' && (
           <p className={styles.corrupt}>
             {t('corrupt')}{' '}
