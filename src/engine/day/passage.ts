@@ -4,6 +4,7 @@ import { appendLog } from '../log';
 import { maneuverForKind, validateOrder } from '../maneuver';
 import { applyOutcome } from '../resources';
 import { advanceClock, otherEnd, requireBoat, requirePoint, requireRoute, round1, round2 } from '../state';
+import { addWear } from '../systems';
 import { restHours } from '../time';
 import { MANEUVER_KINDS, type Activity, type Balance, type Boat, type Content, type DayPlan, type EventPhase, type GameState, type ManeuverKind } from '../types';
 import { arrive, runManeuver } from './arrival';
@@ -15,7 +16,7 @@ const GENOAS = ['full', 'partial'];
 const COURSES = ['direct', 'detour'];
 const REEFS = [0, 1, 2];
 
-interface DaySummary { moving: boolean; departureHour: number | null; mooring: 'anchor' | 'berth'; motor: number; sail: number; legHours: number; swum: number }
+interface DaySummary { moving: boolean; departureHour: number | null; mooring: 'anchor' | 'berth'; motor: number; sail: number; legHours: number; swum: number; maxWind: number }
 
 function invalid(msg: string): never {
   throw new EngineError('INVALID_INPUT', msg);
@@ -83,7 +84,8 @@ function swimStops(state: GameState, boat: Boat, n: number, b: Balance): { state
 function settleDay(state: GameState, content: Content, boat: Boat, plan: DayPlan, d: DaySummary): GameState {
   const b = content.balance;
   const point = requirePoint(content, state.locationId);
-  const s = d.moving ? applyOutcome(state, boat, { cause: 'fatigue:passage', pillar: 'time', effect: { fatigue: round1(d.legHours * b.fatigue.passagePerHour) } }) : state;
+  const tired = d.moving ? applyOutcome(state, boat, { cause: 'fatigue:passage', pillar: 'time', effect: { fatigue: round1(d.legHours * b.fatigue.passagePerHour) } }) : state;
+  const s = addWear(addWear(tired, content, 'motor_hour', round2(d.motor)), content, 'sail_hour', round2(d.sail));
   const activities: Activity[] = [];
   if (d.swum > 0) activities.push('swim');
   if (point.services.beach && restHours(state.clockMin, b) > 0) activities.push('beach');
@@ -100,6 +102,7 @@ function settleDay(state: GameState, content: Content, boat: Boat, plan: DayPlan
       motorHours: round2(d.motor),
       sailHours: round2(d.sail),
       autopilotHours: plan.autopilot ? round2(d.legHours) : 0,
+      maxWindKn: d.maxWind,
       shower: plan.shower,
     },
   };
@@ -112,14 +115,14 @@ function sail(state: GameState, content: Content, boat: Boat, plan: DayPlan): { 
   const departureHour = s.clockMin / 60;
   s = runManeuver(s, content, origin.kind === 'bay' ? 'anchor_up' : 'departure', plan.maneuverOrders);
   s = advanceClock(s, b.time.departureMin);
-  const start: DaySummary = { moving: true, departureHour, mooring: 'anchor', motor: b.time.departureMin / 60, sail: 0, legHours: 0, swum: 0 };
+  const start: DaySummary = { moving: true, departureHour, mooring: 'anchor', motor: b.time.departureMin / 60, sail: 0, legHours: 0, swum: 0, maxWind: 0 };
   const sailed = plan.legs.reduce((acc, leg) => {
     const r = runLeg(acc.state, content, boat, leg, acc.at);
     const sum = acc.summary;
     return {
       state: r.state,
       at: r.to,
-      summary: { ...sum, motor: sum.motor + r.motorHours, sail: sum.sail + r.sailHours, legHours: sum.legHours + r.motorHours + r.sailHours },
+      summary: { ...sum, motor: sum.motor + r.motorHours, sail: sum.sail + r.sailHours, legHours: sum.legHours + r.motorHours + r.sailHours, maxWind: Math.max(sum.maxWind, r.windKn) },
     };
   }, { state: s, at: s.locationId, summary: start });
   const swim = swimStops({ ...sailed.state, locationId: sailed.at }, boat, plan.swimStops, b);
@@ -142,7 +145,7 @@ export function planDay(state: GameState, content: Content, plan: DayPlan): Game
     const swim = swimStops(s, boat, plan.swimStops, content.balance);
     s = swim.state;
     const here = requirePoint(content, s.locationId);
-    summary = { moving: false, departureHour: null, mooring: here.kind === 'bay' ? 'anchor' : 'berth', motor: 0, sail: 0, legHours: 0, swum: swim.swum };
+    summary = { moving: false, departureHour: null, mooring: here.kind === 'bay' ? 'anchor' : 'berth', motor: 0, sail: 0, legHours: 0, swum: swim.swum, maxWind: 0 };
   }
   s = settleDay(s, content, boat, plan, summary);
   const phases: EventPhase[] = summary.moving ? ['passage', 'arrival', 'evening'] : ['evening'];

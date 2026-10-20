@@ -435,6 +435,8 @@ export interface DayFacts {
   motorHours: number;
   sailHours: number;
   autopilotHours: number;
+  /** Strongest true wind (kn) over today's legs; 0 when not sailing. */
+  maxWindKn: number;
   shower: ShowerDiscipline;
 }
 

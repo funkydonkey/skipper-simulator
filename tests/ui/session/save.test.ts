@@ -66,7 +66,7 @@ describe('save slot', () => {
       ...base,
       expectations: [{ id: 'x1', dialogueId: 'd', spec: { kind: 'depart_by' as const, hour: 9 }, strength: 2, createdDay: 1, dueDay: 2, status: 'open' as const }],
       weather: { day: 1, forecastKn: 10, forecastGustKn: 14, forecastDir: 'NW' as const, barometerHpa: 1012, front: false, frontAddKn: 0, frontDir: 'N' as const, barometerTrendHpa: -1, signalsVisible: true },
-      dayFacts: { day: 1, departureHour: 9, arrivalHour: null, arrivalPointKind: null, mooring: null, activities: ['swim' as const], motorHours: 1, sailHours: 2, autopilotHours: 0, shower: 'normal' as const },
+      dayFacts: { day: 1, departureHour: 9, arrivalHour: null, arrivalPointKind: null, mooring: null, activities: ['swim' as const], motorHours: 1, sailHours: 2, autopilotHours: 0, maxWindKn: 0, shower: 'normal' as const },
       log: [{ day: 1, clockMin: 540, kind: 'roll' as const, cause: 'c', odds: { value: 0.3, parts: [
         { source: 'base', delta: 0.3 }, { source: 'wind', delta: 0.1, kind: 'add' as const }, { source: 'voice.caution', delta: -0.1, kind: 'mul' as const, factor: 0.75 },
       ] } }],

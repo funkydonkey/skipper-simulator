@@ -4,6 +4,7 @@ import { priceFor } from '../perks';
 import { crewSensitivity, resolveDueExpectations, sayDialogue } from '../promises';
 import { applyOutcome, applyOutcomes, dailyConsumption, refillAt, zeroResourceOutcomes } from '../resources';
 import { clamp, requireBoat, requirePoint, round1 } from '../state';
+import { addWear } from '../systems';
 import type { Activity, Balance, Boat, Content, DayFacts, GameState, MapPoint, Outcome } from '../types';
 import { restHours } from '../time';
 import { exposure } from '../weather';
@@ -42,6 +43,7 @@ function night(state: GameState, content: Content, boat: Boat, point: MapPoint, 
   if (facts.mooring === 'anchor' && dir && exposure(point, dir) > b.fatigue.rollyExposure) {
     s = applyOutcome(s, boat, { cause: 'night:rolly', pillar: 'weather', effect: { mood: -b.mood.rollyNight, fatigue: b.fatigue.rollyNightPenalty } });
   }
+  s = addWear(s, content, 'night', 1);
   return applyOutcome(s, boat, { cause: 'night:sleep', pillar: 'time', effect: { fatigue: -round1(b.fatigue.nightRecovery * sleepShare(s.clockMin, b)) } });
 }
 

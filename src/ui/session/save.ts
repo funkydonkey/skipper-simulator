@@ -34,7 +34,7 @@ const DayWeatherSchema = z.object({
 const DayFactsSchema = z.object({
   day: num, departureHour: num.nullable(), arrivalHour: num.nullable(), arrivalPointKind: z.enum(POINT_KINDS).nullable(),
   mooring: z.enum(['anchor', 'berth']).nullable(), activities: z.array(z.enum(ACTIVITIES)),
-  motorHours: num, sailHours: num, autopilotHours: num, shower: z.enum(['strict', 'normal', 'loose']),
+  motorHours: num, sailHours: num, autopilotHours: num, maxWindKn: num, shower: z.enum(['strict', 'normal', 'loose']),
 });
 
 const LogEntrySchema = z.object({

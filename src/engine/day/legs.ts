@@ -9,7 +9,7 @@ import { advanceClock, otherEnd, requirePoint, requireRoute, requireTemplate, ro
 import type { Boat, Content, GameState, LegPlan, Route } from '../types';
 import { realWind } from '../weather';
 
-export interface LegRun { state: GameState; to: string; motorHours: number; sailHours: number }
+export interface LegRun { state: GameState; to: string; motorHours: number; sailHours: number; windKn: number }
 
 export function avgSeasickness(state: GameState, content: Content): number {
   if (state.crew.length === 0) return 0;
@@ -86,5 +86,6 @@ export function runLeg(state: GameState, content: Content, boat: Boat, leg: LegP
     to,
     motorHours: mode === 'motor' ? res.hours : 0,
     sailHours: mode === 'sail' ? res.hours : 0,
+    windKn: wind.windKn,
   };
 }

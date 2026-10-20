@@ -142,7 +142,7 @@ describe('XP sources', () => {
 });
 
 describe('level changes land in the evening', () => {
-  const facts: DayFacts = { day: 1, departureHour: 9, arrivalHour: 14, arrivalPointKind: 'marina', mooring: 'berth', activities: [], motorHours: 2, sailHours: 0, autopilotHours: 0, shower: 'normal' };
+  const facts: DayFacts = { day: 1, departureHour: 9, arrivalHour: 14, arrivalPointKind: 'marina', mooring: 'berth', activities: [], motorHours: 2, sailHours: 0, autopilotHours: 0, maxWindKn: 0, shower: 'normal' };
 
   it('a failed check does not change the level for the next check the same day; endDay does', () => {
     const c = withEvent({ options: checkOptions });

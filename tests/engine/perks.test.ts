@@ -90,7 +90,7 @@ describe('voicePerks', () => {
 describe('diplomat', () => {
   const facts: DayFacts = {
     day: 1, departureHour: 10, arrivalHour: 14, arrivalPointKind: 'bay', mooring: 'anchor', activities: [],
-    motorHours: 2, sailHours: 0, autopilotHours: 0, shower: 'normal',
+    motorHours: 2, sailHours: 0, autopilotHours: 0, maxWindKn: 0, shower: 'normal',
   };
   it('broken promise reports the softened mood: 20% of the base penalty at level 2', () => {
     const e = createExpectation(content.dialogues.find((d) => d.id === 'early_try')!, 'briefing', 0)!;

@@ -5,6 +5,7 @@ import { correctOrder, evaluateManeuver, maneuverForKind } from '../maneuver';
 import { priceFor } from '../perks';
 import { applyOutcome, applyOutcomes } from '../resources';
 import { advanceClock, requireBoat, requirePoint } from '../state';
+import { addWear } from '../systems';
 import { anchoring, marinaArrival } from '../time';
 import type { Balance, Boat, Content, DayPlan, GameState, Maneuver, ManeuverKind } from '../types';
 import { cautionTimeFactor } from '../voices';
@@ -51,7 +52,7 @@ function anchorHere(state: GameState, content: Content, boat: Boat, orders?: Ord
   );
   s = appendLog(s, { kind: 'info', cause: `anchor:attempts:${r.value.attempts}`, pillar: 'time' });
   s = advanceClock(s, r.value.minutes * cautionTimeFactor(s.voices.caution, b));
-  s = runManeuver(s, content, 'anchoring', orders);
+  s = addWear(runManeuver(s, content, 'anchoring', orders), content, 'anchoring', 1);
   if (!r.value.held) s = applyOutcome(s, boat, { cause: 'anchor:dragging', pillar: 'time', effect: { fatigue: b.fatigue.rollyNightPenalty } });
   return { state: s, mooring: 'anchor' };
 }

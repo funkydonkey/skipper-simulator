@@ -7,7 +7,7 @@ import { makeState } from '../fixtures/state';
 const content = makeContent();
 const facts: DayFacts = {
   day: 1, departureHour: 9, arrivalHour: 14, arrivalPointKind: 'marina', mooring: 'berth', activities: [],
-  motorHours: 2, sailHours: 0, autopilotHours: 0, shower: 'normal',
+  motorHours: 2, sailHours: 0, autopilotHours: 0, maxWindKn: 0, shower: 'normal',
 };
 
 describe('strategies', () => {
