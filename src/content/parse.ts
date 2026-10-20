@@ -49,6 +49,13 @@ export function parseContent(raw: Partial<Record<ContentFile, unknown>>, deadAll
   return cross.length ? { content: null, errors: cross } : { content, errors: [] };
 }
 
+/** A region pack must describe the region it was loaded as: region.json `id` equals the requested region id. */
+export function regionIdErrors(region: unknown, regionId: string): ContentError[] {
+  const id = typeof region === 'object' && region !== null ? (region as { id?: unknown }).id : undefined;
+  if (id === undefined || id === regionId) return [];
+  return [{ file: 'region', path: 'id', message: `region id "${String(id)}" does not match the requested region "${regionId}"` }];
+}
+
 export function formatErrors(errors: readonly ContentError[]): string {
   return errors.map((e) => `[${e.file}] ${e.path || '(root)'}: ${e.message}`).join('\n');
 }

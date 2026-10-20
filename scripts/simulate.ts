@@ -25,9 +25,14 @@ if (!content) {
   process.exit(1);
 }
 
-const batchSize = values.weeks ?? values.batch;
-if (batchSize) {
-  const seeds = Array.from({ length: Number(batchSize) }, (_, i) => i + 1);
+const batchArg = values.weeks ?? values.batch;
+const batchSize = batchArg === undefined ? null : Number(batchArg);
+if (batchSize !== null && (!/^\d+$/.test(batchArg ?? '') || batchSize < 1)) {
+  console.error(`--weeks (or --batch) must be a positive integer, got "${batchArg}"`);
+  process.exit(1);
+}
+if (batchSize !== null) {
+  const seeds = Array.from({ length: batchSize }, (_, i) => i + 1);
   const all: Record<string, ReturnType<typeof runBatch>> = {};
   for (const strategy of [newbie, expert]) {
     all[strategy.name] = runBatch(content, strategy, seeds);

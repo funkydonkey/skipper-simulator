@@ -1,7 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { CORE_FILES, DEAD_ALLOW_FILE, REGION_FILES, WEATHER_DIR, type ContentFile } from './files';
-import { parseContent, type ContentError, type ParseResult } from './parse';
+import { parseContent, regionIdErrors, type ContentError, type ParseResult } from './parse';
 
 type Raw = Partial<Record<ContentFile, unknown>>;
 
@@ -23,6 +23,7 @@ export async function loadContentDir(dir: string, regionId = 'archipelago'): Pro
   const regionDir = join(dir, 'regions', regionId);
   for (const file of CORE_FILES) await read(file, join(dir, 'core', `${file}.json`));
   for (const file of REGION_FILES) await read(file, join(regionDir, `${file}.json`));
+  errors.push(...regionIdErrors(raw.region, regionId));
   try {
     const names = (await readdir(join(regionDir, WEATHER_DIR))).filter((n) => n.endsWith('.json')).sort();
     raw.weather = await Promise.all(names.map((n) => readJson(join(regionDir, WEATHER_DIR, n))));

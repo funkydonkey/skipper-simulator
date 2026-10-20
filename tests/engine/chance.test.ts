@@ -105,6 +105,18 @@ describe('ChanceInputSchema', () => {
     expect(ChanceInputSchema.safeParse(0.3).success).toBe(true);
     expect(ChanceInputSchema.safeParse({ base: 0.5, mods: [{ per: 'fatigue', add: -0.004 }, { mul: 0.1, label: 'wind' }], max: 0.9 }).success).toBe(true);
   });
+  it('keeps every bare chance and base/min/max a probability, with min <= max', () => {
+    for (const bad of [-0.1, 1.5, Number.NaN]) expect(ChanceInputSchema.safeParse(bad).success, String(bad)).toBe(false);
+    expect(ChanceInputSchema.safeParse({ base: 1.2 }).success).toBe(false);
+    expect(ChanceInputSchema.safeParse({ base: -0.1 }).success).toBe(false);
+    expect(ChanceInputSchema.safeParse({ base: 0.5, min: -0.1 }).success).toBe(false);
+    expect(ChanceInputSchema.safeParse({ base: 0.5, max: 2 }).success).toBe(false);
+    expect(ChanceInputSchema.safeParse({ base: 0.5, min: 0.6, max: 0.4 }).success).toBe(false);
+    expect(ChanceInputSchema.safeParse({ base: 0.5, min: 0.4, max: 0.4 }).success).toBe(true);
+    expect(ChanceInputSchema.safeParse(0).success).toBe(true);
+    expect(ChanceInputSchema.safeParse(1).success).toBe(true);
+  });
+
   it('rejects a mod with both add and mul, or neither', () => {
     expect(ChanceInputSchema.safeParse({ base: 0.5, mods: [{ add: 0.1, mul: 0.1, label: 'wind' }] }).success).toBe(false);
     expect(ChanceInputSchema.safeParse({ base: 0.5, mods: [{ label: 'wind' }] }).success).toBe(false);

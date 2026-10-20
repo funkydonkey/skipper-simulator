@@ -38,13 +38,13 @@ const ChanceModSchema: z.ZodType<ChanceMod> = z.object({
   .refine((m) => m.per !== undefined || m.label !== undefined, 'chance mod needs a label when per is absent');
 
 export const ChanceInputSchema: z.ZodType<ChanceInput> = z.union([
-  z.number(),
+  Prob,
   z.object({
-    base: z.number(),
+    base: Prob,
     mods: z.array(ChanceModSchema).optional(),
-    min: z.number().optional(),
-    max: z.number().optional(),
-  }).strict(),
+    min: Prob.optional(),
+    max: Prob.optional(),
+  }).strict().refine((s) => (s.min ?? 0) <= (s.max ?? 1), { message: 'chance min must be <= max', path: ['min'] }),
 ]);
 
 export const EffectSchema: z.ZodType<Effect> = z.object({
@@ -149,10 +149,11 @@ export const DebriefRuleSchema: z.ZodType<DebriefRule> = z.object({
 const Pair = z.tuple([z.number(), z.number()]);
 const Triple = z.tuple([z.number(), z.number(), z.number()]);
 
-const Band = z.tuple([z.number(), z.number()]);
+const Band = z.tuple([z.number(), z.number()]).refine(([lo, hi]) => lo <= hi, 'band needs lo <= hi');
 export const BalanceSchema: z.ZodType<Balance> = z.object({
   start: z.object({ moneyEur: NonNeg, mood: NonNeg, fatigue: NonNeg, gasPct: NonNeg, serviceBankPct: NonNeg, starterBankPct: NonNeg, hour: Hour, crewSize: Int.positive() }).strict(),
-  voices: z.object({ points: Int.positive(), maxLevel: Int.positive(), prideLevel: Int.min(0), crewVoiceLevel: Int.min(0), seaSenseSignalLevel: Int.min(0), seaSenseChanceLevel: Int.min(0), seaSenseTimingLevel: Int.min(0), economistDiscountPerLevel: NonNeg, mechanicExactLevel: Int.min(0), cautionRiskPerLevel: NonNeg, cautionTimePerLevel: NonNeg, orderRiskPerLevel: NonNeg, xpToLevel: z.array(Int.positive()).min(1), xpExempt: z.array(z.enum(VOICES)), checkXp: z.object({ success: NonNeg, fail: NonNeg }).strict(), maneuverErrorXp: NonNeg, cleanManeuverXp: NonNeg }).strict(),
+  voices: z.object({ points: Int.positive(), maxLevel: Int.positive(), prideLevel: Int.min(0), crewVoiceLevel: Int.min(0), seaSenseSignalLevel: Int.min(0), seaSenseChanceLevel: Int.min(0), seaSenseTimingLevel: Int.min(0), economistDiscountPerLevel: NonNeg, mechanicExactLevel: Int.min(0), cautionRiskPerLevel: NonNeg, cautionTimePerLevel: NonNeg, orderRiskPerLevel: NonNeg, xpToLevel: z.array(Int.positive()).min(1), xpExempt: z.array(z.enum(VOICES)), checkXp: z.object({ success: NonNeg, fail: NonNeg }).strict(), maneuverErrorXp: NonNeg, cleanManeuverXp: NonNeg }).strict()
+    .refine((v) => v.xpToLevel.length >= v.maxLevel, { message: 'xpToLevel needs a threshold for every level up to maxLevel', path: ['xpToLevel'] }),
   water: z.object({ perPersonPerDayL: fullRecord(SHOWERS, NonNeg), zeroMoodPenalty: NonNeg }).strict(),
   fuel: z.object({ motorLph: Pos, priceEurPerL: NonNeg }).strict(),
   electric: z.object({ fridgeAhPerDay: NonNeg, pumpsAhPerDay: NonNeg, electricToiletAhPerDay: NonNeg, plotterAhPerHour: NonNeg, autopilotAhPerHour: NonNeg, engineChargeAhPerHour: NonNeg, solarAhPerWattDay: NonNeg, starterStartPct: NonNeg, starterMinPct: NonNeg, zeroServiceMoodPenalty: NonNeg }).strict(),

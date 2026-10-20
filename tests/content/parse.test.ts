@@ -1,13 +1,17 @@
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { loadContentDir } from '../../src/content/load-node';
 import { parseContent } from '../../src/content/parse';
 import { makeContent } from '../fixtures/content';
 import { toRaw } from '../fixtures/raw';
 
 const raw = (): Record<string, any> => toRaw(makeContent());
+const tempDirs: string[] = [];
+afterEach(async () => {
+  await Promise.all(tempDirs.splice(0).map((d) => rm(d, { recursive: true, force: true })));
+});
 
 describe('content parsing', () => {
   it('fixture content is valid', () => {
@@ -57,8 +61,21 @@ describe('content parsing', () => {
     expect(r.errors.map((e) => `${e.path}: ${e.message}`).join('\n')).toMatch(pattern);
   });
 
+  it.each([
+    ['xpToLevel shorter than maxLevel', (r: any) => { r.balance.voices.xpToLevel = [6, 10, 15]; }, /xpToLevel/],
+    ['a sim band with lo > hi', (r: any) => { r.balance.simTargets.levelGain.newbie = [3, 1]; }, /lo <= hi/],
+    ['an event chance above 1', (r: any) => { r.events[0].trigger.chance = 1.5; }, /1/],
+  ])('balance and chance validation: %s', (_name, mutate, pattern) => {
+    const r0 = raw();
+    mutate(r0);
+    const r = parseContent(r0);
+    expect(r.content).toBeNull();
+    expect(r.errors.map((e) => `${e.path}: ${e.message}`).join('\n')).toMatch(pattern);
+  });
+
   it('loadContentDir reports unreadable files as errors', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'skipper-'));
+    tempDirs.push(dir);
     const r = await loadContentDir(join(dir, 'nope'));
     expect(r.content).toBeNull();
     expect(r.errors[0]!.message).toMatch(/Cannot read .*boats\.json/);
