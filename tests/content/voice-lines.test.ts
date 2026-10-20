@@ -49,4 +49,17 @@ describe('voice content', () => {
     expect(e.options[1]!.check).toEqual({ voice: 'diplomat', difficulty: 2 });
     expect(e.voices.map((v) => v.voice)).toEqual(expect.arrayContaining(['diplomat', 'pride']));
   });
+
+  it('mood-gated lines are reachable under their event trigger', () => {
+    for (const e of content.events) {
+      const upper = e.trigger.conditions.map((c) => /^mood\s*<\s*(\d+)$/.exec(c)?.[1]).filter(Boolean).map(Number);
+      const lower = e.trigger.conditions.map((c) => /^mood\s*>=?\s*(\d+)$/.exec(c)?.[1]).filter(Boolean).map(Number);
+      for (const l of e.voices) {
+        const ge = /^mood\s*>=\s*(\d+)$/.exec(l.when ?? '')?.[1];
+        const lt = /^mood\s*<\s*(\d+)$/.exec(l.when ?? '')?.[1];
+        if (ge) for (const y of upper) expect(y, `${e.id}: ${l.when}`).toBeGreaterThan(Number(ge));
+        if (lt) for (const y of lower) expect(y, `${e.id}: ${l.when}`).toBeLessThan(Number(lt));
+      }
+    }
+  });
 });

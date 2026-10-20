@@ -1818,10 +1818,10 @@
         "voice": "crew_voice",
         "min_level": 0,
         "text": {
-          "ru": "Ладно, позавтракаем — и поехали.",
-          "en": "Fine, breakfast first, then off we go."
+          "ru": "Мы вставали ради этого? Могли бы поспать.",
+          "en": "We got up for this? We could have slept in."
         },
-        "when": "mood >= 70"
+        "when": "mood < 50"
       }
     ],
     "options": [
@@ -1899,8 +1899,8 @@
         "voice": "diplomat",
         "min_level": 4,
         "text": {
-          "ru": "Скажи «если дойдём до порта до пяти». Четыре из пяти раз ты сдержишь слово.",
-          "en": "Say \"if we reach port by five\". Four times out of five you'll keep your word."
+          "ru": "Расплывчатое «если дойдём до города» запомнят на 0,3. Твёрдое «завтра таверна» — на 0,7.",
+          "en": "A vague \"if we reach a town\" is remembered at 0.3. A firm \"taverna tomorrow\" at 0.7."
         }
       },
       {
