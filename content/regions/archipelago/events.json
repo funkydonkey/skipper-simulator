@@ -856,7 +856,7 @@
       },
       {
         "voice": "sea_sense",
-        "min_level": 3,
+        "min_level": 4,
         "text": {
           "ru": "Пять гектопаскалей за ночь — к трём часам фронт будет над мысом.",
           "en": "Five hectopascals overnight means the front is over the cape by three."
@@ -1079,8 +1079,8 @@
         "voice": "diplomat",
         "min_level": 3,
         "text": {
-          "ru": "Маринеро держит три свободных места под своих. Спроси у него по имени.",
-          "en": "The marinero keeps three berths free for regulars. Ask him by name."
+          "ru": "У маринеро всегда есть пара мест под своих. Поговори с ним всерьёз — их можно выспорить.",
+          "en": "A marinero always keeps a couple of berths for regulars. Talk to him properly and you can argue one out of him."
         }
       },
       {
@@ -1404,8 +1404,8 @@
         "voice": "economist",
         "min_level": 1,
         "text": {
-          "ru": "Полтора часа очереди дороже литра соляры.",
-          "en": "An hour and a half in the queue costs more than a litre of diesel."
+          "ru": "Пропустить заправку сейчас ничего не стоит. Полтора часа в очереди — стоят.",
+          "en": "Skipping the fuel dock now costs nothing. An hour and a half in the queue does."
         }
       }
     ],
@@ -1596,8 +1596,8 @@
         "voice": "order",
         "min_level": 3,
         "text": {
-          "ru": "Кранцы — на двух третях борта, по четыре штуки. Не одним концом.",
-          "en": "Fenders at two thirds of the hull, four of them. Not just one end."
+          "ru": "Четыре кранца вдоль всего борта, на высоте причала. Не кучкой у одного конца.",
+          "en": "Four fenders along the whole hull, at quay height. Not bunched at one end."
         }
       }
     ],
@@ -1658,8 +1658,8 @@
         "voice": "caution",
         "min_level": 3,
         "text": {
-          "ru": "Цепь нужна втрое длиннее глубины. Горка на якоре — это ноль.",
-          "en": "You need chain three times the depth. A pile on the anchor is worth zero."
+          "ru": "Цепи нужно впятеро больше глубины. Горка на якоре — это ноль.",
+          "en": "You need chain five times the depth. A pile on the anchor is worth zero."
         }
       }
     ],
@@ -1899,16 +1899,16 @@
         "voice": "diplomat",
         "min_level": 4,
         "text": {
-          "ru": "Расплывчатое «если дойдём до города» запомнят на 0,3. Твёрдое «завтра таверна» — на 0,7.",
-          "en": "A vague \"if we reach a town\" is remembered at 0.3. A firm \"taverna tomorrow\" at 0.7."
+          "ru": "Расплывчатое «если дойдём до города» — обещание весом 0,3. Твёрдое «завтра таверна» весит 0,7.",
+          "en": "A vague \"if we reach a town\" is a promise that weighs 0.3. A firm \"taverna tomorrow\" weighs 0.7."
         }
       },
       {
         "voice": "economist",
         "min_level": 2,
         "text": {
-          "ru": "Таверна — это сто сорок евро. Консервы на борту — десять.",
-          "en": "A taverna is a hundred and forty euros. Tins aboard are ten."
+          "ru": "Таверна на всю команду — в разы дороже ужина из запасов на борту.",
+          "en": "A taverna for the whole crew costs many times more than dinner from the stores aboard."
         }
       }
     ],
@@ -1980,8 +1980,8 @@
         "voice": "crew_voice",
         "min_level": 0,
         "text": {
-          "ru": "Вы нас вытянете, мы всё поймём. Только давайте под парусом!",
-          "en": "Take us out, we'll get it. Just let's sail!"
+          "ru": "Вы капитан, вам виднее. Только давайте под парусом!",
+          "en": "You're the skipper, you know best. Just let's sail!"
         },
         "when": "mood >= 70"
       }
