@@ -33,6 +33,14 @@ async function logbookClearOfActions(page: Page, label: string): Promise<void> {
   await page.evaluate(() => window.scrollTo(0, 0));
 }
 
+/** The sticky actions bar keeps every action fully visible at the top of the page, without scrolling. */
+async function actionsInViewport(page: Page, label: string): Promise<void> {
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const buttons = await page.locator('[data-screen] > footer button').all();
+  expect(buttons.length, `no actions bar on ${label}`).toBeGreaterThan(0);
+  for (const b of buttons) await expect(b, `action "${await b.textContent()}" hidden on ${label}`).toBeInViewport({ ratio: 1 });
+}
+
 /** Event/outcome art: the caption stays anchored inside its picture (≤800px stacks the layout). */
 async function captionInsideScene(page: Page, label: string): Promise<void> {
   const scene = page.locator('[data-screen] figure[data-scene]').first();
@@ -75,6 +83,7 @@ test('from the menu to the day planner without horizontal scroll', async ({ page
   await shot('boat');
   await page.getByRole('button', { name: 'Взять «Мельтеми 40»' }).click();
   await shot('checkin');
+  await actionsInViewport(page, 'checkin');
   await page.getByRole('button', { name: 'Закончить приёмку' }).click();
   const topics = page.locator('[data-screen="briefing"] ul li button');
   for (let i = 0; i < 4; i++) await topics.nth(i).click();
@@ -173,6 +182,7 @@ test('the week ends in a debrief with the voices block, without horizontal scrol
     }
   }
   expect(await screenName(page)).toBe('debrief');
+  await actionsInViewport(page, 'debrief');
   await expect(heading).toBeVisible();
   await noHorizontalScroll(page, 'debrief');
 });

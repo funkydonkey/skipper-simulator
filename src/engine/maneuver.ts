@@ -50,6 +50,7 @@ export function evaluateManeuver(
   let next = rng;
   for (const err of m.errors) {
     if (order.indexOf(err.wrongIf.first) >= order.indexOf(err.wrongIf.then)) continue;
+    // Same condition as injurySpec's mitigation mod: the effect and the injury chance are scaled together.
     const mitigated = err.mitigatedBy !== undefined && evaluateCondition(err.mitigatedBy, ctx);
     const roll = rollChance(next, injurySpec(err.injuryChance, err.mitigatedBy, b), ctx);
     next = roll.next;
