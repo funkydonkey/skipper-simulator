@@ -420,7 +420,11 @@ export interface GameState {
 
 export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn'] as const;
 export type ChanceLabel = (typeof CHANCE_LABELS)[number];
-/** add: value += add. mul: value *= mul. `per` scales by a numeric context key (e.g. 'voice.caution', 'fatigue'): add → add*ctx[per]; mul → factor (1 + mul*ctx[per]). `if` gates the mod. */
+/**
+ * add: value += add * scale. mul: always a delta factor, value *= (1 + mul * scale); write deltas such as (weight - 1).
+ * scale is ctx[per] (a numeric context key, e.g. 'voice.caution', 'fatigue'), or 1 without `per`.
+ * All add mods apply before all mul mods. `if` gates the mod.
+ */
 export interface ChanceMod { if?: string; per?: string; add?: number; mul?: number; label?: ChanceLabel }
 export interface ChanceSpec { base: number; mods?: ChanceMod[]; min?: number; max?: number }
 export type ChanceInput = number | ChanceSpec;
