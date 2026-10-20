@@ -7,6 +7,7 @@ export { planDay, validatePlan } from './day/passage';
 export { endDay, finishWeek, tavernaOpen, type EveningChoice } from './day/evening';
 export { presentEvent, resolvePendingEvent, optionAvailable, type EventView } from './events';
 export { buildDebrief, type Debrief, type DebriefLink, type WeekScales } from './debrief';
+export { voiceReport, type VoiceReport, type VoiceImpact } from './voice-report';
 export { buildConditionContext } from './expr';
 export { formatClock } from './time';
 export { resourceReadout, validateAllocation, checkChance } from './voices';
