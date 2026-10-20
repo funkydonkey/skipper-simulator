@@ -14,8 +14,8 @@ describe('content packs', () => {
     expect(content!.region.id).toBe('archipelago');
     expect(content!.region.name.en).toBeTruthy();
     expect(content!.boats).toHaveLength(3);
-    expect(content!.map.length).toBeGreaterThan(2);
-    expect(content!.routes.length).toBeGreaterThan(0);
+    expect(content!.map).toHaveLength(9);
+    expect(content!.routes).toHaveLength(13);
     expect(content!.events).toHaveLength(30);
     expect(content!.weather).toHaveLength(1);
   });
