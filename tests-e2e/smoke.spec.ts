@@ -107,6 +107,11 @@ test('from the menu to the day planner without horizontal scroll', async ({ page
     await expect(page.getByRole('heading', { name: 'Оценка капитана' })).toBeInViewport();
     await expect(page.getByRole('button', { name: 'К манёврам' })).toBeInViewport();
   }
+  // The richest plan reachable from the base: three legs. The primary action must stay visible without scrolling.
+  for (let i = 0; i < 2; i++) await page.locator('[data-screen="planning"] g[role="button"]').first().click();
+  await expect(page.locator('[data-screen="planning"] ol li').nth(2)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'К манёврам' })).toBeInViewport({ ratio: 1 });
+  await logbookClearOfActions(page, 'planning-3-legs');
 });
 
 /** Clicks the first maneuver-pool button (an `li` that is not inside an `ol`) of each kind section until every pool is empty. */
