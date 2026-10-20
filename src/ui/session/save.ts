@@ -65,7 +65,7 @@ const SlotSchema = z.object({
     weather: DayWeatherSchema.nullable(), dayFacts: DayFactsSchema.nullable(), returnedOnTime: z.boolean().nullable(),
     defects: z.array(z.string()),
     checkin: z.object({ found: z.array(z.string()), fixed: z.array(z.string()), minutesLeft: num }).strict().nullable(),
-  }).passthrough(),
+  }).passthrough().refine((g) => g.phase !== 'defects' || g.checkin !== null, { message: 'phase defects needs a check-in', path: ['checkin'] }),
 });
 
 export type SaveRead = { kind: 'none' } | { kind: 'corrupt' } | { kind: 'legacy' } | { kind: 'ok'; savedAt: string; game: GameState };

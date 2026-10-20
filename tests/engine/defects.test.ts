@@ -124,6 +124,25 @@ describe('resolveDefects', () => {
   });
 });
 
+describe('two defects on one system', () => {
+  it('keeps the system worn until the last defect on it is fixed', async () => {
+    const meltemi = (await loadContentDir('content')).content!;
+    const mb = meltemi.boats.find((b) => b.id === 'meltemi_40')!;
+    const ids = ['torn_genoa_seam', 'worn_furler'];
+    let s = chooseBoat(assignVoices(newGame(meltemi, { seed: 3, lang: 'ru' }), meltemi, alloc), meltemi, 'meltemi_40');
+    s = { ...s, defects: ids, systems: applyDefects(initialSystems(mb), mb, ids) };
+    s = performCheckin(s, meltemi, ['sails']);
+    s = { ...s, checkin: { ...s.checkin!, minutesLeft: 100 } };
+    expect(s.phase).toBe('defects');
+    const part = resolveDefects(s, meltemi, ['worn_furler']);
+    expect(part.systems.rig!.state).toBe('worn');
+    expect(part.defects).toEqual(['torn_genoa_seam']);
+    const both = resolveDefects(s, meltemi, ids);
+    expect(both.systems.rig!.state).toBe('ok');
+    expect(both.defects).toEqual([]);
+  });
+});
+
 describe('finishWeek charges', () => {
   const atReturn = (s: GameState): GameState => ({ ...s, phase: 'return', returnedOnTime: true });
   it('an unfound old_scratch as deposit:unrecorded', () => {

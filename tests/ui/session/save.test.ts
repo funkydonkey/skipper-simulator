@@ -35,6 +35,17 @@ describe('save slot', () => {
     expect(readSave(storage, content).kind).toBe('none');
   });
 
+  it('rejects a slot in the defects phase without a check-in, and accepts one with it', () => {
+    const storage = memoryStorage();
+    const game = gameAt('briefing');
+    const bad = { ...game, phase: 'defects' as const, checkin: null };
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: bad }));
+    expect(readSave(storage, content).kind).toBe('corrupt');
+    const good = { ...bad, checkin: { found: [], fixed: [], minutesLeft: 10 } };
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: good }));
+    expect(readSave(storage, content).kind).toBe('ok');
+  });
+
   it('rejects a slot whose system lacks wear', () => {
     const storage = memoryStorage();
     const game = gameAt('morning');
