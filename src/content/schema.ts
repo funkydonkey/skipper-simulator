@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
-  CHECKPOINTS, DIRS, MANEUVER_KINDS, PILLARS, VOICES,
-  type Balance, type Boat, type BriefingTopic, type CrewArchetype, type DebriefRule, type Dialogue, type Effect,
+  CHANCE_LABELS, CHECKPOINTS, DIRS, MANEUVER_KINDS, PILLARS, VOICES,
+  type Balance, type Boat, type ChanceInput, type ChanceMod, type BriefingTopic, type CrewArchetype, type DebriefRule, type Dialogue, type Effect,
   type EventOption, type GameEvent, type Maneuver, type MapPoint, type Region, type Route, type WeatherTemplate,
 } from '../engine/types';
 
@@ -26,6 +26,26 @@ const Hour = z.number().min(0).max(24);
 function fullRecord<K extends string, V extends z.ZodTypeAny>(keys: readonly K[], value: V) {
   return z.object(Object.fromEntries(keys.map((k) => [k, value])) as Record<K, V>).strict();
 }
+
+const ChanceModSchema: z.ZodType<ChanceMod> = z.object({
+  if: z.string().min(1).optional(),
+  per: z.string().min(1).optional(),
+  add: z.number().optional(),
+  mul: z.number().optional(),
+  label: z.enum(CHANCE_LABELS).optional(),
+}).strict()
+  .refine((m) => (m.add === undefined) !== (m.mul === undefined), 'chance mod needs exactly one of add or mul')
+  .refine((m) => m.per !== undefined || m.label !== undefined, 'chance mod needs a label when per is absent');
+
+export const ChanceInputSchema: z.ZodType<ChanceInput> = z.union([
+  z.number(),
+  z.object({
+    base: z.number(),
+    mods: z.array(ChanceModSchema).optional(),
+    min: z.number().optional(),
+    max: z.number().optional(),
+  }).strict(),
+]);
 
 export const EffectSchema: z.ZodType<Effect> = z.object({
   mood: z.number().optional(),

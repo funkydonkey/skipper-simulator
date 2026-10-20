@@ -113,6 +113,13 @@ function lookup(name: string, ctx: CondContext, src: string): CondValue {
   throw new EngineError('CONTENT', `Unknown identifier "${name}" in condition "${src}"`);
 }
 
+/** Numeric context lookup with the same rules as conditions (unknown ids throw CONTENT). */
+export function lookupNumber(ctx: CondContext, key: string): number {
+  const v = lookup(key, ctx, key);
+  if (typeof v !== 'number') throw new EngineError('CONTENT', `Identifier "${key}" is not a number`);
+  return v;
+}
+
 function evalNode(n: Node, ctx: CondContext, src: string): CondValue {
   switch (n.k) {
     case 'lit': return n.v;
