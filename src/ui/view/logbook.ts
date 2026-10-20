@@ -1,4 +1,4 @@
-import { formatClock, type Content, type Lang, type LogEntry, type LogKind, type Pillar } from '../../engine';
+import { formatClock, TRAINABLE_VOICES, type ChanceValue, type Content, type Lang, type LogEntry, type LogKind, type Pillar, type TrainableVoice } from '../../engine';
 import { CHECKPOINT_NAMES, DAMAGE_NAMES, label, VOICE_NAMES } from '../i18n/glossary';
 import { fmt, type Vars } from '../i18n/t';
 import { formatHour, signed } from './format';
@@ -6,7 +6,7 @@ import { pointName } from './map';
 import { LOG, MODE_NAMES, SHOWER_NAMES, SIGNAL_NAMES } from './strings';
 
 export type Tone = 'neutral' | 'good' | 'bad';
-export interface LogLine { day: number; clock: string; text: string; tone: Tone; kind: LogKind; cause: string; pillar?: Pillar }
+export interface LogLine { day: number; clock: string; text: string; tone: Tone; kind: LogKind; cause: string; pillar?: Pillar; odds?: ChanceValue }
 
 type Described = { text: string; tone?: Tone } | null;
 type Describer = (parts: string[], e: LogEntry, c: Content, lang: Lang) => Described;
@@ -31,6 +31,15 @@ function maneuverTitle(c: Content, id: string, lang: Lang): string {
 function routeName(c: Content, id: string, lang: Lang): string {
   const r = c.routes.find((x) => x.id === id);
   return r ? `${pointName(c, r.from, lang)} — ${pointName(c, r.to, lang)}` : id;
+}
+
+/** Human reason for an xp grant, from the inner cause (`roll:check:<event>:<option>`, `order:wrong:<m>:<err>`, `order:ok:<m>`); null when unknown. */
+export function xpCauseText(inner: string[], c: Content, lang: Lang): string | null {
+  const [root, a = '', b = ''] = inner;
+  if (root === 'roll' && a === 'check') return fmt(LOG.xpCheck[lang], { option: optionText(c, inner[2] ?? '', inner[3] ?? '', lang) });
+  if (root === 'order' && a === 'wrong') return fmt(LOG.xpManeuverWrong[lang], { title: maneuverTitle(c, b, lang) });
+  if (root === 'order' && a === 'ok') return fmt(LOG.xpManeuverOk[lang], { title: maneuverTitle(c, b, lang) });
+  return null;
 }
 
 const DESCRIBE: Record<string, Describer> = {
@@ -106,15 +115,30 @@ const DESCRIBE: Record<string, Describer> = {
     return say('eventOption', lang, { option: optionText(c, eventId, optionId, lang) }, tag === 'fail' ? 'bad' : tag === 'success' ? 'good' : 'neutral');
   },
   choice: ([eventId = '', optionId = ''], _e, c, lang) => say('chose', lang, { option: optionText(c, eventId, optionId, lang) }),
-  /** Only voice checks are shown for now; the other rolls stay hidden until the odds UI lands. */
-  roll: ([what, eventId = '', optionId = ''], e, c, lang) => {
-    if (what !== 'check') return null;
-    const voice = c.events.find((x) => x.id === eventId)?.options.find((o) => o.id === optionId)?.check?.voice;
-    const vars = { voice: voice ? VOICE_NAMES[voice][lang] : '?', chance: Math.round(num(e, 'chance') * 100) };
-    return e.data?.success === true ? say('checkPassed', lang, vars, 'good') : say('checkFailed', lang, vars, 'bad');
+  roll: ([what, a = '', b2 = ''], e, c, lang) => {
+    const chance = Math.round((e.odds?.value ?? num(e, 'chance')) * 100);
+    if (what === 'check') {
+      const voice = c.events.find((x) => x.id === a)?.options.find((o) => o.id === b2)?.check?.voice;
+      const vars = { voice: voice ? VOICE_NAMES[voice][lang] : '?', chance: Math.round(num(e, 'chance') * 100) };
+      return e.data?.success === true ? say('checkPassed', lang, vars, 'good') : say('checkFailed', lang, vars, 'bad');
+    }
+    const hit = e.data?.hit === true;
+    const outcome = (key: LogKey, missKey: LogKey, vars: Vars = {}): Described => say(hit ? key : missKey, lang, { chance, ...vars }, hit ? 'bad' : 'good');
+    switch (what) {
+      case 'front': return say(hit ? 'rollFrontHit' : 'rollFrontMiss', lang, { chance }, hit ? 'bad' : 'good');
+      case 'anchor': return outcome('rollAnchorHit', 'rollAnchorMiss', { n: a });
+      case 'marina': return outcome('rollMarinaHit', 'rollMarinaMiss');
+      case 'sail_break': return outcome('rollSailHit', 'rollSailMiss');
+      case 'injury': return outcome('rollInjuryHit', 'rollInjuryMiss');
+      default: return null;
+    }
   },
   levelup: ([voice = ''], e, _c, lang) => say('levelUp', lang, { voice: VOICE_NAMES[voice as keyof typeof VOICE_NAMES]?.[lang] ?? voice, from: num(e, 'from'), to: num(e, 'to') }, 'good'),
-  xp: () => null,
+  xp: ([voice = '', ...inner], e, c, lang) => {
+    const vars = { xp: num(e, 'xp'), voice: VOICE_NAMES[voice as keyof typeof VOICE_NAMES]?.[lang] ?? voice };
+    const cause = xpCauseText(inner, c, lang);
+    return cause ? say('xp', lang, { ...vars, cause }) : say('xpPlain', lang, vars);
+  },
   voice: ([voice, what], e, _c, lang) => {
     if (voice === 'economist' && what === 'saved') return say('economistSaved', lang, { eur: num(e, 'eur') }, 'good');
     if (voice === 'sea_sense' && what === 'front_seen') return say('seaSenseFront', lang);
@@ -133,10 +157,10 @@ export function describeEntry(e: LogEntry, content: Content, lang: Lang): LogLin
   const describer = DESCRIBE[root];
   const d = describer ? describer(parts, e, content, lang) : say('unknown', lang, { cause: e.cause });
   if (!d) return null;
-  return { day: e.day, clock: formatClock(e.clockMin), text: d.text, tone: d.tone ?? 'neutral', kind: e.kind, cause: e.cause, ...(e.pillar ? { pillar: e.pillar } : {}) };
+  return { day: e.day, clock: formatClock(e.clockMin), text: d.text, tone: d.tone ?? 'neutral', kind: e.kind, cause: e.cause, ...(e.pillar ? { pillar: e.pillar } : {}), ...(e.odds ? { odds: e.odds } : {}) };
 }
 
-const NOISE_ROOTS = new Set(['voices', 'engine', 'fatigue', 'consumption', 'charge', 'defect', 'choice', 'xp']);
+const NOISE_ROOTS = new Set(['voices', 'engine', 'fatigue', 'consumption', 'charge', 'defect', 'choice']);
 
 /** Entries the captain did not witness or that only duplicate another line. Debrief still uses them. */
 export function isNoise(e: LogEntry): boolean {
@@ -156,3 +180,17 @@ export function logbookDays(log: readonly LogEntry[], content: Content, lang: La
   const days = [...new Set(log.map((e) => e.day))].sort((a, b) => a - b);
   return days.map((day) => ({ day, lines: dayLines(log, day, content, lang) })).filter((d) => d.lines.length > 0);
 }
+
+export interface DayGrowth { voice: TrainableVoice; xp: number; causes: string[] }
+
+/** XP the captain earned on `day`, grouped by voice in the fixed voice order, with human causes. */
+export function dayGrowth(log: readonly LogEntry[], day: number, content: Content, lang: Lang): DayGrowth[] {
+  return TRAINABLE_VOICES.flatMap((voice) => {
+    const mine = log.filter((e) => e.day === day && e.cause.startsWith(`xp:${voice}:`));
+    if (mine.length === 0) return [];
+    const causes = mine.flatMap((e) => xpCauseText(e.cause.split(':').slice(2), content, lang) ?? []);
+    return [{ voice, xp: mine.reduce((sum, e) => sum + num(e, 'xp'), 0), causes: [...new Set(causes)] }];
+  });
+}
+
+export const levelUpText = (voice: TrainableVoice, from: number, to: number, lang: Lang): string => fmt(LOG.levelUp[lang], { voice: VOICE_NAMES[voice][lang], from, to });

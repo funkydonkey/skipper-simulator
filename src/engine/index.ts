@@ -18,3 +18,4 @@ export { requirePoint, requireRoute, requireEvent, otherEnd } from './state';
 export { forecastInsight, voicePerks, type VoicePerk, type PerkId } from './perks';
 export { causeMatches } from './log';
 export { previewPlan, type PlanPreview, type LegPreview } from './preview';
+export { pendingLevelUps } from './xp';

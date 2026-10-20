@@ -4,7 +4,7 @@ import { endDay } from '../../src/engine/day/evening';
 import { resolvePendingEvent } from '../../src/engine/events';
 import { newGame } from '../../src/engine/setup';
 import type { Content, DayFacts, GameEvent, GameState, TrainableVoice } from '../../src/engine/types';
-import { applyLevelUps, grantXp } from '../../src/engine/xp';
+import { applyLevelUps, grantXp, pendingLevelUps } from '../../src/engine/xp';
 import { makeContent } from '../fixtures/content';
 import { deepFreeze } from '../fixtures/freeze';
 import { makeState } from '../fixtures/state';
@@ -64,6 +64,25 @@ describe('grantXp / applyLevelUps', () => {
     const capped = applyLevelUps(makeState(withVoice('order', 4, 7)), b);
     expect(xp(capped, 'order')).toBe(0);
     expect(capped.log).toEqual([]);
+  });
+});
+
+describe('pendingLevelUps', () => {
+  it('matches the level-ups applyLevelUps logs and does not change the state', () => {
+    const state = makeState({
+      voices: { ...makeState().voices, order: 1, caution: 2, mechanic: 4, diplomat: 0 },
+      voiceXp: { ...makeState().voiceXp, order: 12, caution: 9, mechanic: 7, diplomat: 6 },
+    });
+    const frozen = deepFreeze(state);
+    const pending = pendingLevelUps(frozen, b);
+    const logged = applyLevelUps(state, b).log.filter((e) => e.cause.startsWith('levelup:'))
+      .map((e) => ({ voice: e.cause.split(':')[1], from: e.data!.from, to: e.data!.to }));
+    expect(pending).toEqual(logged);
+    expect(pending.map((p) => p.voice).sort()).toEqual(['diplomat', 'order']);
+  });
+
+  it('is empty when nothing reaches a threshold', () => {
+    expect(pendingLevelUps(makeState(), b)).toEqual([]);
   });
 });
 

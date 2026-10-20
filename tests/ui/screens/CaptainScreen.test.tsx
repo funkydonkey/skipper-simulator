@@ -41,4 +41,20 @@ describe('CaptainScreen', () => {
     const { container } = renderShell(gameAt('captain'));
     expect(container.querySelectorAll('li svg').length).toBeGreaterThanOrEqual(8);
   });
+
+  it('lists the perks of the allocated level and hints at the next one', async () => {
+    const r = renderShell(gameAt('captain'));
+    await r.user.click(raise('mechanic'));
+    expect(screen.queryByText('Точные цифры на приборах')).not.toBeInTheDocument();
+    expect(screen.getByText(/Ур\. 2: точные цифры/i)).toBeInTheDocument();
+    await r.user.click(raise('mechanic'));
+    expect(screen.getByText('Точные цифры на приборах')).toBeInTheDocument();
+    expect(screen.queryByText(/Ур\. 2: точные цифры/i)).not.toBeInTheDocument();
+  });
+
+  it('shows signed percent values for perks', async () => {
+    const r = renderShell(gameAt('captain'));
+    await r.user.click(raise('order'));
+    expect(screen.getByText('Риск травмы −10%')).toBeInTheDocument();
+  });
 });

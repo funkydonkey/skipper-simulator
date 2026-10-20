@@ -14,6 +14,19 @@ export function grantXp(state: GameState, xp: XpGrant, cause: string, b: Balance
   return s;
 }
 
+/** The single rule for a level-up: below max level, with XP at or above the next threshold. */
+function levelUpThreshold(state: GameState, voice: TrainableVoice, b: Balance): number | null {
+  const level = state.voices[voice];
+  if (level >= b.voices.maxLevel) return null;
+  const threshold = b.voices.xpToLevel[level];
+  return threshold !== undefined && state.voiceXp[voice] >= threshold ? threshold : null;
+}
+
+/** Level-ups `applyLevelUps` would make right now, without changing the state. */
+export function pendingLevelUps(state: GameState, b: Balance): Array<{ voice: TrainableVoice; from: number; to: number }> {
+  return TRAINABLE_VOICES.flatMap((voice) => (levelUpThreshold(state, voice, b) === null ? [] : [{ voice, from: state.voices[voice], to: state.voices[voice] + 1 }]));
+}
+
 /** At most one level per voice per call; surplus XP carries over. A voice at max level drops its XP. */
 export function applyLevelUps(state: GameState, b: Balance): GameState {
   let s = state;
@@ -23,8 +36,8 @@ export function applyLevelUps(state: GameState, b: Balance): GameState {
       if (s.voiceXp[voice] !== 0) s = { ...s, voiceXp: { ...s.voiceXp, [voice]: 0 } };
       continue;
     }
-    const threshold = b.voices.xpToLevel[level];
-    if (threshold === undefined || s.voiceXp[voice] < threshold) continue;
+    const threshold = levelUpThreshold(s, voice, b);
+    if (threshold === null) continue;
     s = {
       ...s,
       voices: { ...s.voices, [voice]: level + 1 },

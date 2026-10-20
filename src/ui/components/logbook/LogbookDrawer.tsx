@@ -3,6 +3,7 @@ import { COMMON } from '../../i18n/common';
 import { useSession, useT } from '../../session/SessionContext';
 import { logbookDays } from '../../view/logbook';
 import { Button } from '../Button';
+import { ChanceBadge } from '../ChanceBadge';
 import { LangSwitch } from './LangSwitch';
 import styles from './Logbook.module.css';
 import { LOGBOOK } from './strings';
@@ -32,7 +33,7 @@ export function LogbookDrawer() {
               <h3 className={styles.day}>{d.day === 0 ? t('dayZero') : tc('day', { n: d.day })}</h3>
               <ol className={styles.lines}>
                 {d.lines.map((l, i) => (
-                  <li key={i} data-tone={l.tone}><span className="mono">{l.clock}</span> {l.text}</li>
+                  <li key={i} data-tone={l.tone}><span className="mono">{l.clock}</span> {l.text}{l.odds && <ChanceBadge odds={l.odds} />}</li>
                 ))}
               </ol>
             </section>

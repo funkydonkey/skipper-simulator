@@ -76,4 +76,18 @@ describe('PlanningScreen', () => {
     r.dispatch({ type: 'draft_plan', plan: { departureHour: 3, legs: [], swimStops: 0, shower: 'normal', autopilot: false } });
     expect(screen.getByRole('alert')).not.toHaveTextContent(/[А-Яа-яЁё]/);
   });
+
+  it('shows Sea Sense forecast insight by level', () => {
+    const base = atBase();
+    const withSense = (level: number, front: boolean) => ({ ...base, voices: { ...base.voices, sea_sense: level }, weather: { ...base.weather!, front } });
+    const low = renderShell(withSense(2, true));
+    expect(screen.queryByText(/Чутьё: /)).toBeNull();
+    low.unmount();
+    const mid = renderShell(withSense(3, true));
+    expect(screen.getByText(/^Чутьё: шанс фронта \d+%$/)).toBeInTheDocument();
+    expect(screen.queryByText(/Чутьё: фронт после/)).toBeNull();
+    mid.unmount();
+    renderShell(withSense(4, true));
+    expect(screen.getByText('Чутьё: фронт после 13:00')).toBeInTheDocument();
+  });
 });
