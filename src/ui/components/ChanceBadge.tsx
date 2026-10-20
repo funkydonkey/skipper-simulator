@@ -19,13 +19,13 @@ export function ChanceBadge({ odds, label }: ChanceBadgeProps) {
     return delta === null ? [] : [{ key: p.source, text: t('entry', { label: partLabel(p.source, lang, game.voices), delta }) }];
   });
   return (
-    <span className={styles.wrap}>
+    <div className={styles.wrap}>
       <button type="button" className={`${styles.badge} mono`} aria-expanded={open} aria-controls={listId} onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}>
         {label ? `${label} · ${pct}` : pct}
       </button>
       <ul id={listId} className={styles.parts} hidden={!open} aria-label={t('partsList')}>
         {rows.map((r, i) => <li key={`${r.key}-${i}`}>{r.text}</li>)}
       </ul>
-    </span>
+    </div>
   );
 }

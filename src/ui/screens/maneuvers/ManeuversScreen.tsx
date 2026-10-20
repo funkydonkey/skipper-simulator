@@ -45,7 +45,7 @@ export function ManeuversScreen() {
             <ManeuverSketch kind={s.kind} />
             <div>
               <h2>{s.maneuver.title[lang]}</h2>
-              {risk && <p className={styles.risk}>{t('risk')} <ChanceBadge odds={risk} /></p>}
+              {risk && <div className={styles.risk}>{t('risk')} <ChanceBadge odds={risk} /></div>}
               {s.fallback && <p className={styles.fallback}>{t('fallback')}</p>}
             </div>
           </header>
