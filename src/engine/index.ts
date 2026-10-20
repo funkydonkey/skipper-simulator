@@ -19,3 +19,4 @@ export { forecastInsight, voicePerks, type VoicePerk, type PerkId } from './perk
 export { causeMatches } from './log';
 export { previewPlan, type PlanPreview, type LegPreview } from './preview';
 export { pendingLevelUps } from './xp';
+export { repairOptions, repairSystem, type RepairChoice } from './repair';

@@ -1,5 +1,5 @@
 import { appendLog } from './log';
-import { TRAINABLE_VOICES, type Balance, type GameState, type TrainableVoice } from './types';
+import { TRAINABLE_VOICES, type Balance, type GameState, type TrainableVoice, type VoiceId } from './types';
 
 export type XpGrant = Partial<Record<TrainableVoice, number>>;
 
@@ -12,6 +12,13 @@ export function grantXp(state: GameState, xp: XpGrant, cause: string, b: Balance
     s = appendLog({ ...s, voiceXp: { ...s.voiceXp, [voice]: s.voiceXp[voice] + amount } }, { kind: 'info', cause: `xp:${voice}:${cause}`, data: { xp: amount } });
   }
   return s;
+}
+
+/** XP for the checked voice after a voice check; `override` is an option's own `xp`. Non-trainable voices learn nothing. */
+export function grantCheckXp(state: GameState, voice: VoiceId, success: boolean, cause: string, b: Balance, override?: number): GameState {
+  if (!(TRAINABLE_VOICES as readonly string[]).includes(voice)) return state;
+  const xp = override ?? (success ? b.voices.checkXp.success : b.voices.checkXp.fail);
+  return grantXp(state, { [voice]: xp }, cause, b);
 }
 
 /** The single rule for a level-up: below max level, with XP at or above the next threshold. */
