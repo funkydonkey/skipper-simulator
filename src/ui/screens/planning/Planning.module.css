@@ -24,6 +24,9 @@
 @media (min-width: 1000px) {
   .layout { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
   .controls .columns { grid-template-columns: minmax(0, 1fr); margin-top: 0; }
+  /* Day settings share lines (departure + swims, shower + autopilot) so the odds in the preview don't push the actions below the fold. */
+  .controls .settings { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--space-4); row-gap: var(--space-1); }
+  .controls .settings > h2 { flex-basis: 100%; }
 }
 .odds { margin: var(--space-1) 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .insight { color: var(--fg-soft); font-style: italic; }
