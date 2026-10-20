@@ -2,7 +2,7 @@ import { z } from 'zod';
 import {
   CHECKPOINTS, DIRS, MANEUVER_KINDS, PILLARS, VOICES,
   type Balance, type Boat, type BriefingTopic, type CrewArchetype, type DebriefRule, type Dialogue, type Effect,
-  type EventOption, type GameEvent, type Maneuver, type MapPoint, type Route, type WeatherTemplate,
+  type EventOption, type GameEvent, type Maneuver, type MapPoint, type Region, type Route, type WeatherTemplate,
 } from '../engine/types';
 
 const POINT_KINDS = ['base', 'marina', 'bay', 'quay'] as const;
@@ -64,6 +64,10 @@ export const MapPointSchema: z.ZodType<MapPoint> = z.object({
 
 export const RouteSchema: z.ZodType<Route> = z.object({
   id: Id, from: Id, to: Id, distanceNm: Pos, kLocal: Pos, features: z.array(z.enum(FEATURES)),
+}).strict();
+
+export const RegionSchema: z.ZodType<Region> = z.object({
+  id: Id, name: Text, map: z.array(MapPointSchema).min(2), routes: z.array(RouteSchema).min(1),
 }).strict();
 
 export const WeatherTemplateSchema: z.ZodType<WeatherTemplate> = z.object({

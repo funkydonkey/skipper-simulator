@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadContentDir } from '../../src/content/load-node';
 import { parseContent } from '../../src/content/parse';
+import { toRaw } from '../fixtures/raw';
 import { endDay, finishWeek, planDay, presentEvent, startDay } from '../../src/engine';
 import { buildConditionContext } from '../../src/engine/expr';
 import { PILLARS, type GameEvent, type GameState } from '../../src/engine/types';
@@ -80,7 +81,7 @@ describe('ТЗ 7.4 acceptance', () => {
       ],
       debrief: { ru: 'Тест.', en: 'Test.' },
     };
-    const raw = JSON.parse(JSON.stringify({ ...content, events: [extra, ...content.events] }));
+    const raw = { ...toRaw(content), events: [extra, ...content.events] };
     const parsed = parseContent(raw);
     expect(parsed.errors).toEqual([]);
     expect(runWeek(parsed.content!, 1, newbie).state.firedEvents).toContain('json_only_test');

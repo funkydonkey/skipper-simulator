@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { knownIdentifiers, validateConditions } from '../../src/content/conditions';
 import { parseContent } from '../../src/content/parse';
 import { makeContent } from '../fixtures/content';
+import { toRaw } from '../fixtures/raw';
 
 describe('condition validation', () => {
   it('fixture conditions are valid', () => {
@@ -36,7 +37,7 @@ describe('condition validation', () => {
   });
 
   it('parseContent runs condition validation', () => {
-    const raw = JSON.parse(JSON.stringify(makeContent()));
+    const raw = toRaw(makeContent());
     raw.events[0].trigger.conditions = ['!briefing.toilets'];
     expect(parseContent(raw).errors).toContainEqual(expect.objectContaining({ message: expect.stringMatching(/briefing\.toilets/) }));
   });

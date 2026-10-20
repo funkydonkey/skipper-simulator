@@ -8,4 +8,4 @@ if (!content) {
   console.error(`Content invalid (${errors.length} errors):\n${formatErrors(errors)}`);
   process.exit(1);
 }
-console.log(`Content OK: ${content.boats.length} boats, ${content.map.length} points, ${content.events.length} events`);
+console.log(`Content OK: ${content.boats.length} boats, ${content.map.length} points in region ${content.region.id}, ${content.events.length} events`);

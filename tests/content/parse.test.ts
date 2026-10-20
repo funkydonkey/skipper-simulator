@@ -1,12 +1,13 @@
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { loadContentDir } from '../../src/content/load-node';
-import { CONTENT_FILES, parseContent } from '../../src/content/parse';
+import { parseContent } from '../../src/content/parse';
 import { makeContent } from '../fixtures/content';
+import { toRaw } from '../fixtures/raw';
 
-const raw = (): Record<string, any> => JSON.parse(JSON.stringify(makeContent()));
+const raw = (): Record<string, any> => toRaw(makeContent());
 
 describe('content parsing', () => {
   it('fixture content is valid', () => {
@@ -25,11 +26,11 @@ describe('content parsing', () => {
 
   it('missing file and unknown keys are errors', () => {
     const r0 = raw();
-    delete r0.routes;
-    r0.map[0].extra = 1;
+    delete r0.crew;
+    r0.region.map[0].extra = 1;
     const r = parseContent(r0);
-    expect(r.errors).toContainEqual(expect.objectContaining({ file: 'routes', message: 'missing file' }));
-    expect(r.errors).toContainEqual(expect.objectContaining({ file: 'map' }));
+    expect(r.errors).toContainEqual(expect.objectContaining({ file: 'crew', message: 'missing file' }));
+    expect(r.errors).toContainEqual(expect.objectContaining({ file: 'region', path: 'map.0' }));
   });
 
   it('option must be either check+success+fail or effects', () => {
@@ -39,10 +40,10 @@ describe('content parsing', () => {
   });
 
   it.each([
-    ['route to unknown point', (r: any) => { r.routes[0].to = 'atlantis'; }, /routes\[0\]\.to/],
-    ['duplicate ids', (r: any) => { r.map[1].id = 'base'; }, /duplicate id "base"/],
-    ['no base', (r: any) => { r.map[0].kind = 'marina'; }, /exactly one base/],
-    ['unreachable point', (r: any) => { r.routes = r.routes.filter((x: any) => x.to !== 'bay_a' && x.from !== 'bay_a'); }, /bay_a.*unreachable/],
+    ['route to unknown point', (r: any) => { r.region.routes[0].to = 'atlantis'; }, /routes\[0\]\.to/],
+    ['duplicate ids', (r: any) => { r.region.map[1].id = 'base'; }, /duplicate id "base"/],
+    ['no base', (r: any) => { r.region.map[0].kind = 'marina'; }, /exactly one base/],
+    ['unreachable point', (r: any) => { r.region.routes = r.region.routes.filter((x: any) => x.to !== 'bay_a' && x.from !== 'bay_a'); }, /bay_a.*unreachable/],
     ['weather day missing', (r: any) => { r.weather[0].days.pop(); }, /day 6/],
     ['bad maneuver step ref', (r: any) => { r.maneuvers[0].errors[0].wrongIf.first = 'nope'; }, /unknown step "nope"/],
     ['promise to unknown dialogue', (r: any) => { r.events[0].options[1].effects.promise = 'ghost'; }, /dialogue "ghost"/],
@@ -56,13 +57,10 @@ describe('content parsing', () => {
     expect(r.errors.map((e) => `${e.path}: ${e.message}`).join('\n')).toMatch(pattern);
   });
 
-  it('loadContentDir reads <file>.json from a directory', async () => {
+  it('loadContentDir reports unreadable files as errors', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'skipper-'));
-    const r0 = raw();
-    for (const f of CONTENT_FILES) await writeFile(join(dir, `${f}.json`), JSON.stringify(r0[f]));
-    const r = await loadContentDir(dir);
-    expect(r.errors).toEqual([]);
-    const empty = await loadContentDir(join(dir, 'nope'));
-    expect(empty.errors[0]!.message).toMatch(/Cannot read boats\.json/);
+    const r = await loadContentDir(join(dir, 'nope'));
+    expect(r.content).toBeNull();
+    expect(r.errors[0]!.message).toMatch(/Cannot read .*boats\.json/);
   });
 });

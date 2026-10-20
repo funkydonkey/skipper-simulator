@@ -314,7 +314,11 @@ export interface Balance {
   drama: { pillarWeightByDay: Record<string, Partial<Record<Pillar, number>>> };
 }
 
+/** Region pack header plus its world; Content exposes the header as `region` and the world as `map`/`routes`. */
+export interface Region { id: string; name: LocalizedText; map: MapPoint[]; routes: Route[] }
+
 export interface Content {
+  region: { id: string; name: LocalizedText };
   boats: Boat[];
   map: MapPoint[];
   routes: Route[];

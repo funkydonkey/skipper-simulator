@@ -14,9 +14,10 @@ const map: MapPoint[] = [
   { id: 'marina_b', name: t('Марина Б', 'Marina B'), kind: 'marina', x: 8, y: 10, seabed: 'mud', depthM: 5, shelter: shelter({}, 0.95), priceEur: 80, placesGoneHour: 15, services: allServices },
 ];
 
-/** Minimal 3-point world for unit tests of Waves 1–3. Real content lives in content/*.json. */
+/** Minimal 3-point world for unit tests of Waves 1–3. Real content lives in content/core and content/regions. */
 export function makeContent(): Content {
   return {
+    region: { id: 'test_region', name: t('Тест', 'Test') },
     balance: balanceJson as unknown as Balance,
     boats: [{
       id: 'test_boat', name: t('Тест 40', 'Test 40'), lengthFt: 40, cabins: 3, berths: 6,
