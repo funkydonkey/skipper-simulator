@@ -1,4 +1,4 @@
-import type { LocalizedText, Resources, ShowerDiscipline } from '../../engine';
+import type { LocalizedText, Resources, Seabed, ShowerDiscipline } from '../../engine';
 import { dict } from '../i18n/t';
 
 const t = (ru: string, en: string): LocalizedText => ({ ru, en });
@@ -106,3 +106,32 @@ export const LOG = dict({
   depositCharged: { ru: 'С депозита удержали: {what}', en: 'Deducted from the deposit: {what}' },
   unknown: { ru: 'Запись: {cause}', en: 'Entry: {cause}' },
 });
+
+export const CHANCE_PARTS = dict({
+  base: { ru: 'база', en: 'base' },
+  clamp: { ru: 'предел', en: 'limit' },
+  difficulty: { ru: 'сложность', en: 'difficulty' },
+  fatigue: { ru: 'усталость', en: 'fatigue' },
+  mitigation: { ru: 'страховка', en: 'safeguards' },
+  seabed: { ru: 'грунт', en: 'seabed' },
+  wind: { ru: 'ветер', en: 'wind' },
+  night: { ru: 'темнота', en: 'darkness' },
+  briefing: { ru: 'брифинг', en: 'briefing' },
+  late: { ru: 'опоздание', en: 'arriving late' },
+  drama: { ru: 'драма', en: 'drama' },
+  checkin: { ru: 'приёмка', en: 'check-in' },
+  worn: { ru: 'износ', en: 'wear' },
+  unknown: { ru: 'прочее', en: 'other' },
+});
+
+export const CHANCE_UI = dict({
+  partsList: { ru: 'Из чего складывается шанс', en: 'What makes up the odds' },
+  entry: { ru: '{label} {delta}', en: '{label} {delta}' },
+});
+
+export const SEABED_NAMES: Readonly<Record<Seabed, LocalizedText>> = {
+  sand: t('песок', 'sand'),
+  mud: t('ил', 'mud'),
+  weed: t('водоросли', 'weed'),
+  rock: t('камень', 'rock'),
+};

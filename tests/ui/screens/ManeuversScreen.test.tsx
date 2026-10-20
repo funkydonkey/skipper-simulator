@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { maneuverRisk } from '../../../src/engine';
 import { OrderPicker } from '../../../src/ui/screens/maneuvers/OrderPicker';
 import { content, gameAt } from '../fixtures';
 import { renderShell, renderWithSession } from '../render';
@@ -28,6 +29,17 @@ describe('ManeuversScreen', () => {
     expect(r.currentScreen()).toBe('passage');
     const orders = r.session().game!.log.filter((e) => e.cause.startsWith('order:')).map((e) => e.cause.split(':')[1]);
     expect(orders).toEqual(['ok', 'ok']);
+  });
+
+  it('shows the injury risk of each maneuver with a breakdown', async () => {
+    const r = startManeuvers();
+    const risk = maneuverRisk(r.session().game!, content, 'departure')!;
+    const pct = Math.round(risk.value * 100);
+    expect(screen.getAllByText(/Если ошибёшься — риск травмы до/).length).toBe(2);
+    const badge = screen.getAllByRole('button', { name: `${pct}%` })[0]!;
+    await r.user.click(badge);
+    expect(badge).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getAllByText(/^база \d+%$/).filter((e) => e.closest('[hidden]') === null)).toHaveLength(1);
   });
 
   it('a step can be taken back', async () => {

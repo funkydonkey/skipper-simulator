@@ -1,5 +1,6 @@
 import { buildConditionContext, formatClock, presentEvent, requireEvent } from '../../../engine';
 import { Button } from '../../components/Button';
+import { ChanceBadge } from '../../components/ChanceBadge';
 import { SceneArt } from '../../components/SceneArt';
 import { ScreenFrame } from '../../components/ScreenFrame';
 import { Typewriter } from '../../components/Typewriter';
@@ -28,12 +29,12 @@ export function EventScreen() {
             {view.options.map((o, i) => {
               const check = event.options[i]?.check;
               return (
-                <li key={o.id}>
+                <li key={o.id} className={styles.optionRow}>
                   <Button variant="secondary" className={styles.option} disabled={!o.available} onClick={() => act({ type: 'resolve_event', optionId: o.id })}>
                     {o.text}
-                    {check && o.chance !== null && <span className={`${styles.odds} mono`}> {t('check', { voice: VOICE_NAMES[check.voice][lang], pct: Math.round(o.chance.value * 100) })}</span>}
                     {!o.available && <span className={styles.na}> {t('unavailable')}</span>}
                   </Button>
+                  {check && o.chance !== null && <ChanceBadge odds={o.chance} label={VOICE_NAMES[check.voice][lang]} />}
                 </li>
               );
             })}
