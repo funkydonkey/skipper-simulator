@@ -1,12 +1,45 @@
 import { z } from 'zod';
+import { DIRS, PILLARS, TRAINABLE_VOICES } from '../../engine';
 import type { Content, GameState, Lang } from '../../engine';
 
-export const SAVE_KEY = 'skipper.save.v1';
+export const SAVE_KEY = 'skipper.save.v2';
+/** Older formats are not migrated: readSave reports them once as 'legacy' and drops them. */
+export const LEGACY_SAVE_KEYS: readonly string[] = ['skipper.save.v1'];
 export const LANG_KEY = 'skipper.lang';
 
 const PHASES = ['captain', 'boat_select', 'checkin', 'briefing', 'morning', 'planning', 'evening', 'return', 'debrief'] as const;
 const num = z.number().finite();
 const text = z.object({ ru: z.string(), en: z.string() });
+const POINT_KINDS = ['base', 'marina', 'bay', 'quay'] as const;
+const ACTIVITIES = ['swim', 'taverna', 'beach'] as const;
+const LOG_KINDS = ['decision', 'effect', 'event', 'signal', 'info', 'roll'] as const;
+
+const ExpectationSchema = z.object({
+  id: z.string(), dialogueId: z.string(),
+  spec: z.discriminatedUnion('kind', [
+    z.object({ kind: z.literal('depart_by'), hour: num }),
+    z.object({ kind: z.literal('arrive_at_kind'), pointKind: z.enum(POINT_KINDS) }),
+    z.object({ kind: z.literal('activity'), activity: z.enum(ACTIVITIES) }),
+  ]),
+  strength: num, createdDay: num, dueDay: num, status: z.enum(['open', 'kept', 'broken']),
+});
+
+const DayWeatherSchema = z.object({
+  day: num, forecastKn: num, forecastGustKn: num, forecastDir: z.enum(DIRS), barometerHpa: num,
+  front: z.boolean(), frontAddKn: num, frontDir: z.enum(DIRS), barometerTrendHpa: num, signalsVisible: z.boolean(),
+});
+
+const DayFactsSchema = z.object({
+  day: num, departureHour: num.nullable(), arrivalHour: num.nullable(), arrivalPointKind: z.enum(POINT_KINDS).nullable(),
+  mooring: z.enum(['anchor', 'berth']).nullable(), activities: z.array(z.enum(ACTIVITIES)),
+  motorHours: num, sailHours: num, autopilotHours: num, shower: z.enum(['strict', 'normal', 'loose']),
+});
+
+const LogEntrySchema = z.object({
+  day: num, clockMin: num, kind: z.enum(LOG_KINDS), cause: z.string(),
+  pillar: z.enum(PILLARS).optional(),
+  odds: z.object({ value: num, parts: z.array(z.object({ source: z.string(), delta: num })) }).optional(),
+}).passthrough();
 
 /** Shape check of a stored game. Deep engine invariants are trusted: the slot is written only by writeSave. */
 const SlotSchema = z.object({
@@ -16,17 +49,18 @@ const SlotSchema = z.object({
     seed: num, rng: num, lang: z.enum(['ru', 'en']), phase: z.enum(PHASES), day: z.number().int().min(0), clockMin: num,
     weatherTemplateId: z.string(), locationId: z.string(), boatId: z.string().nullable(),
     voices: z.record(num),
+    voiceXp: z.object(Object.fromEntries(TRAINABLE_VOICES.map((v) => [v, num])) as Record<(typeof TRAINABLE_VOICES)[number], typeof num>),
     resources: z.object({ waterL: num, fuelL: num, serviceBankPct: num, starterBankPct: num, gasPct: num, moneyEur: num, mood: num, fatigue: num }),
     flags: z.record(z.boolean()), damages: z.array(z.string()),
     crew: z.array(z.object({ id: z.string(), archetypeId: z.string(), name: text })),
-    expectations: z.array(z.unknown()), moodPerDay: num, injuries: num,
-    log: z.array(z.object({ day: num, clockMin: num, kind: z.string(), cause: z.string() }).passthrough()),
+    expectations: z.array(ExpectationSchema), moodPerDay: num, injuries: num,
+    log: z.array(LogEntrySchema),
     firedEvents: z.array(z.string()), eventQueue: z.array(z.string()),
-    weather: z.unknown(), dayFacts: z.unknown(), returnedOnTime: z.boolean().nullable(),
+    weather: DayWeatherSchema.nullable(), dayFacts: DayFactsSchema.nullable(), returnedOnTime: z.boolean().nullable(),
   }).passthrough(),
 });
 
-export type SaveRead = { kind: 'none' } | { kind: 'corrupt' } | { kind: 'ok'; savedAt: string; game: GameState };
+export type SaveRead = { kind: 'none' } | { kind: 'corrupt' } | { kind: 'legacy' } | { kind: 'ok'; savedAt: string; game: GameState };
 
 function refsExist(g: GameState, c: Content): boolean {
   return c.map.some((p) => p.id === g.locationId)
@@ -44,9 +78,15 @@ function safeSet(storage: Storage | null, key: string, value: string): boolean {
   try { storage.setItem(key, value); return true; } catch { return false; }
 }
 
+function takeLegacy(storage: Storage | null): boolean {
+  const found = LEGACY_SAVE_KEYS.filter((k) => safeGet(storage, k) !== null);
+  found.forEach((k) => { try { storage?.removeItem(k); } catch { /* storage unavailable */ } });
+  return found.length > 0;
+}
+
 export function readSave(storage: Storage | null, content: Content): SaveRead {
   const raw = safeGet(storage, SAVE_KEY);
-  if (raw === null) return { kind: 'none' };
+  if (raw === null) return takeLegacy(storage) ? { kind: 'legacy' } : { kind: 'none' };
   try {
     const parsed = SlotSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) return { kind: 'corrupt' };

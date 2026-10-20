@@ -44,6 +44,19 @@ describe('MenuScreen', () => {
     expect(screen.queryByText('Сохранение повреждено')).toBeNull();
   });
 
+  it('shows the legacy-save notice once and still starts a new week', async () => {
+    const storage = memoryStorage();
+    storage.setItem('skipper.save.v1', '{}');
+    const r = renderShell(null, { storage });
+    expect(screen.getByText(/Сохранение от старой версии несовместимо/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Продолжить' })).toBeDisabled();
+    await r.user.click(screen.getByRole('button', { name: 'Новая неделя' }));
+    expect(r.currentScreen()).toBe('captain');
+    r.unmount();
+    renderShell(null, { storage });
+    expect(screen.queryByText(/Сохранение от старой версии несовместимо/)).toBeNull();
+  });
+
   it('switches the language of the whole menu', async () => {
     const r = renderShell(null);
     await r.user.click(screen.getByRole('button', { name: 'EN' }));
