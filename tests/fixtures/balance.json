@@ -50,7 +50,7 @@
   },
   "promises": { "keptPerStrength": 5, "brokenPerStrength": 15, "diplomatSofteningPerLevel": 0.1 },
   "checks": { "base": 0.5, "perLevel": 0.15, "min": 0.05, "max": 0.95 },
-  "checkin": { "budgetMin": 90, "costMin": { "anchor": 15, "impeller": 20, "gas": 10, "toilets": 15, "sails": 25, "electrics": 20, "damage_photos": 15 } },
+  "checkin": { "budgetMin": 72, "costMin": { "anchor": 15, "impeller": 20, "gas": 10, "toilets": 15, "sails": 25, "electrics": 20, "damage_photos": 15 } },
   "briefing": { "slots": 4, "maxDialogues": 2 },
   "weather": { "frontAddKn": [8, 12], "frontShiftSteps": 2, "barometerDropHpa": 5, "afternoonFromHour": 13 },
   "schedule": { "days": 6, "returnDeadlineHour": 17, "lateFeeEur": 400 },

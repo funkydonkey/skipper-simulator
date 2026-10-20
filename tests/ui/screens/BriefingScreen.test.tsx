@@ -12,7 +12,7 @@ describe('BriefingScreen', () => {
     renderShell(game);
     const found = game.log.filter((e) => e.cause.startsWith('checkin:found:')).map((e) => e.cause.split(':')[2]);
     const hidden = game.log.filter((e) => e.cause.startsWith('defect:hidden:')).map((e) => e.cause.split(':')[2]);
-    const defects = content.boats.flatMap((b) => b.hiddenDefects);
+    const defects = content.boats.flatMap((b) => b.defectPool);
     for (const id of found) expect(screen.getByText(new RegExp(defects.find((d) => d.id === id)!.description.ru))).toBeInTheDocument();
     for (const id of hidden) expect(screen.queryByText(new RegExp(defects.find((d) => d.id === id)!.description.ru))).toBeNull();
   });

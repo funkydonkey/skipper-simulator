@@ -13,7 +13,7 @@ export function knownIdentifiers(c: Content): Set<string> {
   const damages = new Set([
     ...Object.keys(c.balance.deposit.damageCostEur),
     ...effects.flatMap((e) => (e.damage ? [e.damage] : [])),
-    ...c.boats.flatMap((b) => b.hiddenDefects.flatMap((d) => (d.chargedOnReturn ? [d.chargedOnReturn] : []))),
+    ...c.boats.flatMap((b) => b.defectPool.flatMap((d) => (d.chargedOnReturn ? [d.chargedOnReturn] : []))),
   ]);
   return new Set<string>([
     ...CONTEXT_KEYS,
@@ -22,7 +22,7 @@ export function knownIdentifiers(c: Content): Set<string> {
     ...VOICES.map((v) => `voice.${v}`),
     ...CHECKPOINTS.map((cp) => `checkin.${cp}`),
     ...c.briefing.map((t) => `briefing.${t.id}`),
-    ...c.boats.flatMap((b) => b.hiddenDefects.flatMap((d) => [`defect.${d.id}`, `defect.${d.id}.found`])),
+    ...c.boats.flatMap((b) => b.defectPool.flatMap((d) => [`defect.${d.id}`, `defect.${d.id}.found`])),
     ...[...damages].map((d) => `damage.${d}`),
     ...c.crew.flatMap((a) => a.wishes.map((w) => `wish.${w}`)),
     ...effects.flatMap((e) => (e.flag ? [`flag.${e.flag}`] : [])),

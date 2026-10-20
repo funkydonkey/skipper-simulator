@@ -39,6 +39,8 @@ export function makeState(overrides: Partial<GameState> = {}): GameState {
     weather: { day: 1, forecastKn: 12, forecastGustKn: 18, forecastDir: 'NW', barometerHpa: 1015, front: false, frontAddKn: 0, frontDir: 'NW', barometerTrendHpa: 0, signalsVisible: false },
     dayFacts: null,
     returnedOnTime: null,
+    defects: [],
+    checkin: null,
   };
   return { ...base, ...overrides };
 }

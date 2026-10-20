@@ -1,6 +1,7 @@
 // Public engine API for the UI. Import from here, not from internal modules.
 export * from './types';
 export { EngineError, type EngineErrorCode } from './errors';
+export { resolveDefects } from './defects';
 export { newGame, assignVoices, boatOffers, chooseBoat, performCheckin, performBriefing, type NewGameOptions } from './setup';
 export { startDay, type MorningChoice } from './day/morning';
 export { planDay, validatePlan } from './day/passage';

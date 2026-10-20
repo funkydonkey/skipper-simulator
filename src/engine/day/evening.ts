@@ -103,8 +103,8 @@ export function finishWeek(state: GameState, content: Content): GameState {
   const boat = requireBoat(content, state);
   let s = state;
   if (s.returnedOnTime !== true) s = applyOutcome(s, boat, { cause: 'return:late_fee', pillar: 'time', effect: { money: -b.schedule.lateFeeEur } });
-  for (const d of boat.hiddenDefects) {
-    if (d.chargedOnReturn && s.flags[`defect.${d.id}`]) {
+  for (const d of boat.defectPool) {
+    if (d.chargedOnReturn && s.defects.includes(d.id) && s.flags[`defect.${d.id}`]) {
       s = applyOutcome(s, boat, { cause: `deposit:unrecorded:${d.id}`, pillar: 'boat', effect: { damage: d.chargedOnReturn } });
     }
   }

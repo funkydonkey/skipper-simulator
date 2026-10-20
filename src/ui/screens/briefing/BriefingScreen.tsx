@@ -14,10 +14,12 @@ export function BriefingScreen() {
   const { slots, maxDialogues } = content.balance.briefing;
   const [topics, setTopics] = useState<string[]>([]);
   const [lines, setLines] = useState<string[]>([]);
-  const defects = content.boats.flatMap((b) => b.hiddenDefects);
+  const defects = content.boats.flatMap((b) => b.defectPool);
   const found = game.log
     .filter((e) => e.cause.startsWith('checkin:found:'))
-    .map((e) => defects.find((d) => d.id === e.cause.split(':')[2])?.description[lang])
+    .map((e) => e.cause.split(':')[2])
+    .filter((id) => game.defects.includes(id ?? ''))
+    .map((id) => defects.find((d) => d.id === id)?.description[lang])
     .filter((d): d is string => Boolean(d));
   const dialogues = content.dialogues.filter((d) => d.contexts.includes('briefing'));
 

@@ -41,7 +41,7 @@ function readIdentifiers(c: Content): Set<string> {
 function findDeadRefs(c: Content): string[] {
   const reads = readIdentifiers(c);
   const written = new Set(effectsOf(c).flatMap((e) => (e.flag ? [`flag.${e.flag}`] : [])));
-  const defects = c.boats.flatMap((b) => b.hiddenDefects);
+  const defects = c.boats.flatMap((b) => b.defectPool);
   const dead: string[] = [];
   for (const w of written) if (!reads.has(w)) dead.push(`flag:${w.slice('flag.'.length)}`);
   for (const r of reads) if (r.startsWith('flag.') && !written.has(r)) dead.push(`flag-read:${r.slice('flag.'.length)}`);
@@ -50,8 +50,7 @@ function findDeadRefs(c: Content): string[] {
   }
   for (const t of c.briefing) if (!reads.has(`briefing.${t.id}`)) dead.push(`topic:${t.id}`);
   for (const id of new Set(defects.map((d) => d.id))) {
-    const charged = defects.some((d) => d.id === id && d.chargedOnReturn);
-    if (!charged && !reads.has(`defect.${id}`) && !reads.has(`defect.${id}.found`)) dead.push(`defect:${id}`);
+    if (!defects.some((d) => d.id === id && (d.system || d.chargedOnReturn))) dead.push(`defect:${id}`);
   }
   for (const key of BOAT_KEYS) if (!reads.has(key)) dead.push(`boat-field:${key}`);
   return dead;

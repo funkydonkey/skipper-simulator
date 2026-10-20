@@ -1,3 +1,4 @@
+import { applyDefects, pickDefects } from './defects';
 import { assertPhase, EngineError } from './errors';
 import { appendLog } from './log';
 import { sayDialogue } from './promises';
@@ -31,7 +32,7 @@ export function newGame(content: Content, opts: NewGameOptions): GameState {
     voiceXp: { sea_sense: 0, caution: 0, order: 0, mechanic: 0, diplomat: 0, economist: 0 },
     resources: { waterL: 0, fuelL: 0, serviceBankPct: b.start.serviceBankPct, starterBankPct: b.start.starterBankPct, gasPct: b.start.gasPct, moneyEur: b.start.moneyEur, mood: b.start.mood, fatigue: b.start.fatigue },
     flags: {}, damages: [], systems: {}, crew: makeCrew(content, crewSize), expectations: [], moodPerDay: 0, injuries: 0,
-    log: [], firedEvents: [], eventQueue: [], weather: null, dayFacts: null, returnedOnTime: null,
+    log: [], firedEvents: [], eventQueue: [], weather: null, dayFacts: null, returnedOnTime: null, defects: [], checkin: null,
   };
 }
 
@@ -55,11 +56,14 @@ export function chooseBoat(state: GameState, content: Content, boatId: string): 
   const boat = content.boats.find((b) => b.id === boatId);
   if (!boat) throw new EngineError('NOT_FOUND', `Boat "${boatId}" not found`);
   if (boat.priceEur > state.resources.moneyEur) throw new EngineError('BUDGET', `Cannot afford ${boat.id}: ${boat.priceEur} > ${state.resources.moneyEur}`);
+  const picked = pickDefects(state.rng, boat);
   const s: GameState = {
     ...state,
+    rng: picked.next,
     boatId: boat.id,
     phase: 'checkin',
-    systems: initialSystems(boat),
+    defects: picked.value,
+    systems: applyDefects(initialSystems(boat), boat, picked.value),
     resources: { ...state.resources, moneyEur: state.resources.moneyEur - boat.priceEur, waterL: boat.waterTankL, fuelL: boat.fuelTankL },
   };
   return appendLog(s, { kind: 'decision', cause: `boat:choose:${boat.id}`, pillar: 'boat' });
@@ -84,12 +88,16 @@ export function performCheckin(state: GameState, content: Content, checkpoints: 
   let s = CHECKPOINTS.reduce((acc, cp) => appendLog(acc, { kind: 'decision', cause: `checkin:${checked.has(cp) ? 'check' : 'skip'}:${cp}`, pillar: 'boat' }), state);
   const flags: Record<string, boolean> = { ...s.flags };
   for (const cp of checked) flags[`checkin.${cp}`] = true;
-  for (const d of boat.hiddenDefects) {
-    const found = checked.has(d.checkpoint);
-    flags[found ? `defect.${d.id}.found` : `defect.${d.id}`] = true;
-    s = appendLog(s, { kind: 'info', cause: found ? `checkin:found:${d.id}` : `defect:hidden:${d.id}`, pillar: 'boat' });
+  const found: string[] = [];
+  for (const d of boat.defectPool.filter((x) => s.defects.includes(x.id))) {
+    const seen = checked.has(d.checkpoint);
+    if (seen) found.push(d.id);
+    flags[seen ? `defect.${d.id}.found` : `defect.${d.id}`] = true;
+    s = appendLog(s, { kind: 'info', cause: seen ? `checkin:found:${d.id}` : `defect:hidden:${d.id}`, pillar: 'boat' });
   }
-  return { ...advanceClock({ ...s, flags }, cost), phase: 'briefing' };
+  const fixableFound = found.some((id) => boat.defectPool.find((d) => d.id === id)?.system);
+  const checkin = fixableFound ? { found, fixed: [], minutesLeft: content.balance.checkin.budgetMin - cost } : null;
+  return { ...advanceClock({ ...s, flags }, cost), checkin, phase: fixableFound ? 'defects' : 'briefing' };
 }
 
 function validateTopics(topicIds: readonly string[], content: Content): void {

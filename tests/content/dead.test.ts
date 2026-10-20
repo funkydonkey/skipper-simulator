@@ -56,10 +56,13 @@ describe('findDeadContent', () => {
     expect(r).not.toContain('topic:toilet');
   });
 
-  it('reports an unread defect but not one charged on return', () => {
-    const r = refs(cleanContent());
-    expect(r).toContain('defect:worn_impeller');
-    expect(r).not.toContain('defect:old_scratch');
+  it('reports a defect with neither a system nor a charge, but not one that has either', () => {
+    const c = cleanContent();
+    const [impeller, , scratch] = c.boats[0]!.defectPool;
+    expect(refs(c)).not.toContain('defect:worn_impeller');
+    expect(refs(c)).not.toContain('defect:old_scratch');
+    c.boats[0]!.defectPool = [{ id: impeller!.id, checkpoint: impeller!.checkpoint, description: impeller!.description }, scratch!];
+    expect(refs(c)).toContain('defect:worn_impeller');
   });
 
   it('reports unread boat fields', () => {

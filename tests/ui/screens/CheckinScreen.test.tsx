@@ -9,9 +9,9 @@ const point = (id: keyof typeof CHECKPOINT_NAMES) => screen.getByRole('button', 
 describe('CheckinScreen', () => {
   it('spends the attention budget and blocks what does not fit', async () => {
     const r = renderShell(gameAt('checkin'));
-    expect(screen.getByText('Время на приёмку: 0 из 90 мин')).toBeInTheDocument();
-    for (const id of ['impeller', 'sails', 'electrics', 'anchor', 'gas'] as const) await r.user.click(point(id));
-    expect(screen.getByText('Время на приёмку: 90 из 90 мин')).toBeInTheDocument();
+    expect(screen.getByText('Время на приёмку: 0 из 72 мин')).toBeInTheDocument();
+    for (const id of ['impeller', 'sails', 'electrics'] as const) await r.user.click(point(id));
+    expect(screen.getByText('Время на приёмку: 65 из 72 мин')).toBeInTheDocument();
     expect(point('toilets')).toBeDisabled();
     expect(point('impeller')).toHaveAttribute('aria-pressed', 'true');
     await r.user.click(point('impeller'));

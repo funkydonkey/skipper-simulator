@@ -2,6 +2,7 @@ import { buildDebrief, type Debrief } from '../engine/debrief';
 import { endDay, finishWeek } from '../engine/day/evening';
 import { startDay } from '../engine/day/morning';
 import { planDay } from '../engine/day/passage';
+import { resolveDefects } from '../engine/defects';
 import { resolvePendingEvent } from '../engine/events';
 import { assignVoices, chooseBoat, newGame, performBriefing, performCheckin } from '../engine/setup';
 import { requireEvent } from '../engine/state';
@@ -17,6 +18,7 @@ export function setupWeek(content: Content, seed: number, strategy: Strategy, la
   s = assignVoices(s, content, strategy.voices);
   s = chooseBoat(s, content, strategy.boatId);
   s = performCheckin(s, content, strategy.checkpoints);
+  if (s.phase === 'defects') s = resolveDefects(s, content, []);
   return performBriefing(s, content, strategy.briefingTopics, strategy.briefingDialogues);
 }
 

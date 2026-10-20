@@ -9,7 +9,7 @@ const SAVE_VERSION = 3;
 export const LEGACY_SAVE_KEYS: readonly string[] = ['skipper.save.v1'];
 export const LANG_KEY = 'skipper.lang';
 
-const PHASES = ['captain', 'boat_select', 'checkin', 'briefing', 'morning', 'planning', 'evening', 'return', 'debrief'] as const;
+const PHASES = ['captain', 'boat_select', 'checkin', 'defects', 'briefing', 'morning', 'planning', 'evening', 'return', 'debrief'] as const;
 const num = z.number().finite();
 const text = z.object({ ru: z.string(), en: z.string() });
 const POINT_KINDS = ['base', 'marina', 'bay', 'quay'] as const;
@@ -63,6 +63,8 @@ const SlotSchema = z.object({
     log: z.array(LogEntrySchema),
     firedEvents: z.array(z.string()), eventQueue: z.array(z.string()),
     weather: DayWeatherSchema.nullable(), dayFacts: DayFactsSchema.nullable(), returnedOnTime: z.boolean().nullable(),
+    defects: z.array(z.string()),
+    checkin: z.object({ found: z.array(z.string()), fixed: z.array(z.string()), minutesLeft: num }).strict().nullable(),
   }).passthrough(),
 });
 

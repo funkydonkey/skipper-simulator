@@ -4,6 +4,7 @@ import { BoatScreen } from './boat/BoatScreen';
 import { BriefingScreen } from './briefing/BriefingScreen';
 import { CaptainScreen } from './captain/CaptainScreen';
 import { CheckinScreen } from './checkin/CheckinScreen';
+import { DefectsScreen } from './checkin/DefectsScreen';
 import { DebriefScreen } from './debrief/DebriefScreen';
 import { EveningScreen } from './evening/EveningScreen';
 import { EventScreen } from './event/EventScreen';
@@ -20,6 +21,7 @@ export const SCREENS: Readonly<Record<Screen, ComponentType>> = {
   captain: CaptainScreen,
   boat: BoatScreen,
   checkin: CheckinScreen,
+  defects: DefectsScreen,
   briefing: BriefingScreen,
   morning: MorningScreen,
   planning: PlanningScreen,

@@ -25,8 +25,10 @@ export function makeContent(): Content {
       solarW: 0, electricToilet: false, motorKn: 6.5, hullSpeedKn: 7.5,
       priceEur: 4000, depositEur: 2000,
       shinyFeatures: [t('Подруливающее устройство', 'Bow thruster')],
-      hiddenDefects: [
-        { id: 'worn_impeller', checkpoint: 'impeller', description: t('Изношенный импеллер', 'Worn impeller') },
+      defectsPerWeek: [2, 3],
+      defectPool: [
+        { id: 'worn_impeller', checkpoint: 'impeller', description: t('Изношенный импеллер', 'Worn impeller'), system: 'engine_cooling', fixEur: 60, fixMin: 20 },
+        { id: 'toilet_valve', checkpoint: 'toilets', description: t('Клапан гальюна подтекает', 'The head valve leaks'), system: 'heads', fixEur: 40, fixMin: 15 },
         { id: 'old_scratch', checkpoint: 'damage_photos', description: t('Старая царапина', 'Old scratch'), chargedOnReturn: 'hull_scratch' },
       ],
       systems: { engine_cooling: 'ok', heads: 'ok', rig: 'ok', bow_thruster: 'worn' },

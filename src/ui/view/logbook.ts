@@ -17,7 +17,7 @@ const num = (e: LogEntry, k: string): number => Number(e.data?.[k] ?? 0);
 const firstSentence = (s: string): string => s.split(/(?<=[.!?…])\s/)[0] ?? s;
 
 function defectText(c: Content, id: string, lang: Lang): string {
-  return c.boats.flatMap((b) => b.hiddenDefects).find((d) => d.id === id)?.description[lang] ?? label(DAMAGE_NAMES, id, lang);
+  return c.boats.flatMap((b) => b.defectPool).find((d) => d.id === id)?.description[lang] ?? label(DAMAGE_NAMES, id, lang);
 }
 function topicTitle(c: Content, id: string, lang: Lang): string {
   return c.briefing.find((t) => t.id === id)?.title[lang] ?? id;

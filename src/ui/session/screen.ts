@@ -5,6 +5,7 @@ const PHASE_SCREEN: Record<Exclude<Phase, 'planning'>, Screen> = {
   captain: 'captain',
   boat_select: 'boat',
   checkin: 'checkin',
+  defects: 'defects',
   briefing: 'briefing',
   morning: 'morning',
   evening: 'evening',

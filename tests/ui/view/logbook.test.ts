@@ -126,7 +126,7 @@ describe('logbook', () => {
 describe('logbook does not spoil the weather', () => {
   it('shows no front outcome in the planning phase when signals are hidden and the barometer is closed', () => {
     const outcomes = new Set<boolean>();
-    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
+    for (const seed of Array.from({ length: 24 }, (_, i) => i + 1)) {
       const morning = gameAt('morning', seed);
       const blind = { ...morning, voices: { ...morning.voices, sea_sense: 0 } };
       const planning = startDay(blind, content, { openBarometer: false });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildConditionContext, evaluateCondition as evaluate } from '../../src/engine/expr';
 import { applyOutcome } from '../../src/engine/resources';
+import { applyDefects } from '../../src/engine/defects';
 import { initialSystems, systemContext } from '../../src/engine/systems';
 import { assignVoices, chooseBoat, newGame } from '../../src/engine';
 import { content } from '../ui/fixtures';
@@ -26,7 +27,8 @@ describe('systems model', () => {
 
   it('newGame has no systems; chooseBoat initialises them', () => {
     expect(newGame(content, { seed: 1, lang: 'ru' }).systems).toEqual({});
-    expect(on('aurora_45').systems).toEqual(initialSystems(aurora));
+    const s = on('aurora_45');
+    expect(s.systems).toEqual(applyDefects(initialSystems(aurora), aurora, s.defects));
   });
 
   it('systemContext reports none/false/0 for a system the boat lacks', () => {

@@ -22,7 +22,7 @@ export type CheckpointId = (typeof CHECKPOINTS)[number];
 export const MANEUVER_KINDS = ['departure', 'mooring', 'anchoring', 'anchor_up'] as const;
 export type ManeuverKind = (typeof MANEUVER_KINDS)[number];
 
-export type Phase = 'captain' | 'boat_select' | 'checkin' | 'briefing' | 'morning' | 'planning' | 'evening' | 'return' | 'debrief';
+export type Phase = 'captain' | 'boat_select' | 'checkin' | 'defects' | 'briefing' | 'morning' | 'planning' | 'evening' | 'return' | 'debrief';
 export type EventPhase = 'morning' | 'passage' | 'arrival' | 'evening';
 export type PointKind = 'base' | 'marina' | 'bay' | 'quay';
 export type Seabed = 'sand' | 'mud' | 'weed' | 'rock';
@@ -93,12 +93,17 @@ export interface LogEntry {
 
 // ---------- content ----------
 
-export interface HiddenDefect {
+export interface BoatDefect {
   id: string;
   checkpoint: CheckpointId;
   description: LocalizedText;
+  /** Sets this system to 'worn' while the defect is unfixed. */
+  system?: SystemId;
   /** Damage id charged at check-out if the defect stayed hidden (e.g. unrecorded scratch). */
   chargedOnReturn?: string;
+  /** Fix at the charter base; both are required when `system` is set. */
+  fixEur?: number;
+  fixMin?: number;
 }
 
 export interface Boat {
@@ -120,7 +125,9 @@ export interface Boat {
   priceEur: number;
   depositEur: number;
   shinyFeatures: LocalizedText[];
-  hiddenDefects: HiddenDefect[];
+  /** Defects that may turn up in a week; `defectsPerWeek` of them are drawn at `chooseBoat`. */
+  defectPool: BoatDefect[];
+  defectsPerWeek: [number, number];
   /** Initial condition of every system on this boat; a system absent here is not fitted. */
   systems: Record<SystemId, SystemCondition>;
 }
@@ -470,6 +477,10 @@ export interface GameState {
   weather: DayWeather | null;
   dayFacts: DayFacts | null;
   returnedOnTime: boolean | null;
+  /** Ids from the boat's defect pool present this week and not fixed (a fixed one is removed). */
+  defects: string[];
+  /** Set by `performCheckin` when a defect with a system was found; kept after `resolveDefects` for the record. */
+  checkin: { found: string[]; fixed: string[]; minutesLeft: number } | null;
 }
 
 export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn', 'thruster', 'broken', 'wear'] as const;

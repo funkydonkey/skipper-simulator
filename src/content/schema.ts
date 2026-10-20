@@ -71,15 +71,25 @@ export const EffectSchema: z.ZodType<Effect> = z.object({
   xp: z.record(z.enum(TRAINABLE_VOICES), NonNeg).optional(),
 }).strict();
 
+const DefectSchema = z.object({
+  id: Id, checkpoint: z.enum(CHECKPOINTS), description: Text, system: Id.optional(), chargedOnReturn: Id.optional(),
+  fixEur: NonNeg.optional(), fixMin: NonNeg.optional(),
+}).strict().refine((d) => !d.system || (d.fixEur !== undefined && d.fixMin !== undefined), { message: 'a defect with a system needs fixEur and fixMin' });
+
 export const BoatSchema: z.ZodType<Boat> = z.object({
   id: Id, name: Text, lengthFt: Pos, cabins: Int.positive(), berths: Int.positive(),
   waterTankL: Pos, fuelTankL: Pos, serviceBankAh: Pos, serviceBanks: Int.positive(), starterSeparate: z.boolean(),
   solarW: NonNeg, electricToilet: z.boolean(),
   motorKn: Pos, hullSpeedKn: Pos, priceEur: NonNeg, depositEur: NonNeg,
   shinyFeatures: z.array(Text),
-  hiddenDefects: z.array(z.object({ id: Id, checkpoint: z.enum(CHECKPOINTS), description: Text, chargedOnReturn: Id.optional() }).strict()),
+  defectPool: z.array(DefectSchema),
+  defectsPerWeek: z.tuple([z.number().int().min(0), z.number().int().min(0)]),
   systems: z.record(Id, z.enum(SYSTEM_CONDITIONS)),
-}).strict();
+}).strict()
+  .refine((b) => b.defectsPerWeek[0] <= b.defectsPerWeek[1], { path: ['defectsPerWeek'], message: 'defectsPerWeek must be [min, max]' })
+  .refine((b) => b.defectPool.length >= b.defectsPerWeek[1], { path: ['defectPool'], message: 'defectPool has fewer entries than defectsPerWeek[1]' })
+  .refine((b) => new Set(b.defectPool.map((d) => d.id)).size === b.defectPool.length, { path: ['defectPool'], message: 'duplicate defect ids' })
+  .refine((b) => b.defectPool.every((d) => !d.system || d.system in b.systems), { path: ['defectPool'], message: 'defect system is not fitted on the boat' });
 
 export const MapPointSchema: z.ZodType<MapPoint> = z.object({
   id: Id, name: Text, kind: z.enum(POINT_KINDS), x: z.number(), y: z.number(),

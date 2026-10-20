@@ -3,7 +3,7 @@ import type {
 } from '../../engine';
 
 export type Screen =
-  | 'menu' | 'captain' | 'boat' | 'checkin' | 'briefing' | 'morning' | 'planning' | 'maneuvers'
+  | 'menu' | 'captain' | 'boat' | 'checkin' | 'defects' | 'briefing' | 'morning' | 'planning' | 'maneuvers'
   | 'passage' | 'event' | 'outcome' | 'evening' | 'return' | 'debrief';
 
 export type ManeuverOrders = Partial<Record<ManeuverKind, string[]>>;
@@ -40,6 +40,7 @@ export type ActionBody =
   | { type: 'assign_voices'; alloc: Partial<Record<TrainableVoice, number>> }
   | { type: 'choose_boat'; boatId: string }
   | { type: 'checkin'; checkpoints: CheckpointId[] }
+  | { type: 'resolve_defects'; fixIds: string[] }
   | { type: 'briefing'; topicIds: string[]; dialogueIds: string[] }
   | { type: 'start_day'; choice: MorningChoice }
   | { type: 'draft_plan'; plan: DayPlan }

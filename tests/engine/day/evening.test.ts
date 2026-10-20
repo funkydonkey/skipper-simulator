@@ -134,7 +134,7 @@ describe('endDay', () => {
 
 describe('finishWeek', () => {
   it('late return pays a fee; unrecorded old damage is charged', () => {
-    const s = finishWeek(deepFreeze(makeState({ phase: 'return', day: 7, returnedOnTime: false, flags: { 'defect.old_scratch': true } })), content);
+    const s = finishWeek(deepFreeze(makeState({ phase: 'return', day: 7, returnedOnTime: false, flags: { 'defect.old_scratch': true }, defects: ['old_scratch'] })), content);
     expect(s.phase).toBe('debrief');
     expect(s.resources.moneyEur).toBe(1100);
     expect(s.damages).toContain('hull_scratch');
