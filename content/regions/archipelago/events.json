@@ -105,6 +105,14 @@
           "ru": "Дотянем. Не позорься перед гостями.",
           "en": "We'll make it. Don't embarrass yourself in front of the guests."
         }
+      },
+      {
+        "voice": "mechanic",
+        "min_level": 4,
+        "text": {
+          "ru": "Без воды импеллер сгорает за пять минут. Выключай сейчас, а не через милю.",
+          "en": "Without water the impeller burns out in five minutes. Shut it off now, not in a mile."
+        }
       }
     ],
     "options": [
@@ -253,6 +261,32 @@
           "ru": "Я только голову помою, быстро!",
           "en": "I'll just wash my hair, quick!"
         }
+      },
+      {
+        "voice": "mechanic",
+        "min_level": 3,
+        "text": {
+          "ru": "Помпа берёт воздух: в танке литров двадцать. Два душа — и пусто.",
+          "en": "The pump is sucking air: about twenty litres left. Two showers and it's dry."
+        }
+      },
+      {
+        "voice": "crew_voice",
+        "min_level": 0,
+        "text": {
+          "ru": "Мы потерпим, только до обеда!",
+          "en": "We can hold out, but only till lunch!"
+        },
+        "when": "mood >= 70"
+      },
+      {
+        "voice": "crew_voice",
+        "min_level": 0,
+        "text": {
+          "ru": "Ни воды, ни душа. Это называется отпуск?",
+          "en": "No water, no shower. Is this what you call a holiday?"
+        },
+        "when": "mood < 50"
       }
     ],
     "options": [
@@ -603,6 +637,14 @@
           "ru": "Проверь скобу, прежде чем травить.",
           "en": "Check the shackle before you pay out."
         }
+      },
+      {
+        "voice": "order",
+        "min_level": 3,
+        "text": {
+          "ru": "Скоба без проволоки раскручивается за пару часов. Обвяжи — минута работы.",
+          "en": "An unmoused shackle works loose in a couple of hours. Mouse it, one minute of work."
+        }
       }
     ],
     "options": [
@@ -671,6 +713,14 @@
         "text": {
           "ru": "Держи курс. Гости смотрят.",
           "en": "Hold your course. The guests are watching."
+        }
+      },
+      {
+        "voice": "sea_sense",
+        "min_level": 3,
+        "text": {
+          "ru": "Порыв за тридцать узлов. Минут десять, потом отпустит.",
+          "en": "Gusts over thirty knots. Ten minutes, then it eases."
         }
       }
     ],
@@ -803,6 +853,14 @@
           "ru": "Падает быстро. После обеда придёт фронт.",
           "en": "Falling fast. A front arrives after lunch."
         }
+      },
+      {
+        "voice": "sea_sense",
+        "min_level": 3,
+        "text": {
+          "ru": "Пять гектопаскалей за ночь — к трём часам фронт будет над мысом.",
+          "en": "Five hectopascals overnight means the front is over the cape by three."
+        }
       }
     ],
     "options": [
@@ -856,6 +914,14 @@
         "text": {
           "ru": "Поползём ночью — проснёмся на камнях.",
           "en": "If we drag tonight, we wake up on the rocks."
+        }
+      },
+      {
+        "voice": "caution",
+        "min_level": 3,
+        "text": {
+          "ru": "Зыбь с юго-запада, цепь натянута на пределе. К трём ночи якорь поползёт.",
+          "en": "Swell from the south-west, chain at its limit. By three at night the anchor will drag."
         }
       }
     ],
@@ -937,6 +1003,14 @@
           "ru": "Пробьёмся.",
           "en": "We'll punch through."
         }
+      },
+      {
+        "voice": "sea_sense",
+        "min_level": 4,
+        "text": {
+          "ru": "Против течения ветер вырастает на десять узлов. Обход — час, зато без удара в скулу.",
+          "en": "Wind against current adds ten knots. The detour costs an hour, but no pounding on the bow."
+        }
       }
     ],
     "options": [
@@ -999,6 +1073,22 @@
         "text": {
           "ru": "Скажи, что у тебя бронь.",
           "en": "Tell him you have a booking."
+        }
+      },
+      {
+        "voice": "diplomat",
+        "min_level": 3,
+        "text": {
+          "ru": "Маринеро держит три свободных места под своих. Спроси у него по имени.",
+          "en": "The marinero keeps three berths free for regulars. Ask him by name."
+        }
+      },
+      {
+        "voice": "economist",
+        "min_level": 1,
+        "text": {
+          "ru": "Тридцать евро на чай дешевле, чем час стоянки на входе.",
+          "en": "Thirty euros as a tip is cheaper than an hour idling at the entrance."
         }
       }
     ],
@@ -1080,6 +1170,24 @@
           "ru": "Каждая остановка — якорь, купание и снова якорь. Час минимум.",
           "en": "Every stop is anchor, swim, anchor again. An hour minimum."
         }
+      },
+      {
+        "voice": "crew_voice",
+        "min_level": 0,
+        "text": {
+          "ru": "Ну пожалуйста! Мы же в отпуске, мы никуда не спешим!",
+          "en": "Please! We're on holiday, we're in no hurry!"
+        },
+        "when": "mood >= 70"
+      },
+      {
+        "voice": "crew_voice",
+        "min_level": 0,
+        "text": {
+          "ru": "Опять сидеть на лодке? Мы тут чтобы смотреть берег.",
+          "en": "Sitting on the boat again? We came to see the shore."
+        },
+        "when": "mood < 50"
       }
     ],
     "options": [
@@ -1150,6 +1258,24 @@
           "ru": "Ещё десять минуточек!",
           "en": "Ten more minutes!"
         }
+      },
+      {
+        "voice": "crew_voice",
+        "min_level": 0,
+        "text": {
+          "ru": "Какая красота! Давайте останемся ещё на чуть-чуть.",
+          "en": "How beautiful! Let's stay just a little longer."
+        },
+        "when": "mood >= 70"
+      },
+      {
+        "voice": "crew_voice",
+        "min_level": 0,
+        "text": {
+          "ru": "Нас торопят. Мы вообще отдыхаем или нет?",
+          "en": "We're being rushed. Are we on holiday or not?"
+        },
+        "when": "mood < 50"
       }
     ],
     "options": [
@@ -1264,6 +1390,22 @@
         "text": {
           "ru": "Топлива на завтра впритык.",
           "en": "Fuel for tomorrow is cutting it close."
+        }
+      },
+      {
+        "voice": "mechanic",
+        "min_level": 3,
+        "text": {
+          "ru": "Бак на четверть: хватит часа на четыре хода. Завтрашний переход — пять.",
+          "en": "The tank is a quarter full: about four hours of motoring. Tomorrow's passage is five."
+        }
+      },
+      {
+        "voice": "economist",
+        "min_level": 1,
+        "text": {
+          "ru": "Полтора часа очереди дороже литра соляры.",
+          "en": "An hour and a half in the queue costs more than a litre of diesel."
         }
       }
     ],
@@ -1449,6 +1591,14 @@
           "ru": "Кранцы — до захода, а не после.",
           "en": "Fenders go out before the approach, not after."
         }
+      },
+      {
+        "voice": "order",
+        "min_level": 3,
+        "text": {
+          "ru": "Кранцы — на двух третях борта, по четыре штуки. Не одним концом.",
+          "en": "Fenders at two thirds of the hull, four of them. Not just one end."
+        }
       }
     ],
     "options": [
@@ -1502,6 +1652,14 @@
         "text": {
           "ru": "Так он не возьмёт. Ночью поползём.",
           "en": "It won't bite like that. We'll drag tonight."
+        }
+      },
+      {
+        "voice": "caution",
+        "min_level": 3,
+        "text": {
+          "ru": "Цепь нужна втрое длиннее глубины. Горка на якоре — это ноль.",
+          "en": "You need chain three times the depth. A pile on the anchor is worth zero."
         }
       }
     ],
@@ -1638,6 +1796,32 @@
           "ru": "Нам обещали!",
           "en": "We were promised!"
         }
+      },
+      {
+        "voice": "diplomat",
+        "min_level": 3,
+        "text": {
+          "ru": "Они помнят три обещания. Назови время выхода, а не «пораньше».",
+          "en": "They remember three promises. Give a departure time, not \"earlier\"."
+        }
+      },
+      {
+        "voice": "crew_voice",
+        "min_level": 0,
+        "text": {
+          "ru": "Нам обещали восемь, а сейчас уже девять!",
+          "en": "We were promised eight, and it is already nine!"
+        },
+        "when": "mood < 50"
+      },
+      {
+        "voice": "crew_voice",
+        "min_level": 0,
+        "text": {
+          "ru": "Ладно, позавтракаем — и поехали.",
+          "en": "Fine, breakfast first, then off we go."
+        },
+        "when": "mood >= 70"
       }
     ],
     "options": [
@@ -1710,6 +1894,22 @@
           "ru": "Скажи «если дойдём до города». Не «да».",
           "en": "Say \"if we reach a town\". Not \"yes\"."
         }
+      },
+      {
+        "voice": "diplomat",
+        "min_level": 4,
+        "text": {
+          "ru": "Скажи «если дойдём до порта до пяти». Четыре из пяти раз ты сдержишь слово.",
+          "en": "Say \"if we reach port by five\". Four times out of five you'll keep your word."
+        }
+      },
+      {
+        "voice": "economist",
+        "min_level": 2,
+        "text": {
+          "ru": "Таверна — это сто сорок евро. Консервы на борту — десять.",
+          "en": "A taverna is a hundred and forty euros. Tins aboard are ten."
+        }
       }
     ],
     "options": [
@@ -1775,6 +1975,15 @@
           "ru": "Мы же на яхте, а не на катере!",
           "en": "This is a yacht, not a motorboat!"
         }
+      },
+      {
+        "voice": "crew_voice",
+        "min_level": 0,
+        "text": {
+          "ru": "Вы нас вытянете, мы всё поймём. Только давайте под парусом!",
+          "en": "Take us out, we'll get it. Just let's sail!"
+        },
+        "when": "mood >= 70"
       }
     ],
     "options": [
@@ -1843,6 +2052,14 @@
           "ru": "Пусть учится, он взрослый.",
           "en": "Let him learn, he's an adult."
         }
+      },
+      {
+        "voice": "order",
+        "min_level": 4,
+        "text": {
+          "ru": "Шкот под нагрузкой тянет на сотни килограммов. Руки он забирает за секунду.",
+          "en": "A loaded sheet pulls hundreds of kilograms. It takes a hand in a second."
+        }
       }
     ],
     "options": [
@@ -1902,6 +2119,14 @@
           "ru": "Глуши! Винт!",
           "en": "Kill it! The prop!"
         }
+      },
+      {
+        "voice": "caution",
+        "min_level": 4,
+        "text": {
+          "ru": "Винт крутится ещё секунды три. Секунды три до беды.",
+          "en": "The prop spins for another three seconds. Three seconds from disaster."
+        }
       }
     ],
     "options": [
@@ -1960,6 +2185,14 @@
           "ru": "Вниз нельзя — там будет хуже. Горизонт и свежий воздух.",
           "en": "Not below, it only gets worse there. Horizon and fresh air."
         }
+      },
+      {
+        "voice": "caution",
+        "min_level": 3,
+        "text": {
+          "ru": "Через час она не сможет стоять. Посади к рулю и дай ей горизонт.",
+          "en": "In an hour she won't be able to stand. Put her at the helm and give her the horizon."
+        }
       }
     ],
     "options": [
@@ -1998,6 +2231,185 @@
     "debrief": {
       "ru": "Укачивание лечится горизонтом и воздухом, а не каютой.",
       "en": "Seasickness is cured by horizon and air, not by the cabin."
+    }
+  },
+  {
+    "id": "neighbor_complains",
+    "pillar": "promises",
+    "trigger": {
+      "phase": "evening",
+      "conditions": [
+        "moored_berth"
+      ],
+      "chance": 0.3
+    },
+    "scene": "marina_berth",
+    "text": {
+      "ru": "Сосед по пирсу стучит в борт: «Музыка! Дети спят!»",
+      "en": "The neighbour on the pier knocks on your hull: \"The music! The kids are asleep!\""
+    },
+    "voices": [
+      {
+        "voice": "diplomat",
+        "min_level": 2,
+        "text": {
+          "ru": "Он не враг. Он устал. Начни с «извините».",
+          "en": "He's not an enemy. He's tired. Start with \"sorry\"."
+        }
+      },
+      {
+        "voice": "diplomat",
+        "min_level": 3,
+        "text": {
+          "ru": "Завтра вам обоим уходить в семь. Договоритесь о тишине — и у вас будет союзник.",
+          "en": "You both leave at seven tomorrow. Agree on quiet and you'll have an ally."
+        }
+      },
+      {
+        "voice": "pride",
+        "min_level": 1,
+        "text": {
+          "ru": "Это марина, а не монастырь. Пусть терпит.",
+          "en": "This is a marina, not a monastery. Let him cope."
+        }
+      },
+      {
+        "voice": "economist",
+        "min_level": 1,
+        "text": {
+          "ru": "Скандал с соседом обойдётся дороже, чем выключить колонку.",
+          "en": "A row with the neighbour costs more than switching off the speaker."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "apologize",
+        "text": {
+          "ru": "Извиниться и выключить музыку",
+          "en": "Apologise and turn the music off"
+        },
+        "effects": {
+          "mood": -2
+        }
+      },
+      {
+        "id": "talk_it_over",
+        "text": {
+          "ru": "Выйти и поговорить по-человечески",
+          "en": "Step out and talk it over"
+        },
+        "check": {
+          "voice": "diplomat",
+          "difficulty": 2
+        },
+        "success": {
+          "mood": 3
+        },
+        "fail": {
+          "mood": -5
+        }
+      },
+      {
+        "id": "ignore",
+        "text": {
+          "ru": "Сделать вид, что не слышишь",
+          "en": "Pretend you didn't hear"
+        },
+        "effects": {
+          "mood": -4,
+          "fatigue": 5
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Шум на пирсе слышат все лодки сразу: сосед — тоже часть вашего отпуска.",
+      "en": "Noise carries across the whole pier: your neighbour is part of your holiday too."
+    }
+  },
+  {
+    "id": "marinero_tip",
+    "pillar": "time",
+    "trigger": {
+      "phase": "arrival",
+      "conditions": [
+        "at_marina",
+        "hour >= 14"
+      ],
+      "chance": 0.35
+    },
+    "scene": "marina_entrance",
+    "text": {
+      "ru": "Маринеро показывает на свободное место у входа и замирает с протянутой ладонью.",
+      "en": "The marinero points to a free berth by the entrance and freezes with his palm out."
+    },
+    "voices": [
+      {
+        "voice": "diplomat",
+        "min_level": 2,
+        "text": {
+          "ru": "Он решает, куда тебя поставить. Улыбка работает лучше купюры.",
+          "en": "He decides where you'll berth. A smile works better than a banknote."
+        }
+      },
+      {
+        "voice": "pride",
+        "min_level": 1,
+        "text": {
+          "ru": "Платить за то, что он и так обязан показать? Ни за что.",
+          "en": "Pay for what he has to show you anyway? No way."
+        }
+      },
+      {
+        "voice": "economist",
+        "min_level": 1,
+        "text": {
+          "ru": "Двадцать евро. Дороже встанет час в очереди.",
+          "en": "Twenty euros. An hour in the queue costs more."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "tip",
+        "text": {
+          "ru": "Дать двадцатку",
+          "en": "Slip him twenty"
+        },
+        "effects": {
+          "money": -20,
+          "mood": 2
+        }
+      },
+      {
+        "id": "chat",
+        "text": {
+          "ru": "Поболтать, спросить про порт",
+          "en": "Chat, ask about the port"
+        },
+        "check": {
+          "voice": "diplomat",
+          "difficulty": 2
+        },
+        "success": {
+          "mood": 4
+        },
+        "fail": {
+          "time_hours": 0.5
+        }
+      },
+      {
+        "id": "nothing",
+        "text": {
+          "ru": "Кивнуть и пройти мимо",
+          "en": "Nod and walk past"
+        },
+        "effects": {}
+      }
+    ],
+    "debrief": {
+      "ru": "Маринеро — первый человек, которого видит команда в порту. Его настроение — это ваше место у причала.",
+      "en": "The marinero is the first person your crew meets in port. His mood is your place at the quay."
     }
   }
 ]

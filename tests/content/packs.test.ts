@@ -16,7 +16,7 @@ describe('content packs', () => {
     expect(content!.boats).toHaveLength(3);
     expect(content!.map).toHaveLength(9);
     expect(content!.routes).toHaveLength(13);
-    expect(content!.events).toHaveLength(30);
+    expect(content!.events).toHaveLength(32);
     expect(content!.weather).toHaveLength(1);
   });
 
