@@ -320,6 +320,7 @@ export interface Balance {
   deposit: { damageCostEur: Record<string, number>; defaultDamageEur: number };
   grading: { crewGoodMood: number; crewOkMood: number; boatOkLossEur: number };
   drama: { pillarWeightByDay: Record<string, Partial<Record<Pillar, number>>> };
+  simTargets: { levelGain: Record<'newbie' | 'expert', [number, number]>; weekInjuryRate: Record<'newbie' | 'expert', [number, number]>; zeroFireAllow: string[] };
 }
 
 /** Region pack header plus its world; Content exposes the header as `region` and the world as `map`/`routes`. */

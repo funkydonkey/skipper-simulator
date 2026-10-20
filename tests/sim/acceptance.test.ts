@@ -6,6 +6,7 @@ import { endDay, finishWeek, planDay, presentEvent, startDay } from '../../src/e
 import { buildConditionContext } from '../../src/engine/expr';
 import { PILLARS, type GameEvent, type GameState } from '../../src/engine/types';
 import { drainEvents, pillarsAffected, playDay, runWeek, setupWeek, weekScore } from '../../src/sim/run';
+import { runBatch } from '../../src/sim/batch';
 import { expert, newbie } from '../../src/sim/strategies';
 
 const loaded = await loadContentDir('content');
@@ -122,5 +123,29 @@ describe('ТЗ 7.4 acceptance', () => {
     expect(saved!.phase).toBe('planning');
     const restored: GameState = JSON.parse(JSON.stringify(saved));
     expect(finish(restored)).toEqual(finish(saved!));
+  });
+
+  describe('data-driven balance targets (balance.simTargets, 100 seeds)', () => {
+    const BATCH_SEEDS = Array.from({ length: 100 }, (_, i) => i + 1);
+    const targets = content.balance.simTargets;
+    const stats = { newbie: runBatch(content, newbie, BATCH_SEEDS), expert: runBatch(content, expert, BATCH_SEEDS) };
+
+    for (const name of ['newbie', 'expert'] as const) {
+      it(`${name} level gain stays within its target band`, () => {
+        const [lo, hi] = targets.levelGain[name];
+        expect(stats[name].levelGainMean).toBeGreaterThanOrEqual(lo);
+        expect(stats[name].levelGainMean).toBeLessThanOrEqual(hi);
+      });
+      it(`${name} week injury rate stays within its target band`, () => {
+        const [lo, hi] = targets.weekInjuryRate[name];
+        expect(stats[name].weekInjuryRate).toBeGreaterThanOrEqual(lo);
+        expect(stats[name].weekInjuryRate).toBeLessThanOrEqual(hi);
+      });
+    }
+
+    it('events that fire in neither strategy are all in zeroFireAllow', () => {
+      const never = stats.newbie.zeroFire.filter((id) => stats.expert.zeroFire.includes(id));
+      expect(never.filter((id) => !targets.zeroFireAllow.includes(id))).toEqual([]);
+    });
   });
 });

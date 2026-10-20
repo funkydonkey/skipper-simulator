@@ -58,5 +58,6 @@
   "safety": { "mitigationFactor": 0.5 },
   "deposit": { "damageCostEur": { "sail_torn": 900, "toilet_broken": 250, "prop_line": 400, "hull_scratch": 600, "impeller": 300, "anchor_lost": 700 }, "defaultDamageEur": 300 },
   "grading": { "crewGoodMood": 70, "crewOkMood": 45, "boatOkLossEur": 500 },
-  "drama": { "pillarWeightByDay": { "1": { "time": 1.5 }, "2": { "boat": 1.5 }, "3": { "weather": 1.5, "safety": 1.3 }, "4": { "weather": 1.5, "safety": 1.3 }, "5": { "promises": 1.5 }, "6": { "time": 1.5, "weather": 1.3 } } }
+  "drama": { "pillarWeightByDay": { "1": { "time": 1.5 }, "2": { "boat": 1.5 }, "3": { "weather": 1.5, "safety": 1.3 }, "4": { "weather": 1.5, "safety": 1.3 }, "5": { "promises": 1.5 }, "6": { "time": 1.5, "weather": 1.3 } } },
+  "simTargets": { "levelGain": { "newbie": [2, 4], "expert": [1, 4] }, "weekInjuryRate": { "newbie": [0.15, 0.7], "expert": [0, 0.2] }, "zeroFireAllow": ["fuel_dock_queue", "gas_smell"] }
 }

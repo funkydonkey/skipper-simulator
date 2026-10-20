@@ -1,9 +1,11 @@
 import { parseArgs } from 'node:util';
 import { loadContentDir } from '../src/content/load-node';
 import { formatErrors } from '../src/content/parse';
-import { PILLARS, type Lang } from '../src/engine/types';
+import type { Lang } from '../src/engine/types';
+import { writeFileSync } from 'node:fs';
+import { formatBatch, runBatch } from '../src/sim/batch';
 import { formatWeek } from '../src/sim/report';
-import { pillarsAffected, runWeek, weekScore } from '../src/sim/run';
+import { runWeek } from '../src/sim/run';
 import { expert, newbie } from '../src/sim/strategies';
 
 const { values } = parseArgs({
@@ -11,6 +13,8 @@ const { values } = parseArgs({
     seed: { type: 'string', default: '42' },
     strategy: { type: 'string', default: 'newbie' },
     batch: { type: 'string' },
+    weeks: { type: 'string' },
+    json: { type: 'string' },
     lang: { type: 'string', default: 'ru' },
   },
 });
@@ -21,16 +25,15 @@ if (!content) {
   process.exit(1);
 }
 
-const mean = (xs: number[]) => (xs.reduce((a, b) => a + b, 0) / xs.length).toFixed(1);
-
-if (values.batch) {
-  const n = Number(values.batch);
+const batchSize = values.weeks ?? values.batch;
+if (batchSize) {
+  const seeds = Array.from({ length: Number(batchSize) }, (_, i) => i + 1);
+  const all: Record<string, ReturnType<typeof runBatch>> = {};
   for (const strategy of [newbie, expert]) {
-    const runs = Array.from({ length: n }, (_, i) => runWeek(content, i + 1, strategy));
-    const pillarFreq = PILLARS.map((p) => `${p}:${runs.filter((r) => pillarsAffected(r.state).has(p)).length}/${n}`).join(' ');
-    console.log(`${strategy.name.padEnd(7)} score ${mean(runs.map((r) => weekScore(r.debrief)))}/8 | mood ${mean(runs.map((r) => r.state.resources.mood))} | deposit loss ${mean(runs.map((r) => r.debrief.depositLossEur))} € | injuries ${mean(runs.map((r) => r.state.injuries))} | links ${mean(runs.map((r) => r.debrief.links.length))}`);
-    console.log(`        pillars ${pillarFreq}`);
+    all[strategy.name] = runBatch(content, strategy, seeds);
+    console.log(formatBatch(all[strategy.name]!, strategy.name) + '\n');
   }
+  if (values.json) writeFileSync(values.json, JSON.stringify(all, null, 2));
 } else {
   const strategy = values.strategy === 'expert' ? expert : newbie;
   console.log(formatWeek(runWeek(content, Number(values.seed), strategy), content, values.lang as Lang));

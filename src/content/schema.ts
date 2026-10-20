@@ -149,6 +149,7 @@ export const DebriefRuleSchema: z.ZodType<DebriefRule> = z.object({
 const Pair = z.tuple([z.number(), z.number()]);
 const Triple = z.tuple([z.number(), z.number(), z.number()]);
 
+const Band = z.tuple([z.number(), z.number()]);
 export const BalanceSchema: z.ZodType<Balance> = z.object({
   start: z.object({ moneyEur: NonNeg, mood: NonNeg, fatigue: NonNeg, gasPct: NonNeg, serviceBankPct: NonNeg, starterBankPct: NonNeg, hour: Hour, crewSize: Int.positive() }).strict(),
   voices: z.object({ points: Int.positive(), maxLevel: Int.positive(), prideLevel: Int.min(0), crewVoiceLevel: Int.min(0), seaSenseSignalLevel: Int.min(0), seaSenseChanceLevel: Int.min(0), seaSenseTimingLevel: Int.min(0), economistDiscountPerLevel: NonNeg, mechanicExactLevel: Int.min(0), cautionRiskPerLevel: NonNeg, cautionTimePerLevel: NonNeg, orderRiskPerLevel: NonNeg, xpToLevel: z.array(Int.positive()).min(1), xpExempt: z.array(z.enum(VOICES)), checkXp: z.object({ success: NonNeg, fail: NonNeg }).strict(), maneuverErrorXp: NonNeg, cleanManeuverXp: NonNeg }).strict(),
@@ -182,6 +183,7 @@ export const BalanceSchema: z.ZodType<Balance> = z.object({
   deposit: z.object({ damageCostEur: z.record(NonNeg), defaultDamageEur: NonNeg }).strict(),
   grading: z.object({ crewGoodMood: NonNeg, crewOkMood: NonNeg, boatOkLossEur: NonNeg }).strict(),
   drama: z.object({ pillarWeightByDay: z.record(z.record(z.enum(PILLARS), NonNeg)) }).strict(),
+  simTargets: z.object({ levelGain: z.object({ newbie: Band, expert: Band }).strict(), weekInjuryRate: z.object({ newbie: Band, expert: Band }).strict(), zeroFireAllow: z.array(z.string()) }).strict(),
 }).strict();
 
 export const DeadAllowSchema = z.array(z.object({ ref: z.string().min(1), reason: z.string().min(1) }).strict());
