@@ -1,12 +1,13 @@
 import { z } from 'zod';
 import type { Content, Region } from '../engine/types';
 import {
-  BalanceSchema, BoatSchema, BriefingTopicSchema, CrewArchetypeSchema, DebriefRuleSchema, DialogueSchema,
+  BalanceSchema, BoatSchema, BriefingTopicSchema, CrewArchetypeSchema, DeadAllowSchema, DebriefRuleSchema, DialogueSchema,
   GameEventSchema, ManeuverSchema, RegionSchema, WeatherTemplateSchema,
 } from './schema';
 import { CONTENT_FILES, type ContentFile } from './files';
 import { validateConditions } from './conditions';
 import { crossValidate } from './validate';
+import { findDeadContent } from './dead';
 
 export { CONTENT_FILES, type ContentFile };
 export interface ContentError { file: ContentFile | 'cross'; path: string; message: string }
@@ -25,8 +26,11 @@ const FILE_SCHEMAS: Record<ContentFile, z.ZodTypeAny> = {
   balance: BalanceSchema,
 };
 
-export function parseContent(raw: Partial<Record<ContentFile, unknown>>): ParseResult {
+/** `deadAllow` (the parsed dead-content-allow.json) turns on the dead-content check; omit it for partial content. */
+export function parseContent(raw: Partial<Record<ContentFile, unknown>>, deadAllow?: unknown): ParseResult {
   const errors: ContentError[] = [];
+  const allow = deadAllow === undefined ? undefined : DeadAllowSchema.safeParse(deadAllow);
+  if (allow && !allow.success) for (const issue of allow.error.issues) errors.push({ file: 'cross', path: `dead-content-allow.${issue.path.join('.')}`, message: issue.message });
   const parsed: Partial<Record<ContentFile, unknown>> = {};
   for (const file of CONTENT_FILES) {
     if (raw[file] === undefined) {
@@ -41,6 +45,7 @@ export function parseContent(raw: Partial<Record<ContentFile, unknown>>): ParseR
   const { region, ...rest } = parsed as unknown as { region: Region } & Omit<Content, 'region' | 'map' | 'routes'>;
   const content: Content = { ...rest, region: { id: region.id, name: region.name }, map: region.map, routes: region.routes };
   const cross = [...crossValidate(content), ...validateConditions(content)];
+  if (!cross.length && allow?.success) cross.push(...findDeadContent(content, allow.data));
   return cross.length ? { content: null, errors: cross } : { content, errors: [] };
 }
 

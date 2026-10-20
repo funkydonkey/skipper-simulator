@@ -136,7 +136,6 @@ export interface MapPoint {
   x: number;
   y: number;
   seabed: Seabed;
-  depthM: number;
   /** 0 = fully exposed to wind FROM this direction, 1 = fully sheltered. */
   shelter: Record<Dir8, number>;
   priceEur: number;

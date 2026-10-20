@@ -7,3 +7,6 @@ export const WEATHER_DIR = 'weather';
 
 export const CONTENT_FILES = [...CORE_FILES, ...REGION_FILES, 'weather'] as const;
 export type ContentFile = (typeof CONTENT_FILES)[number];
+
+/** Core-pack allowlist of dead content (content/core/dead-content-allow.json); loaded beside, not as, a content file. */
+export const DEAD_ALLOW_FILE = 'dead-content-allow';

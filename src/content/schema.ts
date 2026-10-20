@@ -78,7 +78,7 @@ export const BoatSchema: z.ZodType<Boat> = z.object({
 
 export const MapPointSchema: z.ZodType<MapPoint> = z.object({
   id: Id, name: Text, kind: z.enum(POINT_KINDS), x: z.number(), y: z.number(),
-  seabed: z.enum(SEABEDS), depthM: Pos, shelter: fullRecord(DIRS, Prob),
+  seabed: z.enum(SEABEDS), shelter: fullRecord(DIRS, Prob),
   priceEur: NonNeg, placesGoneHour: Hour.nullable(),
   services: z.object({ water: z.boolean(), fuel: z.boolean(), shorePower: z.boolean(), gas: z.boolean(), taverna: z.boolean(), beach: z.boolean() }).strict(),
 }).strict();
@@ -183,3 +183,5 @@ export const BalanceSchema: z.ZodType<Balance> = z.object({
   grading: z.object({ crewGoodMood: NonNeg, crewOkMood: NonNeg, boatOkLossEur: NonNeg }).strict(),
   drama: z.object({ pillarWeightByDay: z.record(z.record(z.enum(PILLARS), NonNeg)) }).strict(),
 }).strict();
+
+export const DeadAllowSchema = z.array(z.object({ ref: z.string().min(1), reason: z.string().min(1) }).strict());

@@ -9,9 +9,9 @@ const allServices = { water: true, fuel: true, shorePower: true, gas: true, tave
 const noServices = { water: false, fuel: false, shorePower: false, gas: false, taverna: false, beach: true };
 
 const map: MapPoint[] = [
-  { id: 'base', name: t('База', 'Base'), kind: 'base', x: 0, y: 0, seabed: 'sand', depthM: 4, shelter: shelter({}, 0.9), priceEur: 0, placesGoneHour: null, services: allServices },
-  { id: 'bay_a', name: t('Бухта А', 'Bay A'), kind: 'bay', x: 0, y: 10, seabed: 'sand', depthM: 6, shelter: shelter({ N: 0.2, NE: 0.3, NW: 0.3, E: 0.8, W: 0.8 }, 1), priceEur: 0, placesGoneHour: null, services: noServices },
-  { id: 'marina_b', name: t('Марина Б', 'Marina B'), kind: 'marina', x: 8, y: 10, seabed: 'mud', depthM: 5, shelter: shelter({}, 0.95), priceEur: 80, placesGoneHour: 15, services: allServices },
+  { id: 'base', name: t('База', 'Base'), kind: 'base', x: 0, y: 0, seabed: 'sand', shelter: shelter({}, 0.9), priceEur: 0, placesGoneHour: null, services: allServices },
+  { id: 'bay_a', name: t('Бухта А', 'Bay A'), kind: 'bay', x: 0, y: 10, seabed: 'sand', shelter: shelter({ N: 0.2, NE: 0.3, NW: 0.3, E: 0.8, W: 0.8 }, 1), priceEur: 0, placesGoneHour: null, services: noServices },
+  { id: 'marina_b', name: t('Марина Б', 'Marina B'), kind: 'marina', x: 8, y: 10, seabed: 'mud', shelter: shelter({}, 0.95), priceEur: 80, placesGoneHour: 15, services: allServices },
 ];
 
 /** Minimal 3-point world for unit tests of Waves 1–3. Real content lives in content/core and content/regions. */

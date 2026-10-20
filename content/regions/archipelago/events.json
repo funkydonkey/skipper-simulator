@@ -1598,8 +1598,7 @@
         },
         "effects": {
           "time_hours": 0.5,
-          "mood": 1,
-          "flag": "mob_drill_done"
+          "mood": 1
         }
       }
     ],
@@ -1786,8 +1785,7 @@
           "en": "Of course, sailing all day!"
         },
         "effects": {
-          "mood": 4,
-          "flag": "promised_sailing"
+          "mood": 4
         }
       },
       {

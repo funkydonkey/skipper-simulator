@@ -1,6 +1,6 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { CORE_FILES, REGION_FILES, WEATHER_DIR, type ContentFile } from './files';
+import { CORE_FILES, DEAD_ALLOW_FILE, REGION_FILES, WEATHER_DIR, type ContentFile } from './files';
 import { parseContent, type ContentError, type ParseResult } from './parse';
 
 type Raw = Partial<Record<ContentFile, unknown>>;
@@ -29,5 +29,11 @@ export async function loadContentDir(dir: string, regionId = 'archipelago'): Pro
   } catch (e) {
     errors.push({ file: 'weather', path: '', message: `Cannot read ${join(regionDir, WEATHER_DIR)}: ${(e as Error).message}` });
   }
-  return errors.length ? { content: null, errors } : parseContent(raw);
+  let deadAllow: unknown;
+  try {
+    deadAllow = await readJson(join(dir, 'core', `${DEAD_ALLOW_FILE}.json`));
+  } catch (e) {
+    errors.push({ file: 'cross', path: DEAD_ALLOW_FILE, message: `Cannot read ${DEAD_ALLOW_FILE}.json: ${(e as Error).message}` });
+  }
+  return errors.length ? { content: null, errors } : parseContent(raw, deadAllow);
 }

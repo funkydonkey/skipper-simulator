@@ -4,6 +4,7 @@ import briefing from '../../content/core/briefing.json';
 import crew from '../../content/core/crew.json';
 import debrief from '../../content/core/debrief.json';
 import dialogues from '../../content/core/dialogues.json';
+import deadAllow from '../../content/core/dead-content-allow.json';
 import maneuvers from '../../content/core/maneuvers.json';
 import { parseContent, type ParseResult } from '../content/parse';
 
@@ -21,5 +22,5 @@ export function loadBundledContent(regionId = 'archipelago'): ParseResult {
   const [region] = inRegion(regionFiles, regionId, 'region');
   const [events] = inRegion(regionFiles, regionId, 'events');
   const weather = inRegion(weatherFiles, regionId);
-  return parseContent({ boats, crew, briefing, dialogues, debrief, maneuvers, balance, region, events, weather });
+  return parseContent({ boats, crew, briefing, dialogues, debrief, maneuvers, balance, region, events, weather }, deadAllow);
 }
