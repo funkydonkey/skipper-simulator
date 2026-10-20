@@ -113,6 +113,8 @@ const DESCRIBE: Record<string, Describer> = {
     const vars = { voice: voice ? VOICE_NAMES[voice][lang] : '?', chance: Math.round(num(e, 'chance') * 100) };
     return e.data?.success === true ? say('checkPassed', lang, vars, 'good') : say('checkFailed', lang, vars, 'bad');
   },
+  levelup: ([voice = ''], e, _c, lang) => say('levelUp', lang, { voice: VOICE_NAMES[voice as keyof typeof VOICE_NAMES]?.[lang] ?? voice, from: num(e, 'from'), to: num(e, 'to') }, 'good'),
+  xp: () => null,
   return: ([what], e, _c, lang) => {
     if (what === 'late_fee') return say('lateFee', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0) }, 'bad');
     return what === 'on_time' ? say('returnOnTime', lang, {}, 'good') : say('returnLate', lang, {}, 'bad');
@@ -128,7 +130,7 @@ export function describeEntry(e: LogEntry, content: Content, lang: Lang): LogLin
   return { day: e.day, clock: formatClock(e.clockMin), text: d.text, tone: d.tone ?? 'neutral', kind: e.kind, cause: e.cause, ...(e.pillar ? { pillar: e.pillar } : {}) };
 }
 
-const NOISE_ROOTS = new Set(['voices', 'engine', 'fatigue', 'consumption', 'charge', 'defect', 'choice']);
+const NOISE_ROOTS = new Set(['voices', 'engine', 'fatigue', 'consumption', 'charge', 'defect', 'choice', 'xp']);
 
 /** Entries the captain did not witness or that only duplicate another line. Debrief still uses them. */
 export function isNoise(e: LogEntry): boolean {

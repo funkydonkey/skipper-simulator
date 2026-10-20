@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {
-  CHANCE_LABELS, CHECKPOINTS, DIRS, MANEUVER_KINDS, PILLARS, VOICES,
+  CHANCE_LABELS, CHECKPOINTS, DIRS, MANEUVER_KINDS, PILLARS, TRAINABLE_VOICES, VOICES,
   type Balance, type Boat, type ChanceInput, type ChanceMod, type BriefingTopic, type CrewArchetype, type DebriefRule, type Dialogue, type Effect,
   type EventOption, type GameEvent, type Maneuver, type MapPoint, type Region, type Route, type WeatherTemplate,
 } from '../engine/types';
@@ -64,6 +64,7 @@ export const EffectSchema: z.ZodType<Effect> = z.object({
   injury: z.boolean().optional(),
   signal: Id.optional(),
   promise: Id.optional(),
+  xp: z.record(z.enum(TRAINABLE_VOICES), NonNeg).optional(),
 }).strict();
 
 export const BoatSchema: z.ZodType<Boat> = z.object({
@@ -116,7 +117,7 @@ export const DialogueSchema: z.ZodType<Dialogue> = z.object({
 const OptionSchema: z.ZodType<EventOption> = z.object({
   id: Id, text: Text, requires: z.array(z.string().min(1)).optional(),
   check: z.object({ voice: z.enum(VOICES), difficulty: Int.min(0).max(6) }).strict().optional(),
-  success: EffectSchema.optional(), fail: EffectSchema.optional(), effects: EffectSchema.optional(),
+  success: EffectSchema.optional(), fail: EffectSchema.optional(), effects: EffectSchema.optional(), xp: NonNeg.optional(),
 }).strict().refine(
   (o) => (o.check && o.success && o.fail && !o.effects) || (!o.check && !o.success && !o.fail && o.effects),
   { message: 'option needs either check+success+fail or effects' },
@@ -136,7 +137,7 @@ export const ManeuverSchema: z.ZodType<Maneuver> = z.object({
   steps: z.array(z.object({ id: Id, text: Text }).strict()).min(2),
   errors: z.array(z.object({
     id: Id, wrongIf: z.object({ first: Id, then: Id }).strict(), effect: EffectSchema,
-    injuryChance: Prob, mitigatedBy: z.string().min(1).optional(), text: Text,
+    injuryChance: Prob, mitigatedBy: z.string().min(1).optional(), xp: NonNeg.optional(), text: Text,
   }).strict()),
 }).strict();
 
@@ -150,7 +151,7 @@ const Triple = z.tuple([z.number(), z.number(), z.number()]);
 
 export const BalanceSchema: z.ZodType<Balance> = z.object({
   start: z.object({ moneyEur: NonNeg, mood: NonNeg, fatigue: NonNeg, gasPct: NonNeg, serviceBankPct: NonNeg, starterBankPct: NonNeg, hour: Hour, crewSize: Int.positive() }).strict(),
-  voices: z.object({ points: Int.positive(), maxLevel: Int.positive(), prideLevel: Int.min(0), crewVoiceLevel: Int.min(0), seaSenseSignalLevel: Int.min(0), mechanicExactLevel: Int.min(0), cautionRiskPerLevel: NonNeg, cautionTimePerLevel: NonNeg, orderRiskPerLevel: NonNeg }).strict(),
+  voices: z.object({ points: Int.positive(), maxLevel: Int.positive(), prideLevel: Int.min(0), crewVoiceLevel: Int.min(0), seaSenseSignalLevel: Int.min(0), mechanicExactLevel: Int.min(0), cautionRiskPerLevel: NonNeg, cautionTimePerLevel: NonNeg, orderRiskPerLevel: NonNeg, xpToLevel: z.array(Int.positive()).min(1), xpExempt: z.array(z.enum(VOICES)), checkXp: z.object({ success: NonNeg, fail: NonNeg }).strict(), maneuverErrorXp: NonNeg, cleanManeuverXp: NonNeg }).strict(),
   water: z.object({ perPersonPerDayL: fullRecord(SHOWERS, NonNeg), zeroMoodPenalty: NonNeg }).strict(),
   fuel: z.object({ motorLph: Pos, priceEurPerL: NonNeg }).strict(),
   electric: z.object({ fridgeAhPerDay: NonNeg, pumpsAhPerDay: NonNeg, electricToiletAhPerDay: NonNeg, plotterAhPerHour: NonNeg, autopilotAhPerHour: NonNeg, engineChargeAhPerHour: NonNeg, solarAhPerWattDay: NonNeg, starterStartPct: NonNeg, starterMinPct: NonNeg, zeroServiceMoodPenalty: NonNeg }).strict(),

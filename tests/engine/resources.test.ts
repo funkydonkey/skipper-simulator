@@ -109,3 +109,9 @@ describe('resources', () => {
     expect(zeroResourceOutcomes(makeState(), b)).toEqual([]);
   });
 });
+
+describe('applyOutcome xp', () => {
+  it('throws when an outcome carries xp but no balance was passed', () => {
+    expect(() => applyOutcome(makeState(), null, { cause: 'x', effect: { xp: { order: 1 } } })).toThrow(/pass the balance/);
+  });
+});

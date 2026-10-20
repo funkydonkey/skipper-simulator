@@ -12,7 +12,7 @@ const text = z.object({ ru: z.string(), en: z.string() });
 const SlotSchema = z.object({
   savedAt: z.string(),
   game: z.object({
-    version: z.literal(1),
+    version: z.literal(2),
     seed: num, rng: num, lang: z.enum(['ru', 'en']), phase: z.enum(PHASES), day: z.number().int().min(0), clockMin: num,
     weatherTemplateId: z.string(), locationId: z.string(), boatId: z.string().nullable(),
     voices: z.record(num),

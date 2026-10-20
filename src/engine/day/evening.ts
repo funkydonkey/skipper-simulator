@@ -6,6 +6,7 @@ import { clamp, requireBoat, requirePoint, round1 } from '../state';
 import type { Activity, Balance, Boat, Content, DayFacts, GameState, MapPoint, Outcome } from '../types';
 import { restHours } from '../time';
 import { exposure } from '../weather';
+import { applyLevelUps } from '../xp';
 
 export interface EveningChoice { dinner: 'cook' | 'taverna'; dialogueId?: string | null }
 
@@ -77,6 +78,7 @@ export function endDay(state: GameState, content: Content, choice: EveningChoice
   const resolved = resolveDueExpectations(s.expectations, dayFacts, s.voices.diplomat, crewSensitivity(s, content), b);
   s = applyOutcomes({ ...s, expectations: resolved.expectations }, boat, resolved.outcomes);
   if (choice.dialogueId) s = sayDialogue(s, content, choice.dialogueId, 'evening');
+  s = applyLevelUps(s, b);
   s = night(s, content, boat, point, facts, meal.cooked);
   const day = s.day + 1;
   return { ...s, day, phase: day > b.schedule.days ? 'return' : 'morning', clockMin: b.start.hour * 60, weather: null, dayFacts: null };

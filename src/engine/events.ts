@@ -7,10 +7,13 @@ import { sayDialogue } from './promises';
 import { applyOutcomes } from './resources';
 import type { RngResult } from './rng';
 import { requireBoat, requireEvent } from './state';
-import type { Balance, ChanceValue, Content, EventOption, EventPhase, GameEvent, GameState, Outcome, VoiceId } from './types';
+import { grantXp } from './xp';
+import { TRAINABLE_VOICES, type Balance, ChanceValue, Content, EventOption, EventPhase, GameEvent, GameState, Outcome, TrainableVoice, VoiceId } from './types';
 import { audibleLines, checkChance, rollCheck } from './voices';
 
 export { pillarWeight } from './odds';
+
+const isTrainable = (v: VoiceId): v is TrainableVoice => (TRAINABLE_VOICES as readonly string[]).includes(v);
 
 export interface EventView {
   id: string;
@@ -101,7 +104,13 @@ export function resolvePendingEvent(state: GameState, content: Content, optionId
       data: { hit: check.success, success: check.success, chance: check.odds.value },
     });
   }
-  s = applyOutcomes(s, requireBoat(content, s), r.value.outcomes);
+  const option = ev.options.find((x) => x.id === optionId);
+  if (check && option?.check) {
+    const xp = option.xp ?? (check.success ? content.balance.voices.checkXp.success : content.balance.voices.checkXp.fail);
+    const voice = option.check.voice;
+    if (isTrainable(voice)) s = grantXp(s, { [voice]: xp }, `roll:check:${ev.id}:${optionId}`, content.balance);
+  }
+  s = applyOutcomes(s, requireBoat(content, s), r.value.outcomes, content.balance);
   const context = ev.trigger.phase === 'morning' ? 'morning' : 'evening';
   for (const o of r.value.outcomes) if (o.effect.promise) s = sayDialogue(s, content, o.effect.promise, context);
   return s;

@@ -94,6 +94,7 @@ export const LOG = dict({
   eventHappened: { ru: 'Событие: {text}', en: 'Event: {text}' },
   eventOption: { ru: 'Решение: {option}', en: 'Decision: {option}' },
   chose: { ru: 'Выбрали: {option}', en: 'Chose: {option}' },
+  levelUp: { ru: '⬆ {voice} {from} → {to}', en: '⬆ {voice} {from} → {to}' },
   checkPassed: { ru: 'Проверка «{voice}» удалась (шанс {chance}%)', en: '{voice} check passed ({chance}% chance)' },
   checkFailed: { ru: 'Проверка «{voice}» провалилась (шанс {chance}%)', en: '{voice} check failed ({chance}% chance)' },
   returnOnTime: { ru: 'Вернулись на базу вовремя', en: 'Back at base on time' },

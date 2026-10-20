@@ -21,7 +21,7 @@ describe('save slot', () => {
     storage.setItem(SAVE_KEY, '{not json');
     expect(readSave(storage, content).kind).toBe('corrupt');
     const game = gameAt('morning');
-    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...game, version: 2 } }));
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...game, version: 1 } }));
     expect(readSave(storage, content).kind).toBe('corrupt');
     storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...game, boatId: 'ghost_boat' } }));
     expect(readSave(storage, content).kind).toBe('corrupt');

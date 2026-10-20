@@ -1,5 +1,7 @@
+import { EngineError } from './errors';
 import { appendLog, causeMatches } from './log';
 import { advanceClock, clamp, round1 } from './state';
+import { grantXp } from './xp';
 import type { Balance, Boat, Effect, GameState, MapPoint, Outcome, Resources, ShowerDiscipline } from './types';
 
 const EFFECT_TO_RESOURCE = {
@@ -59,7 +61,8 @@ function effectData(e: Effect): Record<string, string | number | boolean> | unde
   return Object.keys(data).length ? data : undefined;
 }
 
-export function applyOutcome(state: GameState, boat: Boat | null, o: Outcome): GameState {
+/** `b` is required only for outcomes that carry `effect.xp`. */
+export function applyOutcome(state: GameState, boat: Boat | null, o: Outcome, b?: Balance): GameState {
   const e = o.effect;
   const resources = clampResources(rawResources(state.resources, e, boat), boat);
   const damages = e.damage && !state.damages.includes(e.damage) ? [...state.damages, e.damage] : state.damages;
@@ -85,11 +88,15 @@ export function applyOutcome(state: GameState, boat: Boat | null, o: Outcome): G
     s = appendLog(s, { kind: 'effect', cause: `injury:${o.cause}`, ...(o.pillar ? { pillar: o.pillar } : {}) });
   }
   if (e.signal) s = appendLog(s, { kind: 'signal', cause: `signal:${e.signal}`, ...(o.pillar ? { pillar: o.pillar } : {}) });
+  if (e.xp) {
+    if (!b) throw new EngineError('INVALID_INPUT', `Outcome ${o.cause} carries xp: pass the balance to applyOutcome`);
+    s = grantXp(s, e.xp, o.cause, b);
+  }
   return s;
 }
 
-export function applyOutcomes(state: GameState, boat: Boat | null, outcomes: readonly Outcome[]): GameState {
-  return outcomes.reduce((s, o) => applyOutcome(s, boat, o), state);
+export function applyOutcomes(state: GameState, boat: Boat | null, outcomes: readonly Outcome[], b?: Balance): GameState {
+  return outcomes.reduce((s, o) => applyOutcome(s, boat, o, b), state);
 }
 
 export interface ConsumptionInput {

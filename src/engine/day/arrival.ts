@@ -5,11 +5,23 @@ import { correctOrder, evaluateManeuver, maneuverForKind } from '../maneuver';
 import { applyOutcome, applyOutcomes } from '../resources';
 import { advanceClock, requireBoat, requirePoint } from '../state';
 import { anchoring, marinaArrival } from '../time';
-import type { Balance, Boat, Content, DayPlan, GameState, ManeuverKind } from '../types';
+import type { Balance, Boat, Content, DayPlan, GameState, Maneuver, ManeuverKind } from '../types';
 import { cautionTimeFactor } from '../voices';
+import { grantXp } from '../xp';
 
 export interface ArrivalResult { state: GameState; mooring: 'anchor' | 'berth' }
 type Orders = DayPlan['maneuverOrders'];
+
+function grantManeuverXp(state: GameState, m: Maneuver, errors: readonly string[], b: Balance): GameState {
+  if (errors.length === 0) {
+    const done = state.log.some((e) => e.day === state.day && e.cause.startsWith('xp:order:order:ok:'));
+    return done ? state : grantXp(state, { order: b.voices.cleanManeuverXp }, `order:ok:${m.id}`, b);
+  }
+  return errors.reduce((acc, id) => {
+    const err = m.errors.find((x) => x.id === id);
+    return grantXp(acc, { order: err?.xp ?? b.voices.maneuverErrorXp }, `order:wrong:${m.id}:${id}`, b);
+  }, state);
+}
 
 export function runManeuver(state: GameState, content: Content, kind: ManeuverKind, orders?: Orders): GameState {
   const m = maneuverForKind(content, kind);
@@ -20,7 +32,8 @@ export function runManeuver(state: GameState, content: Content, kind: ManeuverKi
   const wrong = r.value.errors.length > 0;
   let s = appendLog({ ...state, rng: r.next }, { kind: 'decision', cause: `order:${wrong ? 'wrong' : 'ok'}:${m.id}`, pillar: 'safety' });
   s = r.value.rolls.reduce((acc, roll) => appendLog(acc, { kind: 'roll', cause: roll.cause, pillar: 'safety', odds: roll.odds, data: { hit: roll.hit } }), s);
-  s = applyOutcomes(s, boat, r.value.outcomes);
+  s = applyOutcomes(s, boat, r.value.outcomes, b);
+  s = grantManeuverXp(s, m, r.value.errors, b);
   if (wrong) {
     s = applyOutcome(s, boat, { cause: `fatigue:maneuver:${m.id}`, pillar: 'safety', effect: { fatigue: r.value.errors.length * b.fatigue.maneuverError } });
   }

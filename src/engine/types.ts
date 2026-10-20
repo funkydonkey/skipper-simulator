@@ -66,6 +66,8 @@ export interface Effect {
   signal?: string;
   /** Dialogue id: creates an expectation (handled by events flow, Task 12). */
   promise?: string;
+  /** Extra voice XP, granted by `grantXp` (exempt voices and voices at max level are skipped). */
+  xp?: Partial<Record<TrainableVoice, number>>;
 }
 
 export interface Outcome { cause: string; pillar?: Pillar; effect: Effect }
@@ -211,6 +213,8 @@ export interface EventOption {
   success?: Effect;
   fail?: Effect;
   effects?: Effect;
+  /** Overrides the default check XP (balance.voices.checkXp) for the checked voice. */
+  xp?: number;
 }
 export interface GameEvent {
   id: string;
@@ -232,6 +236,8 @@ export interface ManeuverError {
   injuryChance: number;
   /** Flag (e.g. `briefing.loaded_lines`) that scales effect and injury chance by balance.safety.mitigationFactor. */
   mitigatedBy?: string;
+  /** Overrides balance.voices.maneuverErrorXp for this error. */
+  xp?: number;
   text: LocalizedText;
 }
 export interface Maneuver {
@@ -255,7 +261,7 @@ export interface DebriefRule {
 
 export interface Balance {
   start: { moneyEur: number; mood: number; fatigue: number; gasPct: number; serviceBankPct: number; starterBankPct: number; hour: number; crewSize: number };
-  voices: { points: number; maxLevel: number; prideLevel: number; crewVoiceLevel: number; seaSenseSignalLevel: number; mechanicExactLevel: number; cautionRiskPerLevel: number; cautionTimePerLevel: number; orderRiskPerLevel: number };
+  voices: { points: number; maxLevel: number; prideLevel: number; crewVoiceLevel: number; seaSenseSignalLevel: number; mechanicExactLevel: number; cautionRiskPerLevel: number; cautionTimePerLevel: number; orderRiskPerLevel: number; xpToLevel: number[]; xpExempt: VoiceId[]; checkXp: { success: number; fail: number }; maneuverErrorXp: number; cleanManeuverXp: number };
   water: { perPersonPerDayL: Record<ShowerDiscipline, number>; zeroMoodPenalty: number };
   fuel: { motorLph: number; priceEurPerL: number };
   electric: { fridgeAhPerDay: number; pumpsAhPerDay: number; electricToiletAhPerDay: number; plotterAhPerHour: number; autopilotAhPerHour: number; engineChargeAhPerHour: number; solarAhPerWattDay: number; starterStartPct: number; starterMinPct: number; zeroServiceMoodPenalty: number };
@@ -394,7 +400,7 @@ export interface DayFacts {
 }
 
 export interface GameState {
-  version: 1;
+  version: 2;
   seed: number;
   rng: number;
   lang: Lang;
@@ -405,6 +411,7 @@ export interface GameState {
   locationId: string;
   boatId: string | null;
   voices: Record<VoiceId, number>;
+  voiceXp: Record<TrainableVoice, number>;
   resources: Resources;
   flags: Record<string, boolean>;
   damages: string[];
