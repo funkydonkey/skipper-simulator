@@ -284,6 +284,8 @@ export interface Maneuver {
   /** Listed in the CORRECT order. UI shuffles. */
   steps: ManeuverStep[];
   errors: ManeuverError[];
+  /** Extra mods on every error's injury chance (e.g. broken systems, a bow thruster). */
+  injuryMods?: ChanceMod[];
 }
 
 export interface DebriefRule {

@@ -116,6 +116,8 @@ export interface ConsumptionInput {
   autopilotHours: number;
   shorePower: boolean;
   cookedDinner: boolean;
+  /** Broken electrical system: neither the engine nor the solar panels charge the service bank. */
+  noCharge?: boolean;
 }
 
 export function dailyConsumption(i: ConsumptionInput, b: Balance): Outcome[] {
@@ -125,7 +127,7 @@ export function dailyConsumption(i: ConsumptionInput, b: Balance): Outcome[] {
     + (i.boat.electricToilet ? el.electricToiletAhPerDay : 0)
     + (i.motorHours + i.sailHours) * el.plotterAhPerHour
     + i.autopilotHours * el.autopilotAhPerHour;
-  const chargeAh = i.motorHours * el.engineChargeAhPerHour + i.boat.solarW * el.solarAhPerWattDay;
+  const chargeAh = i.noCharge ? 0 : i.motorHours * el.engineChargeAhPerHour + i.boat.solarW * el.solarAhPerWattDay;
   const out: Outcome[] = [
     { cause: 'consumption:water', pillar: 'boat', effect: { water: -i.crewSize * b.water.perPersonPerDayL[i.shower] } },
     i.shorePower

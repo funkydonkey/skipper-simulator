@@ -4,7 +4,7 @@ import { priceFor } from '../perks';
 import { crewSensitivity, resolveDueExpectations, sayDialogue } from '../promises';
 import { applyOutcome, applyOutcomes, dailyConsumption, refillAt, zeroResourceOutcomes } from '../resources';
 import { clamp, requireBoat, requirePoint, round1 } from '../state';
-import { addWear } from '../systems';
+import { addWear, brokenFlags, brokenSystems } from '../systems';
 import type { Activity, Balance, Boat, Content, DayFacts, GameState, MapPoint, Outcome } from '../types';
 import { restHours } from '../time';
 import { exposure } from '../weather';
@@ -14,14 +14,18 @@ export interface EveningChoice { dinner: 'cook' | 'taverna'; dialogueId?: string
 
 export const tavernaOpen = (clockMin: number, b: Balance): boolean => clockMin < b.time.tavernaCloseHour * 60;
 
-function dinner(state: GameState, b: Balance, choice: EveningChoice['dinner']): { outcomes: Outcome[]; cooked: boolean; activity: Activity | null } {
+function dinner(state: GameState, content: Content, choice: EveningChoice['dinner']): { outcomes: Outcome[]; cooked: boolean; activity: Activity | null } {
+  const b = content.balance;
   if (choice === 'taverna') {
     const bill = priceFor(state.crew.length * b.mood.tavernaEurPerPerson, state.voices.economist, b);
     const effect = { money: -bill.eur, mood: b.mood.tavernaDinner };
     return { outcomes: [{ cause: 'activity:taverna', pillar: 'promises', effect, saved: bill.savedEur }], cooked: false, activity: 'taverna' };
   }
-  if (state.resources.gasPct < b.gas.pctPerDay) {
-    return { outcomes: [{ cause: 'zero:gas', pillar: 'boat', effect: { mood: -b.gas.noHotFoodMoodPenalty } }], cooked: false, activity: null };
+  const noCook = brokenFlags(state, content).noCook;
+  if (noCook || state.resources.gasPct < b.gas.pctPerDay) {
+    const zero: Outcome = { cause: 'zero:gas', pillar: 'boat', effect: { mood: -b.gas.noHotFoodMoodPenalty } };
+    const broken: Outcome[] = noCook ? [{ cause: 'system:no_cook', pillar: 'boat', effect: {} }] : [];
+    return { outcomes: [zero, ...broken], cooked: false, activity: null };
   }
   return { outcomes: [], cooked: true, activity: null };
 }
@@ -34,10 +38,14 @@ function night(state: GameState, content: Content, boat: Boat, point: MapPoint, 
     crewSize: s.crew.length, shower: facts.shower, boat,
     motorHours: facts.motorHours, sailHours: facts.sailHours, autopilotHours: facts.autopilotHours,
     shorePower: atBerth && point.services.shorePower, cookedDinner: cooked,
+    noCharge: brokenFlags(s, content).noCharge,
   }, b));
   s = applyOutcomes(s, boat, zeroResourceOutcomes(s, b));
   if (s.moodPerDay !== 0) s = applyOutcome(s, boat, { cause: 'mood_per_day', pillar: 'boat', effect: { mood: s.moodPerDay } });
   if (atBerth) s = { ...s, moodPerDay: 0 };
+  for (const def of brokenSystems(s, content)) {
+    if (def.brokenEffect.dailyEffect) s = applyOutcome(s, boat, { cause: `system:daily:${def.id}`, pillar: 'boat', effect: def.brokenEffect.dailyEffect }, b);
+  }
   const w = s.weather;
   const dir = w ? (w.front ? w.frontDir : w.forecastDir) : null;
   if (facts.mooring === 'anchor' && dir && exposure(point, dir) > b.fatigue.rollyExposure) {
@@ -76,7 +84,7 @@ export function endDay(state: GameState, content: Content, choice: EveningChoice
   const point = requirePoint(content, state.locationId);
   if (choice.dinner === 'taverna' && !point.services.taverna) throw new EngineError('INVALID_INPUT', `No taverna at ${point.id}`);
   if (choice.dinner === 'taverna' && !tavernaOpen(state.clockMin, b)) throw new EngineError('INVALID_INPUT', 'Taverna is closed');
-  const meal = dinner(state, b, choice.dinner);
+  const meal = dinner(state, content, choice.dinner);
   let s = applyOutcomes(checkReturn(rest(state, boat, b), point, b), boat, meal.outcomes);
   const dayFacts = meal.activity ? { ...facts, activities: [...facts.activities, meal.activity] } : facts;
   const resolved = resolveDueExpectations(s.expectations, dayFacts, s.voices.diplomat, crewSensitivity(s, content), b);

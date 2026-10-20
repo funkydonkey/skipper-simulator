@@ -144,6 +144,7 @@ export const ManeuverSchema: z.ZodType<Maneuver> = z.object({
     id: Id, wrongIf: z.object({ first: Id, then: Id }).strict(), effect: EffectSchema,
     injuryChance: Prob, mitigatedBy: z.string().min(1).optional(), xp: NonNeg.optional(), text: Text,
   }).strict()),
+  injuryMods: z.array(ChanceModSchema).optional(),
 }).strict();
 
 export const DebriefRuleSchema: z.ZodType<DebriefRule> = z.object({

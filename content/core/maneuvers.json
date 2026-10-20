@@ -13,7 +13,8 @@
       { "id": "release_before_brief", "wrongIf": { "first": "release_stern", "then": "brief_roles" }, "effect": { "mood": -6, "fatigue": 6 }, "injuryChance": 0.2, "mitigatedBy": "briefing.loaded_lines", "text": { "ru": "Кормовой вырвало из рук", "en": "A stern line was ripped from someone's hands" } },
       { "id": "release_before_mooring", "wrongIf": { "first": "release_stern", "then": "drop_mooring" }, "effect": { "damage": "hull_scratch", "mood": -8 }, "injuryChance": 0.05, "mitigatedBy": "briefing.captain_only", "text": { "ru": "Корму повело на соседа", "en": "The stern swung into the neighbour" } },
       { "id": "gear_before_mooring_sinks", "wrongIf": { "first": "engage_ahead", "then": "drop_mooring" }, "effect": { "damage": "prop_line", "mood": -6 }, "injuryChance": 0, "text": { "ru": "Пошли вперёд с мурингом под винтом", "en": "Went ahead with the lazy line under the prop" } }
-    ]
+    ],
+    "injuryMods": [ { "if": "system.engine_cooling.broken", "add": 0.1, "label": "broken" } ]
   },
   {
     "id": "mooring_med", "kind": "mooring", "title": { "ru": "Швартовка кормой", "en": "Stern-to mooring" },
@@ -28,7 +29,8 @@
       { "id": "lines_before_brief", "wrongIf": { "first": "stern_lines_ashore", "then": "brief_roles" }, "effect": { "mood": -5, "fatigue": 5 }, "injuryChance": 0.15, "mitigatedBy": "briefing.captain_only", "text": { "ru": "Экипаж слушал маринера, а не капитана", "en": "The crew followed the marinero, not the skipper" } },
       { "id": "mooring_before_cleat", "wrongIf": { "first": "pick_mooring", "then": "cleat_stern" }, "effect": { "fatigue": 8 }, "injuryChance": 0.25, "mitigatedBy": "briefing.cleats", "text": { "ru": "Кормовой поехал по утке и обжёг ладони", "en": "The stern line ran over the cleat and burned palms" } },
       { "id": "no_fenders_first", "wrongIf": { "first": "stern_lines_ashore", "then": "fenders_ready" }, "effect": { "damage": "hull_scratch", "mood": -6 }, "injuryChance": 0, "text": { "ru": "Борт прошёлся по соседу без кранцев", "en": "The hull rubbed the neighbour with no fenders" } }
-    ]
+    ],
+    "injuryMods": [ { "if": "system.engine_cooling.broken", "add": 0.1, "label": "broken" }, { "if": "system.bow_thruster.state != 'none' && !system.bow_thruster.broken && wind >= 12", "mul": -0.3, "label": "thruster" } ]
   },
   {
     "id": "anchoring_bay", "kind": "anchoring", "title": { "ru": "Постановка на якорь", "en": "Anchoring" },
@@ -43,7 +45,8 @@
       { "id": "drop_before_stop", "wrongIf": { "first": "drop_anchor", "then": "stop_boat" }, "effect": { "time_hours": 0.5, "fatigue": 8 }, "injuryChance": 0, "text": { "ru": "Цепь легла кучей на якорь", "en": "The chain piled on top of the anchor" } },
       { "id": "drop_before_brief", "wrongIf": { "first": "drop_anchor", "then": "brief_bow" }, "effect": { "fatigue": 5, "mood": -3 }, "injuryChance": 0.1, "mitigatedBy": "briefing.anchor", "text": { "ru": "На баке не поняли знаков, цепь ушла рывком", "en": "The bow missed the signals; the chain ran out with a jerk" } },
       { "id": "drop_before_spot", "wrongIf": { "first": "drop_anchor", "then": "choose_spot" }, "effect": { "time_hours": 0.5, "mood": -4 }, "injuryChance": 0, "text": { "ru": "Встали слишком близко к соседу, переставляемся", "en": "Too close to a neighbour; re-anchoring" } }
-    ]
+    ],
+    "injuryMods": [ { "if": "system.engine_cooling.broken", "add": 0.1, "label": "broken" } ]
   },
   {
     "id": "anchor_up_bay", "kind": "anchor_up", "title": { "ru": "Съёмка с якоря", "en": "Weighing anchor" },
@@ -56,6 +59,7 @@
     "errors": [
       { "id": "raise_before_motor", "wrongIf": { "first": "raise_anchor", "then": "motor_to_anchor" }, "effect": { "fatigue": 8, "mood": -3 }, "injuryChance": 0.1, "mitigatedBy": "briefing.anchor", "text": { "ru": "Брашпиль тащит лодку на якорь и перегревается", "en": "The windlass drags the boat and overheats" } },
       { "id": "raise_before_engine", "wrongIf": { "first": "raise_anchor", "then": "engine_on" }, "effect": { "damage": "hull_scratch", "mood": -8 }, "injuryChance": 0.05, "text": { "ru": "Без хода лодку сдуло на камни", "en": "With no way on, the boat was blown onto the rocks" } }
-    ]
+    ],
+    "injuryMods": [ { "if": "system.engine_cooling.broken", "add": 0.1, "label": "broken" } ]
   }
 ]

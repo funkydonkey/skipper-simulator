@@ -3,7 +3,7 @@ import { buildConditionContext, evaluateCondition } from './expr';
 import { appendLog } from './log';
 import { applyOutcome } from './resources';
 import { requireBoat } from './state';
-import type { Boat, Content, EventPhase, GameState, SystemDef, SystemFailure, SystemId, SystemState } from './types';
+import type { Boat, BrokenEffect, Content, EventPhase, GameState, SystemDef, SystemFailure, SystemId, SystemState } from './types';
 import { grantXp } from './xp';
 
 export function initialSystems(boat: Boat): Record<SystemId, SystemState> {
@@ -37,6 +37,25 @@ export function applySystemEffect(
   if (e.repair) patch(e.repair, (s) => ({ ...s, broken: false }));
   for (const [id, w] of Object.entries(e.wear ?? {})) patch(id, (s) => ({ ...s, wear: s.wear + w }));
   return next;
+}
+
+export type BrokenFlags = Required<Pick<BrokenEffect, 'noMotor' | 'noSail' | 'noCharge' | 'noCook'>>;
+
+/** Defs of the systems that are broken right now, in content order. */
+export function brokenSystems(state: GameState, content: Content): SystemDef[] {
+  return content.systems.filter((d) => state.systems[d.id]?.broken);
+}
+
+/** OR of the boolean effects over all broken systems. */
+export function brokenFlags(state: GameState, content: Content): BrokenFlags {
+  const flags: BrokenFlags = { noMotor: false, noSail: false, noCharge: false, noCook: false };
+  for (const { brokenEffect: e } of brokenSystems(state, content)) {
+    flags.noMotor ||= e.noMotor === true;
+    flags.noSail ||= e.noSail === true;
+    flags.noCharge ||= e.noCharge === true;
+    flags.noCook ||= e.noCook === true;
+  }
+  return flags;
 }
 
 export type WearSource = 'motor_hour' | 'sail_hour' | 'night' | 'anchoring';

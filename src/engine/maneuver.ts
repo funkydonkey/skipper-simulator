@@ -52,7 +52,7 @@ export function evaluateManeuver(
     if (order.indexOf(err.wrongIf.first) >= order.indexOf(err.wrongIf.then)) continue;
     // Same condition as injurySpec's mitigation mod: the effect and the injury chance are scaled together.
     const mitigated = err.mitigatedBy !== undefined && evaluateCondition(err.mitigatedBy, ctx);
-    const roll = rollChance(next, injurySpec(err.injuryChance, err.mitigatedBy, b), ctx);
+    const roll = rollChance(next, injurySpec(err.injuryChance, err.mitigatedBy, b, m.injuryMods), ctx);
     next = roll.next;
     errors.push(err.id);
     rolls.push({ cause: `roll:injury:maneuver:${m.id}:${err.id}`, hit: roll.value.hit, odds: roll.value.odds });
@@ -69,5 +69,5 @@ export function maneuverRisk(state: GameState, content: Content, kind: ManeuverK
   const m = maneuverForKind(content, kind);
   const worst = m?.errors.reduce<ManeuverError | null>((a, e) => (e.injuryChance > (a?.injuryChance ?? 0) ? e : a), null);
   if (!worst) return null;
-  return evaluateChance(injurySpec(worst.injuryChance, worst.mitigatedBy, content.balance), buildConditionContext(state, content));
+  return evaluateChance(injurySpec(worst.injuryChance, worst.mitigatedBy, content.balance, m?.injuryMods), buildConditionContext(state, content));
 }

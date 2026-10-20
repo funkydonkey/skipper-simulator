@@ -5,7 +5,7 @@ import { correctOrder, evaluateManeuver, maneuverForKind } from '../maneuver';
 import { priceFor } from '../perks';
 import { applyOutcome, applyOutcomes } from '../resources';
 import { advanceClock, requireBoat, requirePoint } from '../state';
-import { addWear } from '../systems';
+import { addWear, brokenSystems } from '../systems';
 import { anchoring, marinaArrival } from '../time';
 import type { Balance, Boat, Content, DayPlan, GameState, Maneuver, ManeuverKind } from '../types';
 import { cautionTimeFactor } from '../voices';
@@ -36,6 +36,11 @@ export function runManeuver(state: GameState, content: Content, kind: ManeuverKi
   s = r.value.rolls.reduce((acc, roll) => appendLog(acc, { kind: 'roll', cause: roll.cause, pillar: 'safety', odds: roll.odds, data: { hit: roll.hit } }), s);
   s = applyOutcomes(s, boat, r.value.outcomes, b);
   s = grantManeuverXp(s, m, r.value.errors, b);
+  if (kind === 'anchoring' || kind === 'anchor_up') {
+    for (const def of brokenSystems(s, content)) {
+      if (def.brokenEffect.anchorEffect) s = applyOutcome(s, boat, { cause: `system:anchor:${def.id}`, pillar: 'boat', effect: def.brokenEffect.anchorEffect }, b);
+    }
+  }
   if (wrong) {
     s = applyOutcome(s, boat, { cause: `fatigue:maneuver:${m.id}`, pillar: 'safety', effect: { fatigue: r.value.errors.length * b.fatigue.maneuverError } });
   }
