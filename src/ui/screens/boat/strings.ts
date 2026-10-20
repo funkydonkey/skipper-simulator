@@ -16,8 +16,6 @@ export const BOAT = dict({
   starterShared: { ru: 'Стартовый и сервисный — один банк', en: 'Starter and service share one bank' },
   solar: { ru: 'Солнечные панели: {w} Вт', en: 'Solar panels: {w} W' },
   noSolar: { ru: 'Солнечных панелей нет', en: 'No solar panels' },
-  generator: { ru: 'Генератор есть', en: 'Generator on board' },
-  noGenerator: { ru: 'Генератора нет', en: 'No generator' },
   electricToilet: { ru: 'Электрические гальюны (едят заряд)', en: 'Electric heads (they drain the battery)' },
   manualToilet: { ru: 'Ручные гальюны', en: 'Manual heads' },
 });

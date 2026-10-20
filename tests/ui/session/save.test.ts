@@ -15,18 +15,32 @@ describe('save slot', () => {
     expect(r).toEqual({ kind: 'ok', savedAt: NOW.toISOString(), game });
   });
 
-  it('reports none, corrupt JSON, wrong version and dangling references', () => {
+  it('reports none, corrupt JSON, dangling references', () => {
     const storage = memoryStorage();
     expect(readSave(storage, content).kind).toBe('none');
     storage.setItem(SAVE_KEY, '{not json');
     expect(readSave(storage, content).kind).toBe('corrupt');
     const game = gameAt('morning');
-    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...game, version: 1 } }));
-    expect(readSave(storage, content).kind).toBe('corrupt');
     storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...game, boatId: 'ghost_boat' } }));
     expect(readSave(storage, content).kind).toBe('corrupt');
     clearSave(storage);
     expect(readSave(storage, content).kind).toBe('none');
+  });
+
+  it('treats a stored version-2 slot as legacy and clears it', () => {
+    const storage = memoryStorage();
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...gameAt('morning'), version: 2 } }));
+    expect(readSave(storage, content)).toEqual({ kind: 'legacy' });
+    expect(storage.getItem(SAVE_KEY)).toBeNull();
+    expect(readSave(storage, content).kind).toBe('none');
+  });
+
+  it('rejects a slot whose system lacks wear', () => {
+    const storage = memoryStorage();
+    const game = gameAt('morning');
+    const bad = { ...game, systems: { ...game.systems, rig: { state: 'ok', broken: false } } };
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: bad }));
+    expect(readSave(storage, content).kind).toBe('corrupt');
   });
 
   it('reports a legacy v1 slot once and removes it', () => {

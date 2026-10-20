@@ -1,0 +1,272 @@
+[
+  {
+    "id": "engine_cooling",
+    "name": {
+      "ru": "Охлаждение двигателя",
+      "en": "Engine cooling"
+    },
+    "checkpoint": "impeller",
+    "wearPer": {
+      "motor_hour": 1
+    },
+    "failures": [],
+    "brokenEffect": {
+      "noMotor": true
+    },
+    "repairs": [
+      {
+        "id": "self",
+        "label": {
+          "ru": "Починить самим",
+          "en": "Fix it yourselves"
+        },
+        "check": {
+          "voice": "mechanic",
+          "difficulty": 2
+        },
+        "costEur": 40,
+        "timeHours": 1
+      },
+      {
+        "id": "service",
+        "label": {
+          "ru": "Сервис в марине",
+          "en": "Marina service"
+        },
+        "costEur": 220,
+        "timeHours": 3,
+        "requires": "at_marina || moored_berth",
+        "restores": "ok"
+      }
+    ]
+  },
+  {
+    "id": "heads",
+    "name": {
+      "ru": "Гальюны",
+      "en": "Heads"
+    },
+    "checkpoint": "toilets",
+    "wearPer": {
+      "night": 1
+    },
+    "failures": [],
+    "brokenEffect": {
+      "dailyEffect": {
+        "mood": -8
+      }
+    },
+    "repairs": [
+      {
+        "id": "self",
+        "label": {
+          "ru": "Починить самим",
+          "en": "Fix it yourselves"
+        },
+        "check": {
+          "voice": "mechanic",
+          "difficulty": 2
+        },
+        "costEur": 0,
+        "timeHours": 1.5
+      },
+      {
+        "id": "service",
+        "label": {
+          "ru": "Сервис в марине",
+          "en": "Marina service"
+        },
+        "costEur": 90,
+        "timeHours": 2,
+        "requires": "at_marina || moored_berth",
+        "restores": "ok"
+      }
+    ]
+  },
+  {
+    "id": "windlass",
+    "name": {
+      "ru": "Якорное устройство",
+      "en": "Anchor gear"
+    },
+    "checkpoint": "anchor",
+    "wearPer": {
+      "anchoring": 1
+    },
+    "failures": [],
+    "brokenEffect": {
+      "anchorEffect": {
+        "time_hours": 0.5,
+        "fatigue": 10
+      }
+    },
+    "repairs": [
+      {
+        "id": "self",
+        "label": {
+          "ru": "Починить самим",
+          "en": "Fix it yourselves"
+        },
+        "check": {
+          "voice": "order",
+          "difficulty": 2
+        },
+        "costEur": 0,
+        "timeHours": 1
+      },
+      {
+        "id": "service",
+        "label": {
+          "ru": "Сервис в марине",
+          "en": "Marina service"
+        },
+        "costEur": 150,
+        "timeHours": 2,
+        "requires": "at_marina || moored_berth",
+        "restores": "ok"
+      }
+    ]
+  },
+  {
+    "id": "electrical",
+    "name": {
+      "ru": "Электрика",
+      "en": "Electrics"
+    },
+    "checkpoint": "electrics",
+    "wearPer": {
+      "night": 1
+    },
+    "failures": [],
+    "brokenEffect": {
+      "noCharge": true
+    },
+    "repairs": [
+      {
+        "id": "self",
+        "label": {
+          "ru": "Починить самим",
+          "en": "Fix it yourselves"
+        },
+        "check": {
+          "voice": "mechanic",
+          "difficulty": 3
+        },
+        "costEur": 20,
+        "timeHours": 1
+      },
+      {
+        "id": "service",
+        "label": {
+          "ru": "Сервис в марине",
+          "en": "Marina service"
+        },
+        "costEur": 180,
+        "timeHours": 2,
+        "requires": "at_marina || moored_berth",
+        "restores": "ok"
+      }
+    ]
+  },
+  {
+    "id": "rig",
+    "name": {
+      "ru": "Паруса и такелаж",
+      "en": "Sails and rig"
+    },
+    "checkpoint": "sails",
+    "wearPer": {
+      "sail_hour": 1
+    },
+    "failures": [],
+    "brokenEffect": {
+      "noSail": true
+    },
+    "repairs": [
+      {
+        "id": "self",
+        "label": {
+          "ru": "Починить самим",
+          "en": "Fix it yourselves"
+        },
+        "check": {
+          "voice": "order",
+          "difficulty": 2
+        },
+        "costEur": 30,
+        "timeHours": 1.5
+      },
+      {
+        "id": "service",
+        "label": {
+          "ru": "Сервис в марине",
+          "en": "Marina service"
+        },
+        "costEur": 350,
+        "timeHours": 4,
+        "requires": "at_marina || moored_berth",
+        "restores": "ok"
+      }
+    ]
+  },
+  {
+    "id": "gas",
+    "name": {
+      "ru": "Газ",
+      "en": "Gas"
+    },
+    "checkpoint": "gas",
+    "failures": [],
+    "brokenEffect": {
+      "noCook": true
+    },
+    "repairs": [
+      {
+        "id": "self",
+        "label": {
+          "ru": "Починить самим",
+          "en": "Fix it yourselves"
+        },
+        "check": {
+          "voice": "caution",
+          "difficulty": 2
+        },
+        "costEur": 0,
+        "timeHours": 0.5
+      },
+      {
+        "id": "service",
+        "label": {
+          "ru": "Сервис в марине",
+          "en": "Marina service"
+        },
+        "costEur": 60,
+        "timeHours": 1,
+        "requires": "at_marina || moored_berth",
+        "restores": "ok"
+      }
+    ]
+  },
+  {
+    "id": "bow_thruster",
+    "name": {
+      "ru": "Подруливающее устройство",
+      "en": "Bow thruster"
+    },
+    "failures": [],
+    "brokenEffect": {},
+    "repairs": [
+      {
+        "id": "service",
+        "label": {
+          "ru": "Сервис в марине",
+          "en": "Marina service"
+        },
+        "costEur": 300,
+        "timeHours": 3,
+        "requires": "at_marina || moored_berth",
+        "restores": "ok"
+      }
+    ]
+  }
+]

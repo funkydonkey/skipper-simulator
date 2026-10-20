@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { parseContent } from '../../src/content/parse';
 
 const read = (f: string): unknown => JSON.parse(readFileSync(`content/${f}.json`, 'utf8'));
-const WORLD = ['boats', 'crew', 'briefing', 'maneuvers', 'balance'] as const;
+const WORLD = ['boats', 'crew', 'briefing', 'maneuvers', 'balance', 'systems'] as const;
 
 function worldOnly() {
   const raw: Record<string, unknown> = Object.fromEntries(WORLD.map((f) => [f, read(`core/${f}`)]));

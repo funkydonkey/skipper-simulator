@@ -31,13 +31,13 @@ describe('resources', () => {
     expect(next.log.at(-1)!.delta).toEqual({ fuelL: -2 });
   });
 
-  it('damage, repair, flag, injury, mood_per_day, signal', () => {
+  it('damage, flag, injury, mood_per_day, signal', () => {
     let s = makeState();
     s = applyOutcome(s, boat, { cause: 'sail:break', effect: { damage: 'sail_torn' } });
     s = applyOutcome(s, boat, { cause: 'sail:break', effect: { damage: 'sail_torn' } });
     expect(s.damages).toEqual(['sail_torn']);
     s = applyOutcome(s, boat, { cause: 'repair', effect: { repair: 'sail_torn' } });
-    expect(s.damages).toEqual([]);
+    expect(s.damages, 'repair now concerns boat systems and leaves deposit damages alone').toEqual(['sail_torn']);
     s = applyOutcome(s, boat, { cause: 'x', effect: { flag: 'warned', injury: true, mood_per_day: -8 } });
     expect(s.flags['flag.warned']).toBe(true);
     expect(s.injuries).toBe(1);

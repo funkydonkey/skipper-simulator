@@ -3,6 +3,8 @@ import { DIRS, PILLARS, TRAINABLE_VOICES } from '../../engine';
 import type { Content, GameState, Lang } from '../../engine';
 
 export const SAVE_KEY = 'skipper.save.v2';
+/** GameState.version this build reads; any other stored version is dropped as legacy. */
+const SAVE_VERSION = 3;
 /** Older formats are not migrated: readSave always drops them and reports 'legacy' once when no current slot exists. */
 export const LEGACY_SAVE_KEYS: readonly string[] = ['skipper.save.v1'];
 export const LANG_KEY = 'skipper.lang';
@@ -48,13 +50,14 @@ const LogEntrySchema = z.object({
 const SlotSchema = z.object({
   savedAt: z.string(),
   game: z.object({
-    version: z.literal(2),
+    version: z.literal(SAVE_VERSION),
     seed: num, rng: num, lang: z.enum(['ru', 'en']), phase: z.enum(PHASES), day: z.number().int().min(0), clockMin: num,
     weatherTemplateId: z.string(), locationId: z.string(), boatId: z.string().nullable(),
     voices: z.record(num),
     voiceXp: z.object(Object.fromEntries(TRAINABLE_VOICES.map((v) => [v, num])) as Record<(typeof TRAINABLE_VOICES)[number], typeof num>),
     resources: z.object({ waterL: num, fuelL: num, serviceBankPct: num, starterBankPct: num, gasPct: num, moneyEur: num, mood: num, fatigue: num }),
     flags: z.record(z.boolean()), damages: z.array(z.string()),
+    systems: z.record(z.object({ state: z.enum(['new', 'ok', 'worn']), wear: num.min(0), broken: z.boolean() }).strict()),
     crew: z.array(z.object({ id: z.string(), archetypeId: z.string(), name: text })),
     expectations: z.array(ExpectationSchema), moodPerDay: num, injuries: num,
     log: z.array(LogEntrySchema),
@@ -87,12 +90,22 @@ function takeLegacy(storage: Storage | null): boolean {
   return found.length > 0;
 }
 
+function storedVersion(json: unknown): unknown {
+  const game = typeof json === 'object' && json !== null ? (json as { game?: unknown }).game : undefined;
+  return typeof game === 'object' && game !== null ? (game as { version?: unknown }).version : undefined;
+}
+
 export function readSave(storage: Storage | null, content: Content): SaveRead {
   const raw = safeGet(storage, SAVE_KEY);
   const hadLegacy = takeLegacy(storage);
   if (raw === null) return hadLegacy ? { kind: 'legacy' } : { kind: 'none' };
   try {
-    const parsed = SlotSchema.safeParse(JSON.parse(raw));
+    const json: unknown = JSON.parse(raw);
+    if (storedVersion(json) !== SAVE_VERSION) {
+      clearSave(storage);
+      return { kind: 'legacy' };
+    }
+    const parsed = SlotSchema.safeParse(json);
     if (!parsed.success) return { kind: 'corrupt' };
     const game = parsed.data.game as unknown as GameState;
     return refsExist(game, content) ? { kind: 'ok', savedAt: parsed.data.savedAt, game } : { kind: 'corrupt' };

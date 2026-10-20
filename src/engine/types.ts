@@ -59,7 +59,12 @@ export interface Effect {
   time_hours?: number;
   mood_per_day?: number;
   damage?: string;
+  /** Clears `broken` on a boat system (no-op when the boat lacks it). Does not touch `damages`. */
   repair?: string;
+  /** Marks a boat system broken (no-op when the boat lacks it). */
+  break?: SystemId;
+  /** Adds wear to boat systems (ignores systems the boat lacks). */
+  wear?: Record<SystemId, number>;
   flag?: string;
   injury?: boolean;
   /** Logs `signal:<id>` — a sign the player could have read. */
@@ -109,15 +114,47 @@ export interface Boat {
   /** false = one shared bank: service drain also drains the starter. */
   starterSeparate: boolean;
   solarW: number;
-  generator: boolean;
   electricToilet: boolean;
-  bowThruster: boolean;
   motorKn: number;
   hullSpeedKn: number;
   priceEur: number;
   depositEur: number;
   shinyFeatures: LocalizedText[];
   hiddenDefects: HiddenDefect[];
+  /** Initial condition of every system on this boat; a system absent here is not fitted. */
+  systems: Record<SystemId, SystemCondition>;
+}
+
+export type SystemId = string;
+export type SystemCondition = 'new' | 'ok' | 'worn';
+export interface SystemState { state: SystemCondition; wear: number; broken: boolean }
+export interface BrokenEffect {
+  noMotor?: boolean; noSail?: boolean; noCharge?: boolean; noCook?: boolean;
+  /** Applied each night while broken. */
+  dailyEffect?: Effect;
+  /** Applied on each anchoring / anchor_up maneuver while broken. */
+  anchorEffect?: Effect;
+}
+export interface SystemFailure {
+  id: string; phase: EventPhase; when?: string; chance: ChanceInput;
+  /** Applied on failure, before any queued event. Usually { break: <system> }. */
+  effect?: Effect;
+  /** Existing event queued for the player's choice. */
+  event?: string;
+  xp?: Partial<Record<VoiceId, number>>;
+}
+export interface RepairOption {
+  id: string; label: LocalizedText;
+  check?: VoiceCheck; costEur?: number; timeHours?: number;
+  /** Condition, e.g. 'at_marina || moored_berth'. */
+  requires?: string;
+  /** Service repairs restore state 'ok'; self repairs only clear `broken`. */
+  restores?: 'ok';
+}
+export interface SystemDef {
+  id: SystemId; name: LocalizedText; checkpoint?: CheckpointId;
+  wearPer?: Partial<Record<'motor_hour' | 'sail_hour' | 'night' | 'anchoring', number>>;
+  failures: SystemFailure[]; brokenEffect: BrokenEffect; repairs: RepairOption[];
 }
 
 export interface PointServices {
@@ -329,6 +366,7 @@ export interface Region { id: string; name: LocalizedText; map: MapPoint[]; rout
 export interface Content {
   region: { id: string; name: LocalizedText };
   boats: Boat[];
+  systems: SystemDef[];
   map: MapPoint[];
   routes: Route[];
   weather: WeatherTemplate[];
@@ -401,7 +439,7 @@ export interface DayFacts {
 }
 
 export interface GameState {
-  version: 2;
+  version: 3;
   seed: number;
   rng: number;
   lang: Lang;
@@ -416,6 +454,8 @@ export interface GameState {
   resources: Resources;
   flags: Record<string, boolean>;
   damages: string[];
+  /** Only the systems fitted on the boat; `{}` before `chooseBoat`. */
+  systems: Record<SystemId, SystemState>;
   crew: CrewMember[];
   expectations: Expectation[];
   moodPerDay: number;
@@ -428,7 +468,7 @@ export interface GameState {
   returnedOnTime: boolean | null;
 }
 
-export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn'] as const;
+export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn', 'thruster', 'broken', 'wear'] as const;
 export type ChanceLabel = (typeof CHANCE_LABELS)[number];
 /**
  * add: value += add * scale. mul: always a delta factor, value *= (1 + mul * scale); write deltas such as (weight - 1).

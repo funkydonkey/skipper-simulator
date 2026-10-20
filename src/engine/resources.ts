@@ -2,6 +2,7 @@ import { EngineError } from './errors';
 import { appendLog, causeMatches } from './log';
 import { advanceClock, clamp, round1 } from './state';
 import { priceFor } from './perks';
+import { applySystemEffect } from './systems';
 import { grantXp } from './xp';
 import type { Balance, Boat, Effect, GameState, MapPoint, Outcome, Resources, ShowerDiscipline } from './types';
 
@@ -55,6 +56,8 @@ function effectData(e: Effect): Record<string, string | number | boolean> | unde
   const data: Record<string, string | number | boolean> = {};
   if (e.damage) data.damage = e.damage;
   if (e.repair) data.repair = e.repair;
+  if (e.break) data.break = e.break;
+  if (e.wear) data.wear = Object.entries(e.wear).map(([id, w]) => `${id}:${w}`).join(',');
   if (e.flag) data.flag = e.flag;
   if (e.injury) data.injury = true;
   if (e.time_hours) data.time_hours = e.time_hours;
@@ -70,7 +73,8 @@ export function applyOutcome(state: GameState, boat: Boat | null, o: Outcome, b?
   let s: GameState = {
     ...state,
     resources,
-    damages: e.repair ? damages.filter((d) => d !== e.repair) : damages,
+    damages,
+    systems: applySystemEffect(state.systems, e),
     flags: e.flag ? { ...state.flags, [`flag.${e.flag}`]: true } : state.flags,
     injuries: state.injuries + (e.injury ? 1 : 0),
     moodPerDay: state.moodPerDay + (e.mood_per_day ?? 0),

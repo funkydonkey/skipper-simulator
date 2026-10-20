@@ -1,7 +1,4 @@
 [
-  { "ref": "boat-field:boat.bow_thruster", "reason": "plan-3b" },
-  { "ref": "boat-field:boat.generator", "reason": "plan-3b" },
-  { "ref": "boat-field:boat.solar", "reason": "plan-3b" },
   { "ref": "defect:toilet_valve", "reason": "plan-3b" },
   { "ref": "checkpoint:electrics", "reason": "plan-3b" },
   { "ref": "topic:sails", "reason": "plan-3b" }

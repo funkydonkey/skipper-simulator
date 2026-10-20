@@ -18,6 +18,7 @@ export function knownIdentifiers(c: Content): Set<string> {
   return new Set<string>([
     ...CONTEXT_KEYS,
     ...BOAT_KEYS,
+    ...c.systems.flatMap((s) => ['state', 'broken', 'wear'].map((k) => `system.${s.id}.${k}`)),
     ...VOICES.map((v) => `voice.${v}`),
     ...CHECKPOINTS.map((cp) => `checkin.${cp}`),
     ...c.briefing.map((t) => `briefing.${t.id}`),

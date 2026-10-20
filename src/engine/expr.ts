@@ -1,5 +1,6 @@
 import { EngineError } from './errors';
 import { requireTemplate } from './state';
+import { systemContext } from './systems';
 import type { Content, GameState } from './types';
 import { realWind } from './weather';
 
@@ -13,7 +14,7 @@ export const CONTEXT_KEYS = [
   'mood', 'fatigue', 'injuries', 'wind', 'gust', 'front', 'location_kind', 'at_base', 'at_marina', 'at_bay', 'at_quay',
   'moored_berth', 'night', 'place.seabed', 'marina.late',
 ] as const;
-export const BOAT_KEYS = ['boat.shared_bank', 'boat.electric_toilet', 'boat.bow_thruster', 'boat.generator', 'boat.solar'] as const;
+export const BOAT_KEYS = ['boat.shared_bank', 'boat.electric_toilet'] as const;
 
 type Token =
   | { t: 'num'; v: number } | { t: 'str'; v: string } | { t: 'id'; v: string }
@@ -201,9 +202,7 @@ export function buildConditionContext(state: GameState, content: Content): CondC
     'marina.late': false,
     'boat.shared_bank': boat ? !boat.starterSeparate : false,
     'boat.electric_toilet': boat?.electricToilet ?? false,
-    'boat.bow_thruster': boat?.bowThruster ?? false,
-    'boat.generator': boat?.generator ?? false,
-    'boat.solar': (boat?.solarW ?? 0) > 0,
+    ...systemContext(state, content),
   };
   for (const [k, v] of Object.entries(state.flags)) ctx[k] = v;
   for (const d of state.damages) ctx[`damage.${d}`] = true;

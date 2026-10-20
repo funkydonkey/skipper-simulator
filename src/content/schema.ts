@@ -2,7 +2,7 @@ import { z } from 'zod';
 import {
   CHANCE_LABELS, CHECKPOINTS, DIRS, MANEUVER_KINDS, PILLARS, TRAINABLE_VOICES, VOICES,
   type Balance, type Boat, type ChanceInput, type ChanceMod, type BriefingTopic, type CrewArchetype, type DebriefRule, type Dialogue, type Effect,
-  type EventOption, type GameEvent, type Maneuver, type MapPoint, type Region, type Route, type WeatherTemplate,
+  type EventOption, type GameEvent, type Maneuver, type MapPoint, type Region, type SystemDef, type Route, type WeatherTemplate,
 } from '../engine/types';
 
 const POINT_KINDS = ['base', 'marina', 'bay', 'quay'] as const;
@@ -14,6 +14,8 @@ const EVENT_PHASES = ['morning', 'passage', 'arrival', 'evening'] as const;
 const DIALOGUE_CONTEXTS = ['briefing', 'morning', 'evening'] as const;
 const SHOWERS = ['strict', 'normal', 'loose'] as const;
 const POS = ['upwind', 'reach', 'run'] as const;
+const SYSTEM_CONDITIONS = ['new', 'ok', 'worn'] as const;
+const WEAR_SOURCES = ['motor_hour', 'sail_hour', 'night', 'anchoring'] as const;
 
 const Id = z.string().regex(/^[a-z0-9_]+$/, 'id must be snake_case');
 const Text = z.object({ ru: z.string().min(1), en: z.string().min(1) }).strict();
@@ -60,6 +62,8 @@ export const EffectSchema: z.ZodType<Effect> = z.object({
   mood_per_day: z.number().optional(),
   damage: Id.optional(),
   repair: Id.optional(),
+  break: Id.optional(),
+  wear: z.record(Id, z.number()).optional(),
   flag: Id.optional(),
   injury: z.boolean().optional(),
   signal: Id.optional(),
@@ -70,10 +74,11 @@ export const EffectSchema: z.ZodType<Effect> = z.object({
 export const BoatSchema: z.ZodType<Boat> = z.object({
   id: Id, name: Text, lengthFt: Pos, cabins: Int.positive(), berths: Int.positive(),
   waterTankL: Pos, fuelTankL: Pos, serviceBankAh: Pos, serviceBanks: Int.positive(), starterSeparate: z.boolean(),
-  solarW: NonNeg, generator: z.boolean(), electricToilet: z.boolean(), bowThruster: z.boolean(),
+  solarW: NonNeg, electricToilet: z.boolean(),
   motorKn: Pos, hullSpeedKn: Pos, priceEur: NonNeg, depositEur: NonNeg,
   shinyFeatures: z.array(Text),
   hiddenDefects: z.array(z.object({ id: Id, checkpoint: z.enum(CHECKPOINTS), description: Text, chargedOnReturn: Id.optional() }).strict()),
+  systems: z.record(Id, z.enum(SYSTEM_CONDITIONS)),
 }).strict();
 
 export const MapPointSchema: z.ZodType<MapPoint> = z.object({
@@ -188,3 +193,27 @@ export const BalanceSchema: z.ZodType<Balance> = z.object({
 }).strict();
 
 export const DeadAllowSchema = z.array(z.object({ ref: z.string().min(1), reason: z.string().min(1) }).strict());
+
+const SystemFailureSchema = z.object({
+  id: Id, phase: z.enum(EVENT_PHASES), when: z.string().min(1).optional(), chance: ChanceInputSchema,
+  effect: EffectSchema.optional(), event: Id.optional(),
+  xp: z.record(z.enum(VOICES), NonNeg).optional(),
+}).strict();
+
+const RepairOptionSchema = z.object({
+  id: Id, label: Text,
+  check: z.object({ voice: z.enum(VOICES), difficulty: Int.min(0).max(6) }).strict().optional(),
+  costEur: NonNeg.optional(), timeHours: NonNeg.optional(), requires: z.string().min(1).optional(),
+  restores: z.literal('ok').optional(),
+}).strict();
+
+export const SystemDefSchema: z.ZodType<SystemDef> = z.object({
+  id: Id, name: Text, checkpoint: z.enum(CHECKPOINTS).optional(),
+  wearPer: z.record(z.enum(WEAR_SOURCES), NonNeg).optional(),
+  failures: z.array(SystemFailureSchema),
+  brokenEffect: z.object({
+    noMotor: z.boolean().optional(), noSail: z.boolean().optional(), noCharge: z.boolean().optional(), noCook: z.boolean().optional(),
+    dailyEffect: EffectSchema.optional(), anchorEffect: EffectSchema.optional(),
+  }).strict(),
+  repairs: z.array(RepairOptionSchema),
+}).strict();

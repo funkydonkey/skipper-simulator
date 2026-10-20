@@ -5,6 +5,7 @@ import crew from '../../content/core/crew.json';
 import debrief from '../../content/core/debrief.json';
 import dialogues from '../../content/core/dialogues.json';
 import maneuvers from '../../content/core/maneuvers.json';
+import systems from '../../content/core/systems.json';
 import { parseContent, regionIdErrors, type ParseResult } from '../content/parse';
 
 const regionFiles = import.meta.glob('../../content/regions/*/{region,events}.json', { eager: true, import: 'default' });
@@ -26,5 +27,5 @@ export function loadBundledContent(regionId = 'archipelago'): ParseResult {
   const weather = inRegion(weatherFiles, regionId);
   const mismatch = regionIdErrors(region, regionId);
   if (mismatch.length) return { content: null, errors: mismatch };
-  return parseContent({ boats, crew, briefing, dialogues, debrief, maneuvers, balance, region, events, weather });
+  return parseContent({ boats, crew, briefing, dialogues, debrief, maneuvers, balance, systems, region, events, weather });
 }

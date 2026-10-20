@@ -18,7 +18,6 @@ export function BoatCard({ boat, affordable, onTake }: BoatCardProps) {
     t('bank', { ah: boat.serviceBankAh, n: boat.serviceBanks }),
     boat.starterSeparate ? t('starterSeparate') : t('starterShared'),
     boat.solarW > 0 ? t('solar', { w: boat.solarW }) : t('noSolar'),
-    boat.generator ? t('generator') : t('noGenerator'),
     boat.electricToilet ? t('electricToilet') : t('manualToilet'),
   ];
   return (

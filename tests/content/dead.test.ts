@@ -63,7 +63,7 @@ describe('findDeadContent', () => {
   });
 
   it('reports unread boat fields', () => {
-    expect(refs(cleanContent())).toEqual(expect.arrayContaining(['boat-field:boat.solar', 'boat-field:boat.generator']));
+    expect(refs(cleanContent())).toEqual(expect.arrayContaining(['boat-field:boat.shared_bank', 'boat-field:boat.electric_toilet']));
   });
 
   it('suppresses allowlisted refs', () => {

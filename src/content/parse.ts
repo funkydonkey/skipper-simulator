@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { Content, Region } from '../engine/types';
 import {
   BalanceSchema, BoatSchema, BriefingTopicSchema, CrewArchetypeSchema, DeadAllowSchema, DebriefRuleSchema, DialogueSchema,
-  GameEventSchema, ManeuverSchema, RegionSchema, WeatherTemplateSchema,
+  GameEventSchema, ManeuverSchema, RegionSchema, SystemDefSchema, WeatherTemplateSchema,
 } from './schema';
 import { CONTENT_FILES, type ContentFile } from './files';
 import { validateConditions } from './conditions';
@@ -24,6 +24,7 @@ const FILE_SCHEMAS: Record<ContentFile, z.ZodTypeAny> = {
   debrief: z.array(DebriefRuleSchema),
   maneuvers: z.array(ManeuverSchema),
   balance: BalanceSchema,
+  systems: z.array(SystemDefSchema),
 };
 
 /** `deadAllow` (the parsed dead-content-allow.json) turns on the dead-content check; omit it for partial content. */

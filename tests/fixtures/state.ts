@@ -3,7 +3,7 @@ import type { GameState } from '../../src/engine/types';
 /** A day-1 planning state at `base` on `test_boat`. Override any field per test. */
 export function makeState(overrides: Partial<GameState> = {}): GameState {
   const base: GameState = {
-    version: 2,
+    version: 3,
     seed: 42,
     rng: 42,
     lang: 'ru',
@@ -18,6 +18,12 @@ export function makeState(overrides: Partial<GameState> = {}): GameState {
     resources: { waterL: 300, fuelL: 150, serviceBankPct: 100, starterBankPct: 100, gasPct: 100, moneyEur: 1500, mood: 70, fatigue: 10 },
     flags: {},
     damages: [],
+    systems: {
+      engine_cooling: { state: 'ok', wear: 0, broken: false },
+      heads: { state: 'ok', wear: 0, broken: false },
+      rig: { state: 'ok', wear: 0, broken: false },
+      bow_thruster: { state: 'worn', wear: 0, broken: false },
+    },
     crew: [
       { id: 'crew_1', archetypeId: 'party', name: { ru: 'Аня', en: 'Anya' } },
       { id: 'crew_2', archetypeId: 'sailor', name: { ru: 'Ира', en: 'Ira' } },
