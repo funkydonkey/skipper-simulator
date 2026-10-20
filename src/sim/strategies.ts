@@ -99,7 +99,7 @@ function reversedOrders(c: Content): Partial<Record<ManeuverKind, string[]>> {
 
 export const expert: Strategy = {
   name: 'expert',
-  voices: { sea_sense: 2, caution: 2, order: 0, mechanic: 2, diplomat: 2, economist: 4 },
+  voices: { sea_sense: 2, caution: 2, order: 3, mechanic: 2, diplomat: 2, economist: 1 },
   boatId: 'meltemi_40',
   checkpoints: ['impeller', 'toilets', 'gas', 'damage_photos', 'electrics'],
   briefingTopics: ['captain_only', 'cleats', 'loaded_lines', 'toilet'],
