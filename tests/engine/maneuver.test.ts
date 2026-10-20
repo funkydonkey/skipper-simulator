@@ -6,6 +6,10 @@ const content = makeContent();
 const b = content.balance;
 const m = maneuverForKind(content, 'departure')!;
 const wrong = ['release_lines', 'neutral', 'command_helm', 'engage_gear'];
+/** Caution/order context: risk factor 1 at level 0; order 10 → factor 0; caution -50 → factor 5. */
+const risk = (caution: number, order: number, flags: Record<string, boolean> = {}) => ({ 'voice.caution': caution, 'voice.order': order, ...flags });
+const neutral = risk(0, 0);
+const safe = (flags: Record<string, boolean> = {}) => risk(0, 10, flags);
 
 describe('maneuver', () => {
   it('finds maneuver by kind', () => {
@@ -22,12 +26,12 @@ describe('maneuver', () => {
   });
 
   it('correct order → no errors, no outcomes', () => {
-    const r = evaluateManeuver(1, m, correctOrder(m), {}, 1, b);
-    expect(r.value).toEqual({ errors: [], outcomes: [] });
+    const r = evaluateManeuver(1, m, correctOrder(m), neutral, b);
+    expect(r.value).toEqual({ errors: [], outcomes: [], rolls: [] });
   });
 
   it('wrong order → every violated rule fires', () => {
-    const r = evaluateManeuver(1, m, wrong, {}, 0, b);
+    const r = evaluateManeuver(1, m, wrong, safe(), b);
     expect(r.value.errors).toEqual(['release_before_neutral', 'release_before_command']);
     expect(r.value.outcomes).toEqual([
       { cause: 'maneuver:dep_test:release_before_neutral', pillar: 'safety', effect: { damage: 'prop_line', mood: -5 } },
@@ -36,14 +40,14 @@ describe('maneuver', () => {
   });
 
   it('injury roll scales with risk factor; briefing mitigates', () => {
-    const forced = evaluateManeuver(1, m, wrong, {}, 5, b);
+    const forced = evaluateManeuver(1, m, wrong, risk(-50, 0), b);
     expect(forced.value.outcomes).toContainEqual({ cause: 'injury:maneuver:dep_test:release_before_command', pillar: 'safety', effect: { injury: true, mood: -30 } });
-    const mitigated = evaluateManeuver(1, m, wrong, { 'briefing.loaded_lines': true }, 0, b);
+    const mitigated = evaluateManeuver(1, m, wrong, safe({ 'briefing.loaded_lines': true }), b);
     expect(mitigated.value.outcomes[1]!.effect).toEqual({ mood: -3, fatigue: 3 });
   });
 
   it('throws on invalid order', () => {
-    expect(() => evaluateManeuver(1, m, ['neutral'], {}, 1, b)).toThrow(/INVALID|4 steps/);
+    expect(() => evaluateManeuver(1, m, ['neutral'], neutral, b)).toThrow(/INVALID|4 steps/);
   });
 
   it('scaleEffect keeps non-numeric fields', () => {

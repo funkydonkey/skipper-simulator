@@ -19,10 +19,10 @@ describe('weather', () => {
   it('rollDayWeather is deterministic and copies the forecast', () => {
     const a = rollDayWeather(10, template, 1, b);
     expect(a).toEqual(rollDayWeather(10, template, 1, b));
-    expect(a.value.forecastKn).toBe(12);
-    expect(a.value.front).toBe(false);
-    expect(a.value.frontAddKn).toBe(0);
-    expect(a.value.signalsVisible).toBe(false);
+    expect(a.value.weather.forecastKn).toBe(12);
+    expect(a.value.weather.front).toBe(false);
+    expect(a.value.weather.frontAddKn).toBe(0);
+    expect(a.value.weather.signalsVisible).toBe(false);
   });
 
   it('front appears with template probability and shifts wind/barometer', () => {
@@ -30,12 +30,12 @@ describe('weather', () => {
     let fronts = 0;
     for (let i = 0; i < 2000; i++) {
       const r = rollDayWeather(s, template, 3, b);
-      if (r.value.front) {
+      if (r.value.weather.front) {
         fronts++;
-        expect(r.value.frontAddKn).toBeGreaterThanOrEqual(8);
-        expect(r.value.frontAddKn).toBeLessThanOrEqual(12);
-        expect(r.value.frontDir).toBe('NE');
-        expect(r.value.barometerTrendHpa).toBe(-5);
+        expect(r.value.weather.frontAddKn).toBeGreaterThanOrEqual(8);
+        expect(r.value.weather.frontAddKn).toBeLessThanOrEqual(12);
+        expect(r.value.weather.frontDir).toBe('NE');
+        expect(r.value.weather.barometerTrendHpa).toBe(-5);
       }
       s = r.next;
     }

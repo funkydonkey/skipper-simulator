@@ -124,7 +124,7 @@ const OptionSchema: z.ZodType<EventOption> = z.object({
 
 export const GameEventSchema: z.ZodType<GameEvent> = z.object({
   id: Id, pillar: z.enum(PILLARS),
-  trigger: z.object({ phase: z.enum(EVENT_PHASES), conditions: z.array(z.string().min(1)), chance: Prob, once: z.boolean().optional() }).strict(),
+  trigger: z.object({ phase: z.enum(EVENT_PHASES), conditions: z.array(z.string().min(1)), chance: ChanceInputSchema, once: z.boolean().optional() }).strict(),
   scene: Id, text: Text,
   voices: z.array(z.object({ voice: z.enum(VOICES), min_level: Int.min(0), text: Text }).strict()),
   options: z.array(OptionSchema).min(2),

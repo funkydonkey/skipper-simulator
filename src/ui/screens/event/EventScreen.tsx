@@ -31,7 +31,7 @@ export function EventScreen() {
                 <li key={o.id}>
                   <Button variant="secondary" className={styles.option} disabled={!o.available} onClick={() => act({ type: 'resolve_event', optionId: o.id })}>
                     {o.text}
-                    {check && o.chance !== null && <span className={`${styles.odds} mono`}> {t('check', { voice: VOICE_NAMES[check.voice][lang], pct: Math.round(o.chance * 100) })}</span>}
+                    {check && o.chance !== null && <span className={`${styles.odds} mono`}> {t('check', { voice: VOICE_NAMES[check.voice][lang], pct: Math.round(o.chance.value * 100) })}</span>}
                     {!o.available && <span className={styles.na}> {t('unavailable')}</span>}
                   </Button>
                 </li>

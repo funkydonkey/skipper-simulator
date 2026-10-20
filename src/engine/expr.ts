@@ -11,7 +11,7 @@ export const FLAG_PREFIXES = ['checkin.', 'briefing.', 'flag.', 'defect.', 'dama
 export const CONTEXT_KEYS = [
   'day', 'hour', 'water', 'water_pct', 'fuel', 'fuel_pct', 'service_bank', 'starter_bank', 'gas', 'money',
   'mood', 'fatigue', 'injuries', 'wind', 'gust', 'front', 'location_kind', 'at_base', 'at_marina', 'at_bay', 'at_quay',
-  'moored_berth',
+  'moored_berth', 'night', 'place.seabed', 'marina.late',
 ] as const;
 export const BOAT_KEYS = ['boat.shared_bank', 'boat.electric_toilet', 'boat.bow_thruster', 'boat.generator', 'boat.solar'] as const;
 
@@ -195,6 +195,10 @@ export function buildConditionContext(state: GameState, content: Content): CondC
     moored_berth: state.dayFacts?.mooring === 'berth',
     at_bay: point?.kind === 'bay',
     at_quay: point?.kind === 'quay',
+    night: state.clockMin >= content.balance.time.sunsetHour * 60,
+    'place.seabed': point?.seabed ?? '',
+    // The marina refusal roll sets this per call.
+    'marina.late': false,
     'boat.shared_bank': boat ? !boat.starterSeparate : false,
     'boat.electric_toilet': boat?.electricToilet ?? false,
     'boat.bow_thruster': boat?.bowThruster ?? false,

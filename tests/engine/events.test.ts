@@ -47,7 +47,7 @@ describe('events', () => {
   it('resolveOption: check option → success/fail cause; effects option → plain cause', () => {
     const ctx = buildConditionContext(day3, content);
     const r = resolveOption(5, clog, 'fix_self', day3, ctx, b);
-    expect(r.value.check!.chance).toBeCloseTo(0.46);
+    expect(r.value.check!.odds.value).toBeCloseTo(0.46);
     expect(r.value.outcomes[0]!.cause).toMatch(/^event:toilet_clog:fix_self:(success|fail)$/);
     const c = resolveOption(5, clog, 'call_base', day3, ctx, b);
     expect(c.value).toEqual({ outcomes: [{ cause: 'event:toilet_clog:call_base', pillar: 'boat', effect: { money: -80, time_hours: 4 } }], check: null });
@@ -65,7 +65,7 @@ describe('events', () => {
     const view = presentEvent(clog, day3, buildConditionContext(day3, content), b);
     expect(view.text).toBe(clog.text.ru);
     expect(view.voices).toEqual([{ voice: 'mechanic', text: 'Клапан забит. Это час работы и перчатки.' }]);
-    expect(view.options.map((o) => [o.id, o.available, o.chance === null ? null : Math.round(o.chance * 100)])).toEqual([
+    expect(view.options.map((o) => [o.id, o.available, o.chance === null ? null : Math.round(o.chance.value * 100)])).toEqual([
       ['fix_self', true, 46], ['call_base', true, null], ['endure', true, null],
     ]);
   });

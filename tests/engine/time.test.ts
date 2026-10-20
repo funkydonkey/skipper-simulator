@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { anchorFailChance, anchoring, formatClock, marinaArrival, restHours } from '../../src/engine/time';
+import { evaluateChance } from '../../src/engine/chance';
+import { anchorFailSpec } from '../../src/engine/odds';
+import { anchoring, formatClock, marinaArrival, restHours } from '../../src/engine/time';
+import type { Seabed } from '../../src/engine/types';
 import { makeContent } from '../fixtures/content';
 
 const b = makeContent().balance;
+interface AnchorInput { seabed: Seabed; windKn: number; briefed: boolean; night: boolean }
+const anchorCtx = (i: AnchorInput) => ({ 'place.seabed': i.seabed, wind: i.windKn, 'briefing.anchor': i.briefed, night: i.night });
+const anchorFailChance = (i: AnchorInput, bal: typeof b): number => evaluateChance(anchorFailSpec(bal), anchorCtx(i)).value;
 
 describe('time budget', () => {
   it('anchor fail chance: seabed, wind, briefing (ТЗ 4.5: 20–40%)', () => {
@@ -20,7 +26,7 @@ describe('time budget', () => {
   it('anchoring: attempts 1..3, minutes within 30..60 per attempt', () => {
     let s = 5;
     for (let i = 0; i < 300; i++) {
-      const r = anchoring(s, { seabed: 'weed', windKn: 15, briefed: false, night: false }, b);
+      const r = anchoring(s, anchorCtx({ seabed: 'weed', windKn: 15, briefed: false, night: false }), b);
       expect(r.value.attempts).toBeGreaterThanOrEqual(1);
       expect(r.value.attempts).toBeLessThanOrEqual(3);
       expect(r.value.minutes).toBeGreaterThanOrEqual(30 * r.value.attempts);
@@ -35,7 +41,7 @@ describe('time budget', () => {
       let s = 11;
       let total = 0;
       for (let i = 0; i < 1000; i++) {
-        const r = anchoring(s, { seabed, windKn, briefed, night: false }, b);
+        const r = anchoring(s, anchorCtx({ seabed, windKn, briefed, night: false }), b);
         total += r.value.attempts;
         s = r.next;
       }
@@ -48,15 +54,15 @@ describe('time budget', () => {
     let s = 3;
     let refused = 0;
     for (let i = 0; i < 2000; i++) {
-      const r = marinaArrival(s, { arrivalHour: 16, placesGoneHour: 15 }, b);
+      const r = marinaArrival(s, { arrivalHour: 16, placesGoneHour: 15 }, {}, b);
       if (r.value.refused) refused++;
       expect(r.value.waitMin).toBe(45);
       s = r.next;
     }
     expect(refused / 2000).toBeGreaterThan(0.5);
     expect(refused / 2000).toBeLessThan(0.6);
-    expect(marinaArrival(1, { arrivalHour: 14, placesGoneHour: 15 }, b).value).toEqual({ refused: false, waitMin: 0 });
-    expect(marinaArrival(1, { arrivalHour: 19, placesGoneHour: null }, b).value.refused).toBe(false);
+    expect(marinaArrival(1, { arrivalHour: 14, placesGoneHour: 15 }, {}, b).value).toMatchObject({ refused: false, waitMin: 0 });
+    expect(marinaArrival(1, { arrivalHour: 19, placesGoneHour: null }, {}, b).value.refused).toBe(false);
   });
 
   it('restHours until sunset, capped', () => {

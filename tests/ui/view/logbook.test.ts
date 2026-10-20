@@ -41,6 +41,20 @@ describe('logbook', () => {
     expect(describeEntry(entry('checkin:skip:toilets'), content, 'en')!.text).toContain('Heads');
   });
 
+  it('describes voice-check rolls with their odds and hides the other rolls', () => {
+    const ev = content.events.find((x) => x.options.some((o) => o.check))!;
+    const opt = ev.options.find((o) => o.check)!;
+    const odds = { value: 0.42, parts: [{ source: 'base', delta: 0.42 }] };
+    const passed = entry(`roll:check:${ev.id}:${opt.id}`, { kind: 'roll', odds, data: { hit: true, success: true, chance: 0.42 } });
+    const line = describeEntry(passed, content, 'en')!;
+    expect(line).toMatchObject({ tone: 'good', kind: 'roll' });
+    expect(line.text).toContain('42');
+    expect(describeEntry({ ...passed, data: { hit: false, success: false, chance: 0.42 } }, content, 'en')!.tone).toBe('bad');
+    for (const cause of ['roll:front:2', 'roll:anchor:1', 'roll:marina:x', 'roll:sail_break:r', 'roll:injury:reef:r', 'roll:injury:maneuver:m:e']) {
+      expect(describeEntry(entry(cause, { kind: 'roll', odds, data: { hit: true } }), content, 'en'), cause).toBeNull();
+    }
+  });
+
   it('marks good and bad outcomes', () => {
     expect(describeEntry(entry('promise:early_try:broken', { kind: 'effect' }), content, 'ru')!.tone).toBe('bad');
     expect(describeEntry(entry('promise:early_try:kept', { kind: 'effect' }), content, 'ru')!.tone).toBe('good');

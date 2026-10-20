@@ -70,7 +70,7 @@ export interface Effect {
 
 export interface Outcome { cause: string; pillar?: Pillar; effect: Effect }
 
-export type LogKind = 'decision' | 'effect' | 'event' | 'signal' | 'check' | 'info';
+export type LogKind = 'decision' | 'effect' | 'event' | 'signal' | 'info' | 'roll';
 export interface LogEntry {
   day: number;
   clockMin: number;
@@ -79,6 +79,8 @@ export interface LogEntry {
   pillar?: Pillar;
   delta?: Partial<Record<keyof Resources, number>>;
   data?: Record<string, string | number | boolean>;
+  /** Chance of a `roll` entry, with its per-source breakdown. */
+  odds?: ChanceValue;
 }
 
 // ---------- content ----------
@@ -197,7 +199,7 @@ export interface Dialogue {
   expectation: ExpectationSpec;
 }
 
-export interface EventTrigger { phase: EventPhase; conditions: string[]; chance: number; once?: boolean }
+export interface EventTrigger { phase: EventPhase; conditions: string[]; chance: ChanceInput; once?: boolean }
 export interface VoiceLine { voice: VoiceId; min_level: number; text: LocalizedText }
 export interface VoiceCheck { voice: VoiceId; difficulty: number }
 /** Either `check + success + fail`, or `effects`. Option[0] is the instinctive newbie choice. */

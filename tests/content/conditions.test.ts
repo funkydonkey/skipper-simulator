@@ -36,6 +36,14 @@ describe('condition validation', () => {
     ]);
   });
 
+  it('validates the conditions and keys of a spec trigger chance', () => {
+    const c = makeContent();
+    c.events[0]!.trigger.chance = { base: 0.2, mods: [{ if: 'front && night', add: 0.1, label: 'wind' }, { per: 'voice.mechanic', add: -0.02 }] };
+    expect(validateConditions(c)).toEqual([]);
+    c.events[0]!.trigger.chance = { base: 0.2, mods: [{ if: 'fronts', add: 0.1, label: 'wind' }, { per: 'voice.mechanics', add: -0.02 }] };
+    expect(validateConditions(c).map((e) => e.path)).toEqual(['events[0].trigger.chance.mods[0].if', 'events[0].trigger.chance.mods[1].per']);
+  });
+
   it('parseContent runs condition validation', () => {
     const raw = toRaw(makeContent());
     raw.events[0].trigger.conditions = ['!briefing.toilets'];

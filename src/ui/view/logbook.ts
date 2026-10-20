@@ -106,7 +106,9 @@ const DESCRIBE: Record<string, Describer> = {
     return say('eventOption', lang, { option: optionText(c, eventId, optionId, lang) }, tag === 'fail' ? 'bad' : tag === 'success' ? 'good' : 'neutral');
   },
   choice: ([eventId = '', optionId = ''], _e, c, lang) => say('chose', lang, { option: optionText(c, eventId, optionId, lang) }),
-  check: ([eventId = '', optionId = ''], e, c, lang) => {
+  /** Only voice checks are shown for now; the other rolls stay hidden until the odds UI lands. */
+  roll: ([what, eventId = '', optionId = ''], e, c, lang) => {
+    if (what !== 'check') return null;
     const voice = c.events.find((x) => x.id === eventId)?.options.find((o) => o.id === optionId)?.check?.voice;
     const vars = { voice: voice ? VOICE_NAMES[voice][lang] : '?', chance: Math.round(num(e, 'chance') * 100) };
     return e.data?.success === true ? say('checkPassed', lang, vars, 'good') : say('checkFailed', lang, vars, 'bad');

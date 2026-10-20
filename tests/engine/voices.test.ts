@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { audibleLines, cautionTimeFactor, checkChance, initialVoices, maneuverRiskFactor, resourceReadout, rollCheck, validateAllocation } from '../../src/engine/voices';
+import { audibleLines, cautionTimeFactor, checkChance, initialVoices, resourceReadout, rollCheck, validateAllocation } from '../../src/engine/voices';
 import { makeContent } from '../fixtures/content';
 import { makeState } from '../fixtures/state';
 
 const b = makeContent().balance;
 const valid = { sea_sense: 2, caution: 2, order: 2, mechanic: 2, diplomat: 2, economist: 2 };
+const check = (level: number, difficulty: number, fatigue: number): number =>
+  checkChance({ voice: 'mechanic', difficulty }, { 'voice.mechanic': level, fatigue }, b).value;
+const roll = (rng: number) => rollCheck(rng, { voice: 'mechanic', difficulty: 2 }, { 'voice.mechanic': 2, fatigue: 0 }, b);
 
 describe('voices', () => {
   it('allocation: 12 points across 6 trainable voices, 0..4 each', () => {
@@ -23,17 +26,17 @@ describe('voices', () => {
   });
 
   it('checkChance: level vs difficulty, fatigue, clamped', () => {
-    expect(checkChance(2, 2, 0, b)).toBeCloseTo(0.5);
-    expect(checkChance(4, 2, 0, b)).toBeCloseTo(0.8);
-    expect(checkChance(1, 2, 0, b)).toBeCloseTo(0.35);
-    expect(checkChance(4, 0, 0, b)).toBe(0.95);
-    expect(checkChance(2, 2, 50, b)).toBeCloseTo(0.3);
-    expect(checkChance(0, 4, 100, b)).toBe(0.05);
+    expect(check(2, 2, 0)).toBeCloseTo(0.5);
+    expect(check(4, 2, 0)).toBeCloseTo(0.8);
+    expect(check(1, 2, 0)).toBeCloseTo(0.35);
+    expect(check(4, 0, 0)).toBe(0.95);
+    expect(check(2, 2, 50)).toBeCloseTo(0.3);
+    expect(check(0, 4, 100)).toBe(0.05);
   });
 
   it('rollCheck is deterministic and reports chance', () => {
-    expect(rollCheck(9, 2, 2, 0, b)).toEqual(rollCheck(9, 2, 2, 0, b));
-    expect(rollCheck(9, 2, 2, 0, b).value.chance).toBeCloseTo(0.5);
+    expect(roll(9)).toEqual(roll(9));
+    expect(roll(9).value.odds.value).toBeCloseTo(0.5);
   });
 
   it('audibleLines filters by voice level', () => {
@@ -51,9 +54,7 @@ describe('voices', () => {
     expect(resourceReadout(180, ' L', 50, 0, b)).toBe('~200 L');
   });
 
-  it('risk and time factors from caution/order', () => {
-    expect(maneuverRiskFactor({ ...makeState().voices, caution: 0, order: 0 }, b)).toBe(1);
-    expect(maneuverRiskFactor({ ...makeState().voices, caution: 4, order: 4 }, b)).toBeCloseTo(0.408);
+  it('time factor from caution', () => {
     expect(cautionTimeFactor(4, b)).toBeCloseTo(1.2);
   });
 });
