@@ -1,30 +1,32 @@
 import { useId, useState } from 'react';
-import type { ChanceValue } from '../../engine';
-import { useGame, useT } from '../session/SessionContext';
-import { formatPart, partLabel } from '../view/chance';
-import { CHANCE_UI } from '../view/strings';
+import type { ChanceValue, VoiceId } from '../../engine';
+import { useGame } from '../session/SessionContext';
+import { chanceRows } from '../view/chance';
 import styles from './ChanceBadge.module.css';
 
-export interface ChanceBadgeProps { odds: ChanceValue; label?: string }
+export interface ChanceBadgeProps {
+  odds: ChanceValue;
+  label?: string;
+  /** Current voice levels, shown next to voice parts. Omit for past rolls (the logbook). */
+  voices?: Readonly<Record<VoiceId, number>>;
+  /** Id of the badge button, for aria-describedby on the control it qualifies. */
+  id?: string;
+}
 
 /** A probability the player can read and tap to see where it comes from. */
-export function ChanceBadge({ odds, label }: ChanceBadgeProps) {
-  const { game, lang } = useGame();
-  const t = useT(CHANCE_UI);
+export function ChanceBadge({ odds, label, voices, id }: ChanceBadgeProps) {
+  const { lang } = useGame();
   const [open, setOpen] = useState(false);
   const listId = useId();
   const pct = `${Math.round(odds.value * 100)}%`;
-  const rows = odds.parts.flatMap((p) => {
-    const delta = p.source === 'base' ? `${Math.round(p.delta * 100)}%` : formatPart(p);
-    return delta === null ? [] : [{ key: p.source, text: t('entry', { label: partLabel(p.source, lang, game.voices), delta }) }];
-  });
+  const rows = chanceRows(odds, lang, voices);
   return (
     <div className={styles.wrap}>
-      <button type="button" className={`${styles.badge} mono`} aria-expanded={open} aria-controls={listId} onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}>
+      <button type="button" id={id} className={`${styles.badge} mono`} aria-expanded={open} aria-controls={listId} onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}>
         {label ? `${label} · ${pct}` : pct}
       </button>
-      <ul id={listId} className={styles.parts} hidden={!open} aria-label={t('partsList')}>
-        {rows.map((r, i) => <li key={`${r.key}-${i}`}>{r.text}</li>)}
+      <ul id={listId} className={styles.parts} hidden={!open}>
+        {rows.map((r) => <li key={r.key}>{r.text}</li>)}
       </ul>
     </div>
   );

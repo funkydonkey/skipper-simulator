@@ -31,16 +31,16 @@ export function PreviewPanel({ preview }: { preview: PlanPreview }) {
               <li key={`${l.routeId}-${i}`}>
                 {t('legPreview', { to: pointName(content, l.to, lang), wind: l.windKn, speed: l.speedKn, hours: round1(l.hours) })}
                 {l.localEffectKnown && <em> {t('localKnown')}</em>}
-                {l.breakChance.value > 0 && <div className={styles.odds}>{t('sailRisk')} <ChanceBadge odds={l.breakChance} /></div>}
+                {l.breakChance.value > 0 && <div className={styles.odds}>{t('sailRisk')} <ChanceBadge odds={l.breakChance} voices={game.voices} /></div>}
                 {l.overpowered && <p className={styles.warn}>{t('overpowered')}</p>}
                 {l.forcedReef && <p className={styles.warn}>{t('forcedReef')}</p>}
               </li>
             ))}
           </ul>
-          {preview.marinaRefusal && preview.marinaRefusal.value > 0 && <div className={styles.odds}>{t('marinaRefusal')} <ChanceBadge odds={preview.marinaRefusal} /></div>}
+          {preview.marinaRefusal && preview.marinaRefusal.value > 0 && <div className={styles.odds}>{t('marinaRefusal')} <ChanceBadge odds={preview.marinaRefusal} voices={game.voices} /></div>}
           {preview.anchorFail && (
             <div className={styles.odds}>
-              {t('seabed', { name: SEABED_NAMES[preview.destinationSeabed][lang] })} <ChanceBadge odds={preview.anchorFail} label={t('anchorFail')} />
+              {t('seabed', { name: SEABED_NAMES[preview.destinationSeabed][lang] })} <ChanceBadge odds={preview.anchorFail} label={t('anchorFail')} voices={game.voices} />
             </div>
           )}
         </>

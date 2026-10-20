@@ -140,7 +140,6 @@ export const CHANCE_PARTS = dict({
 });
 
 export const CHANCE_UI = dict({
-  partsList: { ru: 'Из чего складывается шанс', en: 'What makes up the odds' },
   entry: { ru: '{label} {delta}', en: '{label} {delta}' },
 });
 

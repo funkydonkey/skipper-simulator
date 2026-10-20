@@ -28,13 +28,15 @@ export function EventScreen() {
           <ol className={styles.options}>
             {view.options.map((o, i) => {
               const check = event.options[i]?.check;
+              const showOdds = check !== undefined && o.chance !== null;
+              const oddsId = `event-option-${o.id}-odds`;
               return (
                 <li key={o.id} className={styles.optionRow}>
-                  <Button variant="secondary" className={styles.option} disabled={!o.available} onClick={() => act({ type: 'resolve_event', optionId: o.id })}>
+                  <Button variant="secondary" className={styles.option} disabled={!o.available} aria-describedby={showOdds ? oddsId : undefined} onClick={() => act({ type: 'resolve_event', optionId: o.id })}>
                     {o.text}
                     {!o.available && <span className={styles.na}> {t('unavailable')}</span>}
                   </Button>
-                  {check && o.chance !== null && <ChanceBadge odds={o.chance} label={VOICE_NAMES[check.voice][lang]} />}
+                  {check && o.chance !== null && <ChanceBadge odds={o.chance} label={VOICE_NAMES[check.voice][lang]} voices={game.voices} id={oddsId} />}
                 </li>
               );
             })}

@@ -31,6 +31,20 @@ describe('LogbookDrawer', () => {
     expect(screen.queryByRole('button', { name: MORNING.start.ru })).toBeNull();
   });
 
+  it('labels voice parts of past rolls without today\'s voice level', async () => {
+    const base = gameAt('evening');
+    const odds = { value: 0.21, parts: [{ source: 'base', delta: 0.25 }, { source: 'voice.caution', delta: -0.04, kind: 'mul' as const, factor: 0.84 }] };
+    const game = { ...base, voices: { ...base.voices, caution: 3 }, log: [...base.log, { day: base.day, clockMin: base.clockMin, kind: 'roll' as const, cause: 'roll:sail_break:r', odds, data: { hit: false } }] };
+    const r = renderShell(game);
+    await r.user.click(screen.getByRole('button', { name: 'Бортжурнал' }));
+    const dialog = screen.getByRole('dialog', { name: 'Бортжурнал' });
+    const badge = within(dialog).getAllByRole('button', { name: '21%' }).at(-1)!;
+    await r.user.click(badge);
+    const parts = document.getElementById(badge.getAttribute('aria-controls')!)!;
+    expect(within(parts).getByText('Осторожность −16%')).toBeVisible();
+    expect(within(dialog).queryByText(/Осторожность 3/)).toBeNull();
+  });
+
   it('is absent in the menu', () => {
     renderShell(null);
     expect(screen.queryByRole('button', { name: 'Бортжурнал' })).toBeNull();

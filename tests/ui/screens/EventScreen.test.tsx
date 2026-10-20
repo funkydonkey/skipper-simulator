@@ -31,6 +31,18 @@ describe('EventScreen', () => {
     expect(r.currentScreen()).toBe('event');
   });
 
+  it('describes each check option with its odds badge', () => {
+    const game = withEvent(gameAt('evening'), checkEvent.id);
+    const view = presentEvent(checkEvent, game, buildConditionContext(game, content), content.balance);
+    renderShell(game);
+    for (const [i, o] of checkEvent.options.entries()) {
+      const option = screen.getByRole('button', { name: esc(o.text.ru) });
+      const chance = view.options[i]!.chance;
+      if (o.check && chance !== null) expect(option).toHaveAccessibleDescription(new RegExp(`· ${Math.round(chance.value * 100)}%$`));
+      else expect(option).not.toHaveAttribute('aria-describedby');
+    }
+  });
+
   it('resolves a choice, shows its outcome, then returns to the evening', async () => {
     const option = plainEvent.options.find((o) => !o.requires)!;
     const r = renderShell(withEvent(gameAt('evening'), plainEvent.id));

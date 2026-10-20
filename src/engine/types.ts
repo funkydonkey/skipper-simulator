@@ -439,5 +439,6 @@ export interface ChanceMod { if?: string; per?: string; add?: number; mul?: numb
 export interface ChanceSpec { base: number; mods?: ChanceMod[]; min?: number; max?: number }
 export type ChanceInput = number | ChanceSpec;
 /** source: a ChanceLabel, or the `per` key (e.g. 'voice.caution') when no label is given. */
-export interface ChancePart { source: string; delta: number }
+/** One step of a chance. `add` parts move it by `delta`; `mul` parts scale it by `factor` (delta = value * (factor - 1)). Base and clamp have no kind. */
+export interface ChancePart { source: string; delta: number; kind?: 'add' | 'mul'; factor?: number }
 export interface ChanceValue { value: number; parts: ChancePart[] }

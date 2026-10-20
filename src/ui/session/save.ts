@@ -3,7 +3,7 @@ import { DIRS, PILLARS, TRAINABLE_VOICES } from '../../engine';
 import type { Content, GameState, Lang } from '../../engine';
 
 export const SAVE_KEY = 'skipper.save.v2';
-/** Older formats are not migrated: readSave reports them once as 'legacy' and drops them. */
+/** Older formats are not migrated: readSave always drops them and reports 'legacy' once when no current slot exists. */
 export const LEGACY_SAVE_KEYS: readonly string[] = ['skipper.save.v1'];
 export const LANG_KEY = 'skipper.lang';
 
@@ -38,7 +38,10 @@ const DayFactsSchema = z.object({
 const LogEntrySchema = z.object({
   day: num, clockMin: num, kind: z.enum(LOG_KINDS), cause: z.string(),
   pillar: z.enum(PILLARS).optional(),
-  odds: z.object({ value: num, parts: z.array(z.object({ source: z.string(), delta: num })) }).optional(),
+  odds: z.object({
+    value: num,
+    parts: z.array(z.object({ source: z.string(), delta: num, kind: z.enum(['add', 'mul']).optional(), factor: num.optional() })),
+  }).optional(),
 }).passthrough();
 
 /** Shape check of a stored game. Deep engine invariants are trusted: the slot is written only by writeSave. */
@@ -86,7 +89,8 @@ function takeLegacy(storage: Storage | null): boolean {
 
 export function readSave(storage: Storage | null, content: Content): SaveRead {
   const raw = safeGet(storage, SAVE_KEY);
-  if (raw === null) return takeLegacy(storage) ? { kind: 'legacy' } : { kind: 'none' };
+  const hadLegacy = takeLegacy(storage);
+  if (raw === null) return hadLegacy ? { kind: 'legacy' } : { kind: 'none' };
   try {
     const parsed = SlotSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) return { kind: 'corrupt' };

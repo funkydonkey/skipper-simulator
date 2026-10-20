@@ -32,6 +32,20 @@ describe('evaluateChance', () => {
     expect(sum(r.parts)).toBeCloseTo(r.value, 9);
   });
 
+  it('marks parts as add or mul, and mul parts carry their factor', () => {
+    const r = evaluateChance(
+      { base: 0.25, mods: [{ add: 0.05, label: 'wind' }, { per: 'voice.caution', mul: -0.08 }] },
+      { 'voice.caution': 2 },
+    );
+    expect(r.parts[0]).toEqual({ source: 'base', delta: 0.25 });
+    expect(r.parts[1]).toMatchObject({ source: 'wind', kind: 'add' });
+    expect(r.parts[1]!.factor).toBeUndefined();
+    expect(r.parts[2]).toMatchObject({ source: 'voice.caution', kind: 'mul' });
+    expect(r.parts[2]!.factor).toBeCloseTo(0.84, 9);
+    expect(r.parts[2]!.delta).toBeCloseTo(0.3 * -0.16, 9);
+    expect(sum(r.parts)).toBeCloseTo(r.value, 9);
+  });
+
   it('applies all adds before all muls', () => {
     const r = evaluateChance({ base: 0.2, mods: [{ mul: -0.5, label: 'night' }, { add: 0.2, label: 'wind' }] }, {});
     expect(r.value).toBeCloseTo(0.2, 9);

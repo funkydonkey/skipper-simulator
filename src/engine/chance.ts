@@ -20,11 +20,12 @@ export function evaluateChance(input: ChanceInput, ctx: CondContext): ChanceValu
   for (const m of active.filter((x) => x.add !== undefined)) {
     const delta = m.add! * scale(m, ctx);
     value += delta;
-    parts.push({ source: partSource(m), delta });
+    parts.push({ source: partSource(m), delta, kind: 'add' });
   }
   for (const m of active.filter((x) => x.mul !== undefined)) {
-    const next = value * (1 + m.mul! * scale(m, ctx));
-    parts.push({ source: partSource(m), delta: next - value });
+    const factor = 1 + m.mul! * scale(m, ctx);
+    const next = value * factor;
+    parts.push({ source: partSource(m), delta: next - value, kind: 'mul', factor });
     value = next;
   }
   const clamped = clamp(value, spec.min ?? 0, spec.max ?? 1);
