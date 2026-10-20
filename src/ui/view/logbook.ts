@@ -116,7 +116,8 @@ const DESCRIBE: Record<string, Describer> = {
   },
   choice: ([eventId = '', optionId = ''], _e, c, lang) => say('chose', lang, { option: optionText(c, eventId, optionId, lang) }),
   roll: ([what, a = '', b2 = ''], e, c, lang) => {
-    const chance = Math.round((e.odds?.value ?? num(e, 'chance')) * 100);
+    const p = e.odds?.value ?? num(e, 'chance');
+    const chance = Math.round(p * 100);
     if (what === 'check') {
       const voice = c.events.find((x) => x.id === a)?.options.find((o) => o.id === b2)?.check?.voice;
       const vars = { voice: voice ? VOICE_NAMES[voice][lang] : '?', chance: Math.round(num(e, 'chance') * 100) };
@@ -127,7 +128,7 @@ const DESCRIBE: Record<string, Describer> = {
     switch (what) {
       case 'front': return say(hit ? 'rollFrontHit' : 'rollFrontMiss', lang, { chance }, hit ? 'bad' : 'good');
       case 'anchor': return outcome('rollAnchorHit', 'rollAnchorMiss', { n: a });
-      case 'marina': return outcome('rollMarinaHit', 'rollMarinaMiss');
+      case 'marina': return p === 0 ? null : outcome('rollMarinaHit', 'rollMarinaMiss'); // early arrival: no real roll
       case 'sail_break': return outcome('rollSailHit', 'rollSailMiss');
       case 'injury': return outcome('rollInjuryHit', 'rollInjuryMiss');
       default: return null;
@@ -169,6 +170,8 @@ export function isNoise(e: LogEntry): boolean {
   if ((root === 'checkin' || root === 'briefing') && verb === 'skip') return true;
   if (root === 'plan' && verb === 'mode') return true;
   if (root === 'night' && verb === 'sleep') return true;
+  // Logged at 08:00 but decided for the whole day: showing it would spoil the front before any signal.
+  if (root === 'roll' && verb === 'front') return true;
   return root === 'signal' && e.data?.seen === false;
 }
 

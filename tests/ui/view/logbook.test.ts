@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { LogEntry } from '../../../src/engine';
+import { startDay, type LogEntry } from '../../../src/engine';
 import { runWeek } from '../../../src/sim/run';
 import { expert, newbie } from '../../../src/sim/strategies';
-import { describeEntry, isLogbookOnly, isNoise, logbookDays } from '../../../src/ui/view/logbook';
-import { content } from '../fixtures';
+import { dayLines, describeEntry, isLogbookOnly, isNoise, logbookDays } from '../../../src/ui/view/logbook';
+import { content, gameAt } from '../fixtures';
 
 const entry = (cause: string, extra: Partial<LogEntry> = {}): LogEntry => ({ day: 2, clockMin: 600, kind: 'decision', cause, ...extra });
 
@@ -74,6 +74,8 @@ describe('logbook', () => {
     expect(describeEntry(roll('roll:front:2', true), content, 'ru')!.tone).toBe('bad');
     expect(describeEntry(roll('roll:front:2', false), content, 'ru')!.tone).toBe('good');
     expect(describeEntry(roll('roll:mystery:1', true), content, 'ru')).toBeNull();
+    const certain = entry('roll:marina:base_marina', { kind: 'roll', odds: { value: 0, parts: [{ source: 'base', delta: 0 }] }, data: { hit: false } });
+    expect(describeEntry(certain, content, 'ru'), 'a 0% marina roll is not a roll worth logging').toBeNull();
   });
 
   it('shows xp lines with a readable cause', () => {
@@ -118,5 +120,23 @@ describe('logbook', () => {
     const days = logbookDays(state.log, content, 'ru');
     expect(days.map((d) => d.day)).toEqual([...new Set(days.map((d) => d.day))].sort((a, b) => a - b));
     expect(days.every((d) => d.lines.length > 0)).toBe(true);
+  });
+});
+
+describe('logbook does not spoil the weather', () => {
+  it('shows no front outcome in the planning phase when signals are hidden and the barometer is closed', () => {
+    const outcomes = new Set<boolean>();
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
+      const morning = gameAt('morning', seed);
+      const blind = { ...morning, voices: { ...morning.voices, sea_sense: 0 } };
+      const planning = startDay(blind, content, { openBarometer: false });
+      expect(planning.weather?.signalsVisible).toBe(false);
+      outcomes.add(planning.weather?.front === true);
+      for (const lang of ['ru', 'en'] as const) {
+        const texts = dayLines(planning.log, planning.day, content, lang).map((l) => l.text).join('\n');
+        expect(texts, `seed ${seed}`).not.toMatch(/Фронт пришёл|Фронт обошёл|front came|front passed/i);
+      }
+    }
+    expect(outcomes.size, 'cover both a front day and a calm day').toBe(2);
   });
 });
