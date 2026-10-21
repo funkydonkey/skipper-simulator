@@ -1,0 +1,13 @@
+{
+  "id": "sirocco_week",
+  "name": { "ru": "Неделя сирокко", "en": "Sirocco week" },
+  "afternoonFactor": 1.15,
+  "days": [
+    { "day": 1, "windKn": 12, "gustKn": 18, "dir": "SE", "frontChance": 0.05, "barometerHpa": 1012 },
+    { "day": 2, "windKn": 15, "gustKn": 22, "dir": "S", "frontChance": 0.1, "barometerHpa": 1010 },
+    { "day": 3, "windKn": 18, "gustKn": 26, "dir": "SE", "frontChance": 0.15, "barometerHpa": 1008 },
+    { "day": 4, "windKn": 16, "gustKn": 24, "dir": "S", "frontChance": 0.2, "barometerHpa": 1008 },
+    { "day": 5, "windKn": 13, "gustKn": 19, "dir": "SW", "frontChance": 0.1, "barometerHpa": 1010 },
+    { "day": 6, "windKn": 12, "gustKn": 18, "dir": "SE", "frontChance": 0.05, "barometerHpa": 1012 }
+  ]
+}

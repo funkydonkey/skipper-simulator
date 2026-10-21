@@ -7,7 +7,8 @@ import styles from './Planning.module.css';
 import { PLANNING } from './strings';
 
 export function ForecastPanel() {
-  const { game, content } = useGame();
+  const { game, content, lang } = useGame();
+  const template = content.weather.find((x) => x.id === game.weatherTemplateId);
   const t = useT(PLANNING);
   const w = game.weather;
   if (!w) return null;
@@ -15,6 +16,7 @@ export function ForecastPanel() {
   return (
     <section className={styles.forecast}>
       <h2>{t('forecast')}</h2>
+      {template && <p className={styles.muted}>{t('weekTemplate', { name: template.name[lang] })}</p>}
       <WindRose dir={w.forecastDir} kn={w.forecastKn} gustKn={w.forecastGustKn} />
       <p>{t('forecastWind', { kn: w.forecastKn, gust: w.forecastGustKn, dir: w.forecastDir })}</p>
       {w.signalsVisible ? (

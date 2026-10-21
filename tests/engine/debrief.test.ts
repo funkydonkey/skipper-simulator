@@ -106,6 +106,12 @@ describe('debrief', () => {
     expect(findLinks(log, r, 5).map((l) => l.ruleId)).toEqual(['s10', 'boat1', 's9', 's8']);
   });
 
+  it('buildDebrief gives a repeatable event one note, in first-occurrence order', () => {
+    const events = ['e1', 'e2'].map((id) => ({ ...content.events[0]!, id, once: false, debrief: t(id) }));
+    const s = makeState({ firedEvents: ['e2', 'e1', 'e2', 'e1', 'e2'] });
+    expect(buildDebrief(s, { ...content, events }, 5).eventNotes).toEqual([t('e2'), t('e1')]);
+  });
+
   it('buildDebrief caps event notes by maxItems minus links', () => {
     const events = ['e1', 'e2', 'e3'].map((id) => ({ ...content.events[0]!, id, debrief: t(id) }));
     const c = { ...content, events };

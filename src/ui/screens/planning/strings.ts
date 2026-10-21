@@ -5,6 +5,7 @@ export const PLANNING = dict({
   subtitle: { ru: 'Нажмите на соседнюю точку на карте, чтобы добавить переход.', en: 'Tap a neighbouring point on the chart to add a leg.' },
   forecast: { ru: 'Прогноз', en: 'Forecast' },
   forecastWind: { ru: 'Ветер {kn} уз, порывы {gust} уз, {dir}', en: 'Wind {kn} kn, gusts {gust} kn, {dir}' },
+  weekTemplate: { ru: 'Неделя: {name}', en: 'Week: {name}' },
   barometer: { ru: 'Барометр {hpa} гПа', en: 'Barometer {hpa} hPa' },
   trend: { ru: 'Барометр {hpa} гПа ({trend} за ночь)', en: 'Barometer {hpa} hPa ({trend} overnight)' },
   insightChance: { ru: 'Чутьё: шанс фронта {pct}%', en: 'Sea Sense: front chance {pct}%' },
@@ -52,4 +53,8 @@ export const PLANNING = dict({
   tooLate: { ru: 'Сегодня уже поздно выходить', en: 'Too late to leave today' },
   stay: { ru: 'Провести день здесь', en: 'Spend the day here' },
   toManeuvers: { ru: 'К манёврам', en: 'On to maneuvers' },
+  berthTitle: { ru: 'Как швартоваться', en: 'How to berth' },
+  berthFee: { ru: '{eur} €', en: '€{eur}' },
+  berthFeeFactor: { ru: '{eur} € (×{factor})', en: '€{eur} (×{factor})' },
+  berthNoteAnchorAshore: { ru: 'дольше, но держит лучше', en: 'takes longer, holds better' },
 });

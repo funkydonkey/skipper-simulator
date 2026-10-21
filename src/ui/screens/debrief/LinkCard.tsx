@@ -6,11 +6,11 @@ import styles from './Debrief.module.css';
 import { DEBRIEF } from './strings';
 
 export function LinkCard({ link }: { link: DebriefLink }) {
-  const { content, lang } = useGame();
+  const { game, content, lang } = useGame();
   const t = useT(DEBRIEF);
   const row = (title: string, e: LogEntry) => (
     <p className={styles.step}>
-      <strong>{title}:</strong> {describeEntry(e, content, lang)?.text ?? e.cause}{' '}
+      <strong>{title}:</strong> {describeEntry(e, content, lang, game.seed, game.crew)?.text ?? e.cause}{' '}
       <span className={`${styles.stamp} mono`}>({t('stamp', { day: e.day, clock: formatClock(e.clockMin) })})</span>
     </p>
   );

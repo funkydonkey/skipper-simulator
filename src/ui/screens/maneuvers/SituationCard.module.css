@@ -1,0 +1,7 @@
+.card { background: var(--panel); border-radius: var(--radius); padding: var(--space-4); box-shadow: var(--shadow); margin-bottom: var(--space-4); }
+.title { margin: 0; font-size: var(--text-lg); }
+.forecast { margin: var(--space-1) 0 0; color: var(--fg-soft); font-style: italic; }
+.rows { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-2) var(--space-4); margin: var(--space-3) 0 0; align-items: center; }
+.rows dt { color: var(--fg-soft); font-size: var(--text-sm); }
+.rows dd { margin: 0; overflow-wrap: anywhere; }
+.chance { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }

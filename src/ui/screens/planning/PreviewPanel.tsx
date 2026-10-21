@@ -1,15 +1,17 @@
-import { formatClock, type PlanPreview } from '../../../engine';
+import { formatClock, type BerthType, type PlanPreview } from '../../../engine';
 import { ChanceBadge } from '../../components/ChanceBadge';
 import { useGame, useT } from '../../session/SessionContext';
 import { formatHour } from '../../view/format';
 import { pointName } from '../../view/map';
-import { SEABED_NAMES } from '../../view/strings';
+import { BERTH_NAMES, SEABED_NAMES } from '../../view/strings';
 import styles from './Planning.module.css';
 import { PLANNING } from './strings';
 
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 
-export function PreviewPanel({ preview }: { preview: PlanPreview }) {
+interface PreviewPanelProps { preview: PlanPreview; berth?: BerthType | undefined; onBerth: (berth: BerthType) => void }
+
+export function PreviewPanel({ preview, berth, onBerth }: PreviewPanelProps) {
   const { game, content, lang } = useGame();
   const t = useT(PLANNING);
   const b = content.balance;
@@ -40,6 +42,22 @@ export function PreviewPanel({ preview }: { preview: PlanPreview }) {
               </li>
             ))}
           </ul>
+          {preview.berths.length > 1 && (
+            <div role="radiogroup" aria-label={t('berthTitle')} className={styles.berths}>
+              {preview.berths.map((type) => {
+                const fee = preview.berthFees[type];
+                const feeText = fee === undefined ? null : type === 'side_to' ? t('berthFeeFactor', { eur: fee, factor: lang === 'ru' ? String(b.berths.sideToPriceFactor).replace('.', ',') : b.berths.sideToPriceFactor }) : t('berthFee', { eur: fee });
+                return (
+                  <label key={type}>
+                    <input type="radio" name="berth" checked={type === (berth ?? preview.berths[0])} onChange={() => onBerth(type)} />
+                    {BERTH_NAMES[type][lang]}
+                    {feeText && <span className={styles.muted}> {feeText}</span>}
+                    {type === 'anchor_ashore' && <span className={styles.muted}> {t('berthNoteAnchorAshore')}</span>}
+                  </label>
+                );
+              })}
+            </div>
+          )}
           {preview.marinaRefusal && preview.marinaRefusal.value > 0 && <div className={styles.odds}>{t('marinaRefusal')} <ChanceBadge odds={preview.marinaRefusal} voices={game.voices} /></div>}
           {preview.anchorFail && (
             <div className={styles.odds}>

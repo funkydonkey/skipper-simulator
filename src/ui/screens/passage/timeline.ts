@@ -21,5 +21,5 @@ export function passageLines(game: GameState, content: Content, lang: Lang): Log
   return today
     .slice(start)
     .filter((e) => !isNoise(e) && !isLogbookOnly(e) && e.kind !== 'event' && !e.cause.startsWith('plan:'))
-    .flatMap((e) => describeEntry(e, content, lang) ?? []);
+    .flatMap((e) => describeEntry(e, content, lang, game.seed, game.crew) ?? []);
 }

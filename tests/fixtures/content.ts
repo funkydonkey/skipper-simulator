@@ -12,9 +12,9 @@ const allServices = { water: true, fuel: true, shorePower: true, gas: true, tave
 const noServices = { water: false, fuel: false, shorePower: false, gas: false, taverna: false, beach: true };
 
 const map: MapPoint[] = [
-  { id: 'base', name: t('База', 'Base'), kind: 'base', x: 0, y: 0, seabed: 'sand', shelter: shelter({}, 0.9), priceEur: 0, placesGoneHour: null, services: allServices },
-  { id: 'bay_a', name: t('Бухта А', 'Bay A'), kind: 'bay', x: 0, y: 10, seabed: 'sand', shelter: shelter({ N: 0.2, NE: 0.3, NW: 0.3, E: 0.8, W: 0.8 }, 1), priceEur: 0, placesGoneHour: null, services: noServices },
-  { id: 'marina_b', name: t('Марина Б', 'Marina B'), kind: 'marina', x: 8, y: 10, seabed: 'mud', shelter: shelter({}, 0.95), priceEur: 80, placesGoneHour: 15, services: allServices },
+  { id: 'base', name: t('База', 'Base'), kind: 'base', x: 0, y: 0, seabed: 'sand', shelter: shelter({}, 0.9), priceEur: 0, placesGoneHour: null, services: allServices, berths: [{ type: 'stern_to', headingDeg: 180 }], marineroChance: 0.9 },
+  { id: 'bay_a', name: t('Бухта А', 'Bay A'), kind: 'bay', x: 0, y: 10, seabed: 'sand', shelter: shelter({ N: 0.2, NE: 0.3, NW: 0.3, E: 0.8, W: 0.8 }, 1), priceEur: 0, placesGoneHour: null, services: noServices, berths: [{ type: 'anchor', headingDeg: 0 }], marineroChance: 0 },
+  { id: 'marina_b', name: t('Марина Б', 'Marina B'), kind: 'marina', x: 8, y: 10, seabed: 'mud', shelter: shelter({}, 0.95), priceEur: 80, placesGoneHour: 15, services: allServices, berths: [{ type: 'stern_to', headingDeg: 270 }], marineroChance: 0.7 },
 ];
 
 /** Minimal 3-point world for unit tests of Waves 1–3. Real content lives in content/core and content/regions. */
@@ -54,8 +54,8 @@ export function makeContent(): Content {
       days: [1, 2, 3, 4, 5, 6].map((day) => ({ day, windKn: 12, gustKn: 18, dir: 'NW' as const, frontChance: day === 3 ? 0.5 : 0, barometerHpa: 1015 })),
     }],
     crew: [
-      { id: 'party', name: t('Тусовщик', 'Party guest'), names: [t('Аня', 'Anya'), t('Олег', 'Oleg')], wishes: ['taverna', 'beach', 'swim'], seasickness: 0.3, patience: 0.4, promiseSensitivity: 1.2 },
-      { id: 'sailor', name: t('Яхтсмен', 'Sailor'), names: [t('Ира', 'Ira'), t('Макс', 'Max')], wishes: ['sailing', 'early_start'], seasickness: 0.1, patience: 0.7, promiseSensitivity: 0.8 },
+      { id: 'party', role: 'guest', name: t('Тусовщик', 'Party guest'), names: [t('Аня', 'Anya'), t('Олег', 'Oleg'), t('Лена', 'Lena'), t('Паша', 'Pasha')], wishes: ['taverna', 'beach', 'swim'], seasickness: 0.3, patience: 0.4, promiseSensitivity: 1.2 },
+      { id: 'sailor', role: 'sailor', name: t('Яхтсмен', 'Sailor'), names: [t('Ира', 'Ira'), t('Макс', 'Max'), t('Катя', 'Katya'), t('Глеб', 'Gleb')], wishes: ['sailing', 'early_start'], seasickness: 0.1, patience: 0.7, promiseSensitivity: 0.8 },
     ],
     briefing: ['sails', 'cleats', 'fenders', 'captain_only', 'anchor', 'loaded_lines', 'toilet', 'mob'].map((id) => ({
       id, title: t(`Тема ${id}`, `Topic ${id}`), description: t(`Описание ${id}`, `Description ${id}`),

@@ -20,17 +20,39 @@
     "id": "mooring_med", "kind": "mooring", "title": { "ru": "Швартовка кормой", "en": "Stern-to mooring" },
     "steps": [
       { "id": "fenders_ready", "text": { "ru": "Кранцы на высоте причала", "en": "Fenders at dock height" } },
+      { "id": "extra_fenders_neighbor", "when": "place.tight", "text": { "ru": "Кранцы на борт к соседу", "en": "Fenders out on the neighbour's side" } },
       { "id": "brief_roles", "text": { "ru": "Роли: корма, муринг, багор", "en": "Roles: stern lines, lazy line, boat hook" } },
+      { "id": "windward_stern_first", "when": "wind.side == 'port' || wind.side == 'starboard'", "text": { "ru": "Наветренный кормовой — первым", "en": "Windward stern line first" } },
       { "id": "stern_lines_ashore", "text": { "ru": "Подать кормовые маринеру", "en": "Pass stern lines to the marinero" } },
       { "id": "cleat_stern", "text": { "ru": "Заложить кормовые на утку", "en": "Make the stern lines fast" } },
+      { "id": "pick_lazy_line_boathook", "when": "!place.marinero", "text": { "ru": "Поднять муринг отпорным крюком", "en": "Pick up the lazy line with the boathook" } },
       { "id": "pick_mooring", "text": { "ru": "Выбрать и натянуть муринг", "en": "Pick up and tension the lazy line" } }
     ],
     "errors": [
       { "id": "lines_before_brief", "wrongIf": { "first": "stern_lines_ashore", "then": "brief_roles" }, "effect": { "mood": -5, "fatigue": 5 }, "injuryChance": 0.15, "mitigatedBy": "briefing.captain_only", "text": { "ru": "Экипаж слушал маринера, а не капитана", "en": "The crew followed the marinero, not the skipper" } },
       { "id": "mooring_before_cleat", "wrongIf": { "first": "pick_mooring", "then": "cleat_stern" }, "effect": { "fatigue": 8 }, "injuryChance": 0.25, "mitigatedBy": "briefing.cleats", "text": { "ru": "Кормовой поехал по утке и обжёг ладони", "en": "The stern line ran over the cleat and burned palms" } },
-      { "id": "no_fenders_first", "wrongIf": { "first": "stern_lines_ashore", "then": "fenders_ready" }, "effect": { "damage": "hull_scratch", "mood": -6 }, "injuryChance": 0, "text": { "ru": "Борт прошёлся по соседу без кранцев", "en": "The hull rubbed the neighbour with no fenders" } }
+      { "id": "no_fenders_first", "wrongIf": { "first": "stern_lines_ashore", "then": "fenders_ready" }, "effect": { "damage": "hull_scratch", "mood": -6 }, "injuryChance": 0, "text": { "ru": "Борт прошёлся по соседу без кранцев", "en": "The hull rubbed the neighbour with no fenders" } },
+      { "id": "tight_no_fenders", "when": "place.tight", "wrongIf": { "first": "stern_lines_ashore", "then": "extra_fenders_neighbor" }, "effect": { "damage": "hull_scratch", "mood": -5 }, "injuryChance": 0, "text": { "ru": "Навалились на соседа без кранцев", "en": "Hit the neighbour without fenders" } },
+      { "id": "leeward_first", "when": "wind.side == 'port' || wind.side == 'starboard'", "wrongIf": { "first": "stern_lines_ashore", "then": "windward_stern_first" }, "effect": { "damage": "hull_scratch", "mood": -6 }, "injuryChance": 0.1, "text": { "ru": "Подветренный отдали первым — корму снесло на соседа", "en": "Leeward line first — the stern blew onto the neighbour" } },
+      { "id": "mooring_no_hook", "when": "!place.marinero", "wrongIf": { "first": "pick_mooring", "then": "pick_lazy_line_boathook" }, "effect": { "fatigue": 6, "time_hours": 0.25 }, "injuryChance": 0.05, "text": { "ru": "Муринг ловили руками с кормы", "en": "Grabbed for the lazy line by hand from the stern" } }
     ],
     "injuryMods": [ { "if": "system.engine_cooling.broken", "add": 0.1, "label": "broken" }, { "if": "system.bow_thruster.state != 'none' && !system.bow_thruster.broken && wind >= 12", "mul": -0.3, "label": "thruster" } ]
+  },
+  {
+    "id": "mooring_side_to", "kind": "mooring", "berth": "side_to", "title": { "ru": "Швартовка лагом", "en": "Mooring alongside" },
+    "steps": [
+      { "id": "fenders_side", "text": { "ru": "Кранцы на борт к причалу", "en": "Fenders out on the quay side" } },
+      { "id": "brief_roles", "text": { "ru": "Роли: носовой, кормовой, шпринг", "en": "Roles: bow line, stern line, spring" } },
+      { "id": "approach_angle", "text": { "ru": "Подход под острым углом", "en": "Approach at a shallow angle" } },
+      { "id": "bow_spring_first", "text": { "ru": "Носовой шпринг первым", "en": "Bow spring first" } },
+      { "id": "stern_line", "text": { "ru": "Кормовой", "en": "Stern line" } },
+      { "id": "bow_line", "text": { "ru": "Носовой", "en": "Bow line" } }
+    ],
+    "errors": [
+      { "id": "no_fenders_side", "wrongIf": { "first": "approach_angle", "then": "fenders_side" }, "effect": { "damage": "hull_scratch", "mood": -5 }, "injuryChance": 0, "text": { "ru": "Борт прошёлся по причалу без кранцев", "en": "The hull scraped the quay with no fenders" } },
+      { "id": "stern_before_spring", "wrongIf": { "first": "stern_line", "then": "bow_spring_first" }, "effect": { "fatigue": 5, "mood": -4 }, "injuryChance": 0.1, "mitigatedBy": "briefing.loaded_lines", "text": { "ru": "Корму прижало к причалу, лодку развернуло на кормовом", "en": "The stern pinned to the quay; the boat swung on the stern line" } }
+    ],
+    "injuryMods": [ { "if": "system.engine_cooling.broken", "add": 0.1, "label": "broken" }, { "if": "system.bow_thruster.state != 'none' && !system.bow_thruster.broken && wind >= 12 && (wind.side == 'port' || wind.side == 'starboard')", "mul": -0.3, "label": "thruster" } ]
   },
   {
     "id": "anchoring_bay", "kind": "anchoring", "title": { "ru": "Постановка на якорь", "en": "Anchoring" },
@@ -39,12 +61,31 @@
       { "id": "brief_bow", "text": { "ru": "Команда на бак: сколько цепи, знаки руками", "en": "Brief the bow: chain length, hand signals" } },
       { "id": "stop_boat", "text": { "ru": "Остановить лодку носом к ветру", "en": "Stop the boat head to wind" } },
       { "id": "drop_anchor", "text": { "ru": "Отдать якорь", "en": "Drop the anchor" } },
-      { "id": "back_down", "text": { "ru": "Отработать задним, натянуть цепь", "en": "Back down to set the chain" } }
+      { "id": "back_down", "text": { "ru": "Отработать задним, натянуть цепь", "en": "Back down to set the chain" } },
+      { "id": "test_holding_astern", "when": "place.seabed == 'rock' || place.seabed == 'weed'", "text": { "ru": "Проверить, держит ли якорь, задним ходом", "en": "Test the holding astern" } }
     ],
     "errors": [
       { "id": "drop_before_stop", "wrongIf": { "first": "drop_anchor", "then": "stop_boat" }, "effect": { "time_hours": 0.5, "fatigue": 8 }, "injuryChance": 0, "text": { "ru": "Цепь легла кучей на якорь", "en": "The chain piled on top of the anchor" } },
       { "id": "drop_before_brief", "wrongIf": { "first": "drop_anchor", "then": "brief_bow" }, "effect": { "fatigue": 5, "mood": -3 }, "injuryChance": 0.1, "mitigatedBy": "briefing.anchor", "text": { "ru": "На баке не поняли знаков, цепь ушла рывком", "en": "The bow missed the signals; the chain ran out with a jerk" } },
-      { "id": "drop_before_spot", "wrongIf": { "first": "drop_anchor", "then": "choose_spot" }, "effect": { "time_hours": 0.5, "mood": -4 }, "injuryChance": 0, "text": { "ru": "Встали слишком близко к соседу, переставляемся", "en": "Too close to a neighbour; re-anchoring" } }
+      { "id": "drop_before_spot", "wrongIf": { "first": "drop_anchor", "then": "choose_spot" }, "effect": { "time_hours": 0.5, "mood": -4 }, "injuryChance": 0, "text": { "ru": "Встали слишком близко к соседу, переставляемся", "en": "Too close to a neighbour; re-anchoring" } },
+      { "id": "test_before_drop", "when": "place.seabed == 'rock' || place.seabed == 'weed'", "wrongIf": { "first": "test_holding_astern", "then": "drop_anchor" }, "effect": { "time_hours": 0.5 }, "injuryChance": 0, "text": { "ru": "Тянули задним, не отдав якорь — потеряли время", "en": "Went astern before the anchor was down — lost time" } }
+    ],
+    "injuryMods": [ { "if": "system.engine_cooling.broken", "add": 0.1, "label": "broken" } ]
+  },
+  {
+    "id": "anchor_stern_ashore", "kind": "anchoring", "berth": "anchor_ashore", "title": { "ru": "Якорь и кормовой на берег", "en": "Anchor with a stern line ashore" },
+    "steps": [
+      { "id": "choose_spot", "text": { "ru": "Выбрать место: глубина, грунт, расстояние до берега", "en": "Pick a spot: depth, seabed, distance to the shore" } },
+      { "id": "brief_bow", "text": { "ru": "Команда на бак: сколько цепи, знаки руками", "en": "Brief the bow: chain length, hand signals" } },
+      { "id": "brief_shore", "text": { "ru": "Пловец со швартовым — к берегу", "en": "Swimmer with the line — to the shore" } },
+      { "id": "drop_anchor", "text": { "ru": "Отдать якорь", "en": "Drop the anchor" } },
+      { "id": "back_toward_shore", "text": { "ru": "Задним к берегу", "en": "Reverse toward the shore" } },
+      { "id": "line_ashore", "text": { "ru": "Кормовой — на камень или дерево", "en": "Stern line to a rock or tree" } },
+      { "id": "tighten_anchor", "text": { "ru": "Выбрать слабину якоря", "en": "Take up the slack on the anchor" } }
+    ],
+    "errors": [
+      { "id": "back_before_drop", "wrongIf": { "first": "back_toward_shore", "then": "drop_anchor" }, "effect": { "time_hours": 0.5 }, "injuryChance": 0.05, "text": { "ru": "Пошли к берегу без якоря — пришлось выходить и начинать заново", "en": "Backed toward the shore with no anchor down; had to pull out and redo it" } },
+      { "id": "line_before_anchor", "wrongIf": { "first": "line_ashore", "then": "drop_anchor" }, "effect": { "fatigue": 8, "mood": -4 }, "injuryChance": 0.15, "mitigatedBy": "briefing.anchor", "text": { "ru": "Кормовой натянулся раньше якоря, лодку потащило на берег", "en": "The stern line came taut before the anchor, dragging the boat toward the shore" } }
     ],
     "injuryMods": [ { "if": "system.engine_cooling.broken", "add": 0.1, "label": "broken" } ]
   },

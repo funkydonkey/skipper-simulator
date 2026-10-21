@@ -12,7 +12,7 @@ export const content: Content = loaded.content;
 
 /** A real GameState in the requested phase, built through the engine with the expert strategy. */
 export function gameAt(phase: Phase, seed = 42): GameState {
-  let s = newGame(content, { seed, lang: 'ru' });
+  let s = newGame(content, { seed, lang: 'ru', weatherTemplateId: 'meltemi_week' });
   if (phase === 'captain') return s;
   s = assignVoices(s, content, expert.voices);
   if (phase === 'boat_select') return s;

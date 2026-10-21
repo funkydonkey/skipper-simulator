@@ -3,7 +3,7 @@ import type { GameState } from '../../src/engine/types';
 /** A day-1 planning state at `base` on `test_boat`. Override any field per test. */
 export function makeState(overrides: Partial<GameState> = {}): GameState {
   const base: GameState = {
-    version: 3,
+    version: 4,
     seed: 42,
     rng: 42,
     lang: 'ru',
@@ -42,6 +42,7 @@ export function makeState(overrides: Partial<GameState> = {}): GameState {
     defects: [],
     startBalanceEur: 1500,
     checkin: null,
+    situation: null,
   };
   return { ...base, ...overrides };
 }

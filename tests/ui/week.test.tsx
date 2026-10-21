@@ -65,7 +65,7 @@ async function playWeek(lang: Lang, random = 0.123): Promise<Week> {
       case 'morning': await user.click(button(MORNING.start[lang])); break;
       case 'planning': {
         const target = game.locationId === 'base_marina' ? 'cala_azzurra' : 'base_marina';
-        const point = screen.queryByRole('button', { name: name(target, lang) });
+        const point = screen.queryByRole('button', { name: new RegExp(`^${name(target, lang)}(,|$)`) });
         if (point) {
           await user.click(point);
           await user.click(button(PLANNING.toManeuvers[lang]));
@@ -110,7 +110,7 @@ async function playWeek(lang: Lang, random = 0.123): Promise<Week> {
 }
 
 // Seed chosen by scanning: this week breaks the windlass and the first repair attempt fails, the second succeeds.
-const FAILURE_WEEK_RANDOM = 0.3;
+const FAILURE_WEEK_RANDOM = 0.05;
 const LOGBOOK_LINES = {
   ru: { fault: 'Неисправность: якорное устройство', broke: 'Сломалось: якорное устройство', fixed: 'Починили: якорное устройство', failed: 'Починить не вышло: якорное устройство' },
   en: { fault: 'Fault: anchor gear', broke: 'Broke down: anchor gear', fixed: 'Repaired: anchor gear', failed: "Couldn't repair: anchor gear" },

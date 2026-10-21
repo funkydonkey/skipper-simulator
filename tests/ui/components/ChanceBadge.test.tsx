@@ -70,6 +70,8 @@ describe('chance view helpers', () => {
     expect(partLabel('base', 'ru')).toBe('база');
     expect(partLabel('clamp', 'en')).toBe('limit');
     expect(partLabel('seabed', 'en')).toBe('seabed');
+    expect(partLabel('berth', 'ru')).toBe('кормовой на берег');
+    expect(partLabel('berth', 'en')).toBe('stern line ashore');
     expect(partLabel('nonsense', 'en')).toBe('other');
     expect(partLabel('voice.nobody', 'en')).toBe('other');
   });

@@ -19,7 +19,7 @@ function effectsOf(c: Content): Effect[] {
   return [...fromEvents, ...fromManeuvers].filter((e): e is Effect => e !== undefined);
 }
 
-/** Every identifier some condition, chance modifier, option `requires`, `mitigatedBy` or engine read consumes. */
+/** Every identifier some condition, chance modifier, option `requires`, maneuver `when`, `mitigatedBy` or engine read consumes. */
 function readIdentifiers(c: Content): Set<string> {
   const reads = new Set<string>(ENGINE_READS.map((r) => r.id));
   const expr = (src: string): void => conditionIdentifiers(src).forEach((id) => reads.add(id));
@@ -45,7 +45,13 @@ function readIdentifiers(c: Content): Set<string> {
       }
     }
   }
-  for (const m of c.maneuvers) for (const e of m.errors) if (e.mitigatedBy) reads.add(e.mitigatedBy);
+  for (const m of c.maneuvers) {
+    m.steps.forEach((st) => { if (st.when) expr(st.when); });
+    for (const e of m.errors) {
+      if (e.when) expr(e.when);
+      if (e.mitigatedBy) reads.add(e.mitigatedBy);
+    }
+  }
   return reads;
 }
 

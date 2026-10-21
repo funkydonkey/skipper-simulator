@@ -35,6 +35,25 @@ describe('save slot', () => {
     expect(readSave(storage, content).kind).toBe('none');
   });
 
+  it('treats a stored version-3 slot as legacy and clears it', () => {
+    const storage = memoryStorage();
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...gameAt('morning'), version: 3 } }));
+    expect(readSave(storage, content)).toEqual({ kind: 'legacy' });
+    expect(storage.getItem(SAVE_KEY)).toBeNull();
+  });
+
+  it('accepts a valid situation and rejects a malformed one', () => {
+    const storage = memoryStorage();
+    const game = gameAt('morning');
+    const good = { berth: 'stern_to', windSide: 'port', windKn: 8, windDir: 'N', marinero: true, marineroOdds: null, seabed: 'mud', tight: false, source: 'fact' };
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...game, situation: good } }));
+    expect(readSave(storage, content).kind).toBe('ok');
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...game, situation: { ...good, berth: 'dock' } } }));
+    expect(readSave(storage, content).kind).toBe('corrupt');
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...game, situation: { berth: 'anchor' } } }));
+    expect(readSave(storage, content).kind).toBe('corrupt');
+  });
+
   it('rejects a slot in the defects phase without a check-in, and accepts one with it', () => {
     const storage = memoryStorage();
     const game = gameAt('briefing');

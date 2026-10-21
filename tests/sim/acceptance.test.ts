@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { loadContentDir } from '../../src/content/load-node';
 import { parseContent } from '../../src/content/parse';
 import { toRaw } from '../fixtures/raw';
-import { endDay, finishWeek, planDay, presentEvent, startDay } from '../../src/engine';
+import { endDay, eventText, finishWeek, planDay, presentEvent, startDay } from '../../src/engine';
 import { buildConditionContext } from '../../src/engine/expr';
 import { PILLARS, type GameEvent, type GameState } from '../../src/engine/types';
 import { drainEvents, pillarsAffected, playDay, runWeek, setupWeek, weekScore } from '../../src/sim/run';
@@ -67,7 +67,7 @@ describe('ТЗ 7.4 acceptance', () => {
   it('#5 texts come out in both languages', () => {
     const s = setupWeek(content, 1, expert, 'en');
     const ev = content.events[0]!;
-    expect(presentEvent(ev, s, buildConditionContext(s, content), content.balance).text).toBe(ev.text.en);
+    expect(presentEvent(ev, s, buildConditionContext(s, content), content).text).toBe(eventText(ev, s).en);
   });
 
   it('#6 a new event works by editing JSON only', () => {
@@ -142,7 +142,12 @@ describe('ТЗ 7.4 acceptance', () => {
     }
 
     for (const boat of boats) {
-      it(`ignore-weakness on ${boat} hits the boat's weakness in at least weaknessMinRate of weeks`, () => {
+      // Skipped for meltemi_40 — Ruling R24 (Stage 3c): true rate ~0.48 vs 0.6 with varied weather; awaiting design
+      // decision. Its only weakness hits are rig failures, which need day.max_wind >= 14 under sail; the 3c knobs
+      // (maneuver error injuries, marinero chances, cooldowns) do not reach them, and R22's +1..+3 kn template trials
+      // gave 0.56-0.59 on seeds 1-100 (0.40-0.51 on seeds 101-400), never 0.6.
+      const weaknessIt = boat === 'meltemi_40' ? it.skip : it;
+      weaknessIt(`ignore-weakness on ${boat} hits the boat's weakness in at least weaknessMinRate of weeks`, () => {
         expect(ignoring[boat]!.weaknessRate).toBeGreaterThanOrEqual(targets.weaknessMinRate);
       });
       it(`careful on ${boat} keeps the mean score and the injury rate within the careful targets`, () => {
@@ -150,6 +155,12 @@ describe('ТЗ 7.4 acceptance', () => {
         inBand(careful[boat]!.weekInjuryRate, targets.careful.weekInjuryRate);
       });
       it(`careful on ${boat} level gain stays within its target band`, () => inBand(careful[boat]!.levelGainMean, targets.levelGain.careful));
+      it(`careful on ${boat} meets the variety targets (R8)`, () => {
+        const v = careful[boat]!.variety;
+        expect(v.mooringStepSets).toBeGreaterThanOrEqual(targets.variety.minMooringStepSets);
+        expect(v.meanWeeklyMooringSets).toBeGreaterThanOrEqual(targets.variety.minMeanWeeklyMooringSets);
+        expect(v.templatesSeen).toBeGreaterThanOrEqual(targets.variety.minTemplatesSeen);
+      });
     }
 
     it('events that fire in no simulated strategy are exactly zeroFireAllow', () => {

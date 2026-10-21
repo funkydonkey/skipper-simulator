@@ -1,12 +1,13 @@
+import { berthForKind } from '../berths';
 import { assertNoPendingEvent, assertPhase, EngineError } from '../errors';
-import { queueEvent } from '../events';
+import { queueEvent, queueFailureEvent, queuePassageEvent } from '../events';
 import { appendLog } from '../log';
-import { maneuverForKind, validateOrder } from '../maneuver';
+import { maneuverFor, validateOrder } from '../maneuver';
 import { applyOutcome } from '../resources';
 import { advanceClock, otherEnd, requireBoat, requirePoint, requireRoute, round1, round2 } from '../state';
 import { addWear, brokenFlags } from '../systems';
 import { restHours } from '../time';
-import { MANEUVER_KINDS, type Activity, type Balance, type Boat, type Content, type DayPlan, type EventPhase, type GameState, type ManeuverKind } from '../types';
+import { MANEUVER_KINDS, type Activity, type Balance, type BerthType, type Boat, type Content, type DayPlan, type EventPhase, type GameState, type ManeuverKind } from '../types';
 import { arrive, runManeuver } from './arrival';
 import { runLeg, startEngine } from './legs';
 
@@ -22,10 +23,10 @@ function invalid(msg: string): never {
   throw new EngineError('INVALID_INPUT', msg);
 }
 
-function validateOrders(content: Content, plan: DayPlan): void {
+function validateOrders(content: Content, plan: DayPlan, berth: BerthType | undefined): void {
   for (const [kind, order] of Object.entries(plan.maneuverOrders ?? {}) as [ManeuverKind, string[]][]) {
     if (!(MANEUVER_KINDS as readonly string[]).includes(kind)) invalid(`Unknown maneuver kind "${kind}"`);
-    const m = maneuverForKind(content, kind);
+    const m = maneuverFor(content, kind, berthForKind(kind, berth));
     const problem = m ? validateOrder(m, order) : null;
     if (problem) invalid(problem);
   }
@@ -52,7 +53,11 @@ export function validatePlan(state: GameState, content: Content, plan: DayPlan):
     }
     at = next;
   });
-  validateOrders(content, plan);
+  const dest = requirePoint(content, at);
+  if (plan.berth !== undefined && plan.legs.length > 0 && !dest.berths.some((x) => x.type === plan.berth)) {
+    invalid(`${at} has no "${plan.berth}" berth`);
+  }
+  validateOrders(content, plan, plan.legs.length > 0 ? plan.berth ?? dest.berths[0]!.type : undefined);
 }
 
 function logPlanDecisions(state: GameState, content: Content, plan: DayPlan): GameState {
@@ -111,7 +116,8 @@ function settleDay(state: GameState, content: Content, boat: Boat, plan: DayPlan
 function sail(state: GameState, content: Content, boat: Boat, plan: DayPlan): { state: GameState; summary: DaySummary } {
   const b = content.balance;
   const origin = requirePoint(content, state.locationId);
-  let s = startEngine({ ...state, clockMin: Math.max(state.clockMin, Math.round(plan.departureHour * 60)) }, content, boat);
+  // Departure and anchor_up run without a situation: the origin's wind side is not modelled.
+  let s = startEngine({ ...state, situation: null, clockMin: Math.max(state.clockMin, Math.round(plan.departureHour * 60)) }, content, boat);
   const departureHour = s.clockMin / 60;
   s = runManeuver(s, content, origin.kind === 'bay' ? 'anchor_up' : 'departure', plan.maneuverOrders);
   s = advanceClock(s, b.time.departureMin);
@@ -121,14 +127,20 @@ function sail(state: GameState, content: Content, boat: Boat, plan: DayPlan): { 
   const sailed = plan.legs.reduce((acc, leg) => {
     const r = runLeg(acc.state, content, boat, leg, acc.at);
     const sum = acc.summary;
+    const route = requireRoute(content, leg.routeId);
+    const legCtx = {
+      wind: r.windKn, 'wind.dir': r.windDir,
+      'leg.feature.strait': route.features.includes('strait'), 'leg.feature.cape': route.features.includes('cape'),
+      'leg.feature.gulf': route.features.includes('gulf'), 'leg.feature.open': route.features.includes('open'),
+    };
     return {
-      state: r.state,
+      state: queuePassageEvent(r.state, content, legCtx),
       at: r.to,
       summary: { ...sum, motor: sum.motor + r.motorHours, sail: sum.sail + r.sailHours, legHours: sum.legHours + r.motorHours + r.sailHours, maxWind: Math.max(sum.maxWind, r.windKn) },
     };
   }, { state: s, at: s.locationId, summary: start });
   const swim = swimStops({ ...sailed.state, locationId: sailed.at }, boat, plan.swimStops, b);
-  const arrival = arrive(swim.state, content, boat, plan.maneuverOrders);
+  const arrival = arrive(swim.state, content, boat, plan.maneuverOrders, plan.berth);
   return { state: arrival.state, summary: { ...sailed.summary, mooring: arrival.mooring, swum: swim.swum } };
 }
 
@@ -150,7 +162,9 @@ export function planDay(state: GameState, content: Content, plan: DayPlan): Game
     summary = { moving: false, departureHour: null, mooring: here.kind === 'bay' ? 'anchor' : 'berth', motor: 0, sail: 0, legHours: 0, swum: swim.swum, maxWind: 0 };
   }
   s = settleDay(s, content, boat, plan, summary);
-  const phases: EventPhase[] = summary.moving ? ['passage', 'arrival', 'evening'] : ['evening'];
+  // Passage events roll per leg inside `sail`; 3b's passage failures stay day-level.
+  if (summary.moving) s = queueFailureEvent(s, content, 'passage');
+  const phases: EventPhase[] = summary.moving ? ['arrival', 'evening'] : ['evening'];
   s = phases.reduce((acc, phase) => queueEvent(acc, content, phase), s);
   return { ...s, phase: 'evening' };
 }

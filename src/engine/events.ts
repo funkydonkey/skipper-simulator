@@ -1,4 +1,5 @@
 import { rollChance } from './chance';
+import { renderText } from './crew';
 import { EngineError } from './errors';
 import { buildConditionContext, evaluateAll, type CondContext } from './expr';
 import { appendLog } from './log';
@@ -6,10 +7,11 @@ import { eventTriggerSpec } from './odds';
 import { sayDialogue } from './promises';
 import { applyOutcomes } from './resources';
 import type { RngResult } from './rng';
+import { seedHash } from './seed';
 import { requireBoat, requireEvent } from './state';
 import { failureEventIds, rollFailures } from './systems';
 import { grantCheckXp } from './xp';
-import type { Balance, ChanceValue, Content, EventOption, EventPhase, GameEvent, GameState, Outcome, VoiceId } from './types';
+import type { Balance, ChanceValue, Content, EventOption, EventPhase, GameEvent, GameState, LocalizedText, Outcome, VoiceId } from './types';
 import { audibleLines, checkChance, rollCheck } from './voices';
 
 export { pillarWeight } from './odds';
@@ -22,12 +24,37 @@ export interface EventView {
   options: Array<{ id: string; text: string; available: boolean; chance: ChanceValue | null }>;
 }
 
+const WEEK_DAYS = 7;
+
+/** Log entries `{ kind: 'event', cause: 'event:<id>' }`: the only record of past firings (R5). */
+function firings(state: GameState, id: string): number[] {
+  return state.log.filter((e) => e.kind === 'event' && e.cause === `event:${id}`).map((e) => e.day);
+}
+
+function offCooldown(e: GameEvent, state: GameState): boolean {
+  const { cooldownDays, maxPerWeek } = e.trigger;
+  if (cooldownDays === undefined && maxPerWeek === undefined) return true;
+  const days = firings(state, e.id);
+  if (cooldownDays !== undefined && days.some((d) => d > state.day - cooldownDays)) return false;
+  return maxPerWeek === undefined || days.filter((d) => d > state.day - WEEK_DAYS).length < maxPerWeek;
+}
+
+/** The event's text, or for variants one picked by seed, id and day (never `state.rng`). */
+export function eventText(event: GameEvent, state: Pick<GameState, 'seed' | 'day'>): LocalizedText {
+  const t = event.text;
+  return Array.isArray(t) ? t[seedHash(state.seed, event.id, state.day) % t.length]! : t;
+}
+
+/** Every text the event can show (one, or all variants). */
+export const eventTexts = (event: GameEvent): LocalizedText[] => (Array.isArray(event.text) ? event.text : [event.text]);
+
 export function eligibleEvents(content: Content, state: GameState, phase: EventPhase, ctx: CondContext): GameEvent[] {
   const reserved = failureEventIds(content);
   return content.events.filter((e) =>
     !reserved.has(e.id)
     && e.trigger.phase === phase
     && (e.trigger.once === false || !state.firedEvents.includes(e.id))
+    && offCooldown(e, state)
     && !state.eventQueue.includes(e.id)
     && evaluateAll(e.trigger.conditions, ctx));
 }
@@ -65,16 +92,18 @@ export function resolveOption(
   return { value: { outcomes: [{ cause, pillar: event.pillar, effect: o.effects ?? {} }], check: null }, next: rng };
 }
 
-export function presentEvent(event: GameEvent, state: GameState, ctx: CondContext, b: Balance): EventView {
+export function presentEvent(event: GameEvent, state: GameState, ctx: CondContext, content: Content): EventView {
+  const b = content.balance;
   const lang = state.lang;
+  const render = (text: string): string => renderText(text, state, content, `${event.id}:${state.day}`);
   return {
     id: event.id,
     scene: event.scene,
-    text: event.text[lang],
-    voices: audibleLines(event.voices, state.voices, ctx).map((l) => ({ voice: l.voice, text: l.text[lang] })),
+    text: render(eventText(event, state)[lang]),
+    voices: audibleLines(event.voices, state.voices, ctx).map((l) => ({ voice: l.voice, text: render(l.text[lang]) })),
     options: event.options.map((o) => ({
       id: o.id,
-      text: o.text[lang],
+      text: render(o.text[lang]),
       available: optionAvailable(o, ctx),
       chance: o.check ? checkChance(o.check, ctx, b) : null,
     })),
@@ -94,6 +123,19 @@ export function queueEvent(state: GameState, content: Content, phase: EventPhase
   if (failures.queuedEvent) return enqueue(failures.state, requireEvent(content, failures.queuedEvent));
   const r = rollEvent(failures.state.rng, content, failures.state, phase, buildConditionContext(failures.state, content));
   const s = { ...failures.state, rng: r.next };
+  return r.value ? enqueue(s, r.value) : s;
+}
+
+/** Failures stay day-level: they roll once per phase and may name an event; the generic roll is separate. */
+export function queueFailureEvent(state: GameState, content: Content, phase: EventPhase): GameState {
+  const failures = rollFailures(state, content, phase);
+  return failures.queuedEvent ? enqueue(failures.state, requireEvent(content, failures.queuedEvent)) : failures.state;
+}
+
+/** One generic passage roll for a leg: the leg's wind, direction and `leg.feature.*` are spread over the day context. */
+export function queuePassageEvent(state: GameState, content: Content, legCtx: CondContext): GameState {
+  const r = rollEvent(state.rng, content, state, 'passage', { ...buildConditionContext(state, content), ...legCtx });
+  const s = { ...state, rng: r.next };
   return r.value ? enqueue(s, r.value) : s;
 }
 

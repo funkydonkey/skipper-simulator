@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { buildConditionContext, presentEvent } from '../../../src/engine';
+import { buildConditionContext, eventTexts, presentEvent } from '../../../src/engine';
 import { content, gameAt, withEvent } from '../fixtures';
 import { renderShell } from '../render';
 
@@ -12,14 +12,14 @@ describe('EventScreen', () => {
   it('shows the scene, the text and each option, with check odds', () => {
     renderShell(withEvent(gameAt('evening'), checkEvent.id));
     expect(document.querySelector(`[data-scene="${checkEvent.scene}"]`)).not.toBeNull();
-    expect(screen.getByText(checkEvent.text.ru.split(/(?<=[.!?…])\s/)[0]!.trim(), { exact: false })).toBeInTheDocument();
+    expect(screen.getByText(eventTexts(checkEvent)[0]!.ru.split(/(?<=[.!?…])\s/)[0]!.trim(), { exact: false })).toBeInTheDocument();
     for (const o of checkEvent.options) expect(screen.getByRole('button', { name: esc(o.text.ru) })).toBeInTheDocument();
     expect(screen.getAllByText(/\d+%/).length).toBeGreaterThan(0);
   });
 
   it('shows each check as a badge with the engine odds and a breakdown on tap', async () => {
     const game = withEvent(gameAt('evening'), checkEvent.id);
-    const view = presentEvent(checkEvent, game, buildConditionContext(game, content), content.balance);
+    const view = presentEvent(checkEvent, game, buildConditionContext(game, content), content);
     const idx = view.options.findIndex((o) => o.chance !== null);
     const pct = Math.round(view.options[idx]!.chance!.value * 100);
     const r = renderShell(game);
@@ -33,7 +33,7 @@ describe('EventScreen', () => {
 
   it('describes each check option with its odds badge', () => {
     const game = withEvent(gameAt('evening'), checkEvent.id);
-    const view = presentEvent(checkEvent, game, buildConditionContext(game, content), content.balance);
+    const view = presentEvent(checkEvent, game, buildConditionContext(game, content), content);
     renderShell(game);
     for (const [i, o] of checkEvent.options.entries()) {
       const option = screen.getByRole('button', { name: esc(o.text.ru) });

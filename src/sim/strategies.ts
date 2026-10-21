@@ -1,16 +1,20 @@
+import { berthForKind } from '../engine/berths';
 import { canAfford } from '../engine/budget';
 import { tavernaBill, tavernaOpen, type EveningChoice } from '../engine/day/evening';
 import type { MorningChoice } from '../engine/day/morning';
 import { optionAvailable } from '../engine/events';
 import { buildConditionContext } from '../engine/expr';
-import { correctOrder } from '../engine/maneuver';
-import { MANEUVER_KINDS, type CheckpointId, type Content, type DayPlan, type Effect, type EventOption, type GameEvent, type GameState, type LegPlan, type ManeuverKind, type TrainableVoice } from '../engine/types';
+import { correctOrder, forecastStepPool, maneuverFor } from '../engine/maneuver';
+import { previewPlan } from '../engine/preview';
+import { requirePoint } from '../engine/state';
+import { pointShelter } from '../engine/weather';
+import { MANEUVER_KINDS, type BerthType, type CheckpointId, type Content, type DayPlan, type Effect, type EventOption, type GameEvent, type GameState, type LegPlan, type ManeuverKind, type TrainableVoice } from '../engine/types';
 import { checkChance } from '../engine/voices';
 import type { RepairChoice } from '../engine/repair';
 import { weakSystems } from './weakness';
 
 export interface Strategy {
-  name: 'newbie' | 'expert' | 'careful' | 'ignore-weakness';
+  name: 'newbie' | 'expert' | 'careful' | 'ignore-weakness' | 'forecast-follower';
   voices: Partial<Record<TrainableVoice, number>>;
   boatId: string;
   checkpoints(c: Content): CheckpointId[];
@@ -103,7 +107,7 @@ const hasTaverna = (s: GameState, c: Content): boolean => {
 function reversedOrders(c: Content): Partial<Record<ManeuverKind, string[]>> {
   const orders: Partial<Record<ManeuverKind, string[]>> = {};
   for (const kind of MANEUVER_KINDS) {
-    const m = c.maneuvers.find((x) => x.kind === kind);
+    const m = maneuverFor(c, kind);
     if (m) orders[kind] = [...correctOrder(m)].reverse();
   }
   return orders;
@@ -134,6 +138,31 @@ export const expert: Strategy = {
   evening: (s, c) => ({ dinner: hasTaverna(s, c) && s.resources.moneyEur > EXPERT_TAVERNA_MIN_MONEY ? 'taverna' : 'cook', dialogueId: 'decide_morning' }),
   fixDefects: fixNothing,
   repair: repairNothing,
+};
+
+/**
+ * R25 measurement: for every kind, exactly the maneuver screen's pool (forecastStepPool over the plan's forecast) in
+ * content order. Kinds the day does not run are ignored by the engine.
+ */
+function poolOrders(s: GameState, c: Content, plan: DayPlan): Partial<Record<ManeuverKind, string[]>> {
+  const p = previewPlan(s, c, plan);
+  const dest = requirePoint(c, p.destinationId);
+  const orders: Partial<Record<ManeuverKind, string[]>> = {};
+  for (const kind of MANEUVER_KINDS) {
+    const m = maneuverFor(c, kind, berthForKind(kind, p.situation?.berth));
+    if (m) orders[kind] = forecastStepPool(m, s, c, p.situation, dest).map((x) => x.id);
+  }
+  return orders;
+}
+
+/** Expert play that orders by the forecast exactly as the maneuver screen offers it (no hidden knowledge of the fact). */
+export const forecastFollower: Strategy = {
+  ...expert,
+  name: 'forecast-follower',
+  plan: (s, c) => {
+    const plan = expert.plan(s, c);
+    return plan.legs.length === 0 ? plan : { ...plan, maneuverOrders: poolOrders(s, c, plan) };
+  },
 };
 
 export const newbie: Strategy = {
@@ -195,6 +224,23 @@ export function buildItinerary(c: Content, style: Style): Record<number, string[
   return Object.fromEntries(legs.map((id, i) => [i + 1, [id]]));
 }
 
+/**
+ * The careful captain's berth from the plan's forecast: side-to at a quay when the default berth would take the wind
+ * on the bow or stern; stern line ashore in a tight bay exposed to the wind; else the default (undefined).
+ */
+export function carefulBerth(s: GameState, c: Content, plan: DayPlan): BerthType | undefined {
+  if (plan.legs.length === 0) return undefined;
+  const p = previewPlan(s, c, plan);
+  const at = p.situation;
+  if (!at) return undefined;
+  const dest = c.map.find((x) => x.id === p.destinationId)!;
+  if (p.berths.includes('side_to') && (at.windSide === 'bow' || at.windSide === 'stern')) {
+    return previewPlan(s, c, { ...plan, berth: 'side_to' }).marinaAffordable ? 'side_to' : undefined;
+  }
+  if (p.berths.includes('anchor_ashore') && dest.tight && pointShelter(dest, at.windDir, c.balance) === 'exposed') return 'anchor_ashore';
+  return undefined;
+}
+
 /** Greedy by cost within the check-in budget; `first` checkpoints are tried before the rest. */
 function greedyCheckpoints(c: Content, first: readonly CheckpointId[], skip: readonly CheckpointId[]): CheckpointId[] {
   const costs = c.balance.checkin.costMin;
@@ -249,7 +295,11 @@ function weaknessStrategy(style: Style, boatId: string): Strategy {
       const weak = weakCheckpoints(c, boatId);
       return style === 'careful' ? greedyCheckpoints(c, weak, []) : greedyCheckpoints(c, [], weak);
     },
-    plan: (s, c) => expertPlan(todaysLegs(buildItinerary(c, style), s, c), s, c),
+    plan: (s, c) => {
+      const plan = expertPlan(todaysLegs(buildItinerary(c, style), s, c), s, c);
+      const berth = style === 'careful' ? carefulBerth(s, c, plan) : undefined;
+      return berth ? { ...plan, berth } : plan;
+    },
     fixDefects: style === 'careful' ? fixWhatFits : fixNothing,
     repair: style === 'careful' ? bestRepair : repairNothing,
   };
@@ -258,5 +308,6 @@ function weaknessStrategy(style: Style, boatId: string): Strategy {
 export function makeStrategy(name: Strategy['name'], boatId?: string): Strategy {
   if (name === 'newbie') return newbie;
   if (name === 'expert') return expert;
+  if (name === 'forecast-follower') return forecastFollower;
   return weaknessStrategy(name, boatId ?? expert.boatId);
 }

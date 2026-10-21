@@ -6,11 +6,11 @@ import { injurySpec, sailBreakSpec } from '../odds';
 import { applyOutcome } from '../resources';
 import { bearingDeg, dirToDeg, planLeg, type LegResult } from '../sailing';
 import { advanceClock, otherEnd, requirePoint, requireRoute, requireTemplate, round1 } from '../state';
-import type { Balance, Boat, Content, GameState, LegPlan, Route } from '../types';
+import type { Balance, Boat, Dir8, Content, GameState, LegPlan, Route } from '../types';
 import { brokenFlags, type BrokenFlags } from '../systems';
 import { realWind } from '../weather';
 
-export interface LegRun { state: GameState; to: string; motorHours: number; sailHours: number; windKn: number }
+export interface LegRun { state: GameState; to: string; motorHours: number; sailHours: number; windKn: number; windDir: Dir8 }
 
 export function avgSeasickness(state: GameState, content: Content): number {
   if (state.crew.length === 0) return 0;
@@ -101,7 +101,7 @@ export function runLeg(state: GameState, content: Content, boat: Boat, leg: LegP
   if (tow) {
     const effect = { money: -b.rescue.towEur, time_hours: b.rescue.towHours, mood: -b.rescue.towMoodPenalty };
     s = applyOutcome(s, boat, { cause: `rescue:tow:${route.id}`, pillar: 'boat', effect });
-    return { state: s, to, motorHours: 0, sailHours: 0, windKn: wind.windKn };
+    return { state: s, to, motorHours: 0, sailHours: 0, windKn: wind.windKn, windDir: wind.dir };
   }
   let extraMin = 0;
   if (mode === 'motor') {
@@ -118,5 +118,6 @@ export function runLeg(state: GameState, content: Content, boat: Boat, leg: LegP
     motorHours: mode === 'motor' ? res.hours : 0,
     sailHours: mode === 'sail' ? res.hours : 0,
     windKn: wind.windKn,
+    windDir: wind.dir,
   };
 }

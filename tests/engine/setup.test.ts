@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { makeCrew } from '../../src/engine/crew';
 import { resolveDefects } from '../../src/engine/defects';
 import { assignVoices, boatOffers, chooseBoat, newGame, performBriefing, performCheckin } from '../../src/engine/setup';
 import { makeContent } from '../fixtures/content';
@@ -16,7 +17,9 @@ describe('setup phases', () => {
   it('newGame: captain phase at base with crew', () => {
     const s = start();
     expect(s).toMatchObject({ phase: 'captain', day: 0, locationId: 'base', boatId: null, seed: 7, rng: 7, weatherTemplateId: 'test_week' });
-    expect(s.crew.map((m) => [m.archetypeId, m.name.ru])).toEqual([['party', 'Аня'], ['sailor', 'Ира'], ['party', 'Олег'], ['sailor', 'Макс']]);
+    expect(s.crew).toHaveLength(4);
+    expect(s.crew).toEqual(makeCrew(content, 4, 7));
+    expect(new Set(s.crew.map((m) => m.name.ru)).size).toBe(4);
     expect(s.resources).toMatchObject({ moneyEur: 6000, waterL: 0, fuelL: 0, mood: 70 });
     expect(() => newGame(content, { seed: 1, lang: 'en', crewSize: 0 })).toThrow(/crewSize/);
     expect(() => newGame(content, { seed: 1, lang: 'en', weatherTemplateId: 'nope' })).toThrow(/not found/);

@@ -1,4 +1,4 @@
-import { formatClock, TRAINABLE_VOICES, type ChanceValue, type Content, type Lang, type LogEntry, type LogKind, type Pillar, type TrainableVoice } from '../../engine';
+import { eventText, formatClock, renderText, type CrewMember, TRAINABLE_VOICES, type ChanceValue, type Content, type Lang, type LogEntry, type LogKind, type Pillar, type TrainableVoice } from '../../engine';
 import { CHECKPOINT_NAMES, DAMAGE_NAMES, label, VOICE_NAMES } from '../i18n/glossary';
 import { fmt, type Vars } from '../i18n/t';
 import { formatHour, signed } from './format';
@@ -9,7 +9,9 @@ export type Tone = 'neutral' | 'good' | 'bad';
 export interface LogLine { day: number; clock: string; text: string; tone: Tone; kind: LogKind; cause: string; pillar?: Pillar; odds?: ChanceValue }
 
 type Described = { text: string; tone?: Tone } | null;
-type Describer = (parts: string[], e: LogEntry, c: Content, lang: Lang) => Described;
+/** What the logbook needs to render crew names the way the event screen did. */
+export interface Who { seed: number; crew: readonly CrewMember[] }
+type Describer = (parts: string[], e: LogEntry, c: Content, lang: Lang, who: Who) => Described;
 type LogKey = keyof typeof LOG;
 
 const say = (key: LogKey, lang: Lang, vars: Vars = {}, tone: Tone = 'neutral'): Described => ({ text: fmt(LOG[key][lang], vars), tone });
@@ -30,8 +32,16 @@ function systemInline(c: Content, id: string, lang: Lang): string {
 function topicTitle(c: Content, id: string, lang: Lang): string {
   return c.briefing.find((t) => t.id === id)?.title[lang] ?? id;
 }
-function optionText(c: Content, eventId: string, optionId: string, lang: Lang): string {
-  return c.events.find((e) => e.id === eventId)?.options.find((o) => o.id === optionId)?.text[lang] ?? optionId;
+const renderFor = (text: string, c: Content, lang: Lang, who: Who, eventId: string, day: number): string =>
+  renderText(text, { seed: who.seed, crew: [...who.crew], lang }, c, `${eventId}:${day}`);
+function optionText(c: Content, eventId: string, optionId: string, lang: Lang, who: Who, day: number): string {
+  const text = c.events.find((e) => e.id === eventId)?.options.find((o) => o.id === optionId)?.text[lang];
+  return text === undefined ? optionId : renderFor(text, c, lang, who, eventId, day);
+}
+/** The same variant the event screen showed: `eventText` is pure in (seed, id, day). */
+function eventTextOf(c: Content, eventId: string, day: number, lang: Lang, who: Who): string {
+  const e = c.events.find((x) => x.id === eventId);
+  return e ? renderFor(eventText(e, { seed: who.seed, day })[lang], c, lang, who, eventId, day) : eventId;
 }
 function maneuverTitle(c: Content, id: string, lang: Lang): string {
   return c.maneuvers.find((m) => m.id === id)?.title[lang] ?? id;
@@ -42,11 +52,11 @@ function routeName(c: Content, id: string, lang: Lang): string {
 }
 
 /** Human reason for an xp grant, from the inner cause (`fault:<sys>:<f>`, `roll:check:<event>:<option>`, `order:wrong:<m>:<err>`, `order:ok:<m>`); null when unknown. */
-export function xpCauseText(inner: string[], c: Content, lang: Lang): string | null {
+export function xpCauseText(inner: string[], c: Content, lang: Lang, who: Who, day: number): string | null {
   const [root, a = '', b = ''] = inner;
   if (root === 'fault') return fmt(LOG.xpFault[lang], { system: systemInline(c, a, lang) });
   if (root === 'roll' && a === 'check' && inner[2] === 'repair') return fmt(LOG.xpRepair[lang], { system: systemInline(c, inner[3] ?? '', lang) });
-  if (root === 'roll' && a === 'check') return fmt(LOG.xpCheck[lang], { option: optionText(c, inner[2] ?? '', inner[3] ?? '', lang) });
+  if (root === 'roll' && a === 'check') return fmt(LOG.xpCheck[lang], { option: optionText(c, inner[2] ?? '', inner[3] ?? '', lang, who, day) });
   if (root === 'order' && a === 'wrong') return fmt(LOG.xpManeuverWrong[lang], { title: maneuverTitle(c, b, lang) });
   if (root === 'order' && a === 'ok') return fmt(LOG.xpManeuverOk[lang], { title: maneuverTitle(c, b, lang) });
   return null;
@@ -143,11 +153,11 @@ const DESCRIBE: Record<string, Describer> = {
     return outcome === 'fail' ? say('systemRepairFailed', lang, { system }, 'bad') : null;
   },
   mood_per_day: (_p, e, _c, lang) => say('moodPerDay', lang, { mood: signed(e.delta?.mood ?? 0) }, 'bad'),
-  event: ([eventId = '', optionId, tag], _e, c, lang) => {
-    if (!optionId) return say('eventHappened', lang, { text: firstSentence(c.events.find((x) => x.id === eventId)?.text[lang] ?? eventId) });
-    return say('eventOption', lang, { option: optionText(c, eventId, optionId, lang) }, tag === 'fail' ? 'bad' : tag === 'success' ? 'good' : 'neutral');
+  event: ([eventId = '', optionId, tag], e, c, lang, who) => {
+    if (!optionId) return say('eventHappened', lang, { text: firstSentence(eventTextOf(c, eventId, e.day, lang, who)) });
+    return say('eventOption', lang, { option: optionText(c, eventId, optionId, lang, who, e.day) }, tag === 'fail' ? 'bad' : tag === 'success' ? 'good' : 'neutral');
   },
-  choice: ([eventId = '', optionId = ''], _e, c, lang) => say('chose', lang, { option: optionText(c, eventId, optionId, lang) }),
+  choice: ([eventId = '', optionId = ''], e, c, lang, who) => say('chose', lang, { option: optionText(c, eventId, optionId, lang, who, e.day) }),
   roll: ([what, a = '', b2 = ''], e, c, lang) => {
     const p = e.odds?.value ?? num(e, 'chance');
     const chance = Math.round(p * 100);
@@ -164,14 +174,16 @@ const DESCRIBE: Record<string, Describer> = {
       case 'marina': return p === 0 ? null : outcome('rollMarinaHit', 'rollMarinaMiss'); // early arrival: no real roll
       case 'sail_break': return outcome('rollSailHit', 'rollSailMiss');
       case 'injury': return outcome('rollInjuryHit', 'rollInjuryMiss');
+      // A hit is a marinero on the quay: good news, unlike the other rolls.
+      case 'marinero': return say(hit ? 'rollMarineroHit' : 'rollMarineroMiss', lang, { chance }, hit ? 'good' : 'neutral');
       case 'failure': return null; // one roll per eligible failure per phase; a hit shows as its `fault:` line, with these odds
       default: return null;
     }
   },
   levelup: ([voice = ''], e, _c, lang) => say('levelUp', lang, { voice: VOICE_NAMES[voice as keyof typeof VOICE_NAMES]?.[lang] ?? voice, from: num(e, 'from'), to: num(e, 'to') }, 'good'),
-  xp: ([voice = '', ...inner], e, c, lang) => {
+  xp: ([voice = '', ...inner], e, c, lang, who) => {
     const vars = { xp: num(e, 'xp'), voice: VOICE_NAMES[voice as keyof typeof VOICE_NAMES]?.[lang] ?? voice };
-    const cause = xpCauseText(inner, c, lang);
+    const cause = xpCauseText(inner, c, lang, who, e.day);
     return cause ? say('xp', lang, { ...vars, cause }) : say('xpPlain', lang, vars);
   },
   voice: ([voice, what], e, _c, lang) => {
@@ -190,10 +202,10 @@ const DESCRIBE: Record<string, Describer> = {
   },
 };
 
-export function describeEntry(e: LogEntry, content: Content, lang: Lang): LogLine | null {
+export function describeEntry(e: LogEntry, content: Content, lang: Lang, seed: number, crew: readonly CrewMember[] = []): LogLine | null {
   const [root = '', ...parts] = e.cause.split(':');
   const describer = DESCRIBE[root];
-  const d = describer ? describer(parts, e, content, lang) : say('unknown', lang, { cause: e.cause });
+  const d = describer ? describer(parts, e, content, lang, { seed, crew }) : say('unknown', lang, { cause: e.cause });
   if (!d) return null;
   return { day: e.day, clock: formatClock(e.clockMin), text: d.text, tone: d.tone ?? 'neutral', kind: e.kind, cause: e.cause, ...(e.pillar ? { pillar: e.pillar } : {}), ...(e.odds ? { odds: e.odds } : {}) };
 }
@@ -219,8 +231,8 @@ export function isLogbookOnly(e: LogEntry): boolean {
   return root === 'xp' || (root === 'roll' && what !== 'check');
 }
 
-export function dayLines(log: readonly LogEntry[], day: number, content: Content, lang: Lang): LogLine[] {
-  return log.filter((e) => e.day === day && !isNoise(e)).flatMap((e) => describeEntry(e, content, lang) ?? []);
+export function dayLines(log: readonly LogEntry[], day: number, content: Content, lang: Lang, seed: number, crew: readonly CrewMember[] = []): LogLine[] {
+  return log.filter((e) => e.day === day && !isNoise(e)).flatMap((e) => describeEntry(e, content, lang, seed, crew) ?? []);
 }
 
 /** A fault's odds are shown once its day is over; on `today` the line stays without them (no spoilers). */
@@ -231,21 +243,21 @@ function withoutTodaysFaultOdds(line: LogLine, today: number | undefined): LogLi
 }
 
 /** `today`: the current game day, whose fault odds stay hidden. */
-export function logbookDays(log: readonly LogEntry[], content: Content, lang: Lang, today?: number): Array<{ day: number; lines: LogLine[] }> {
+export function logbookDays(log: readonly LogEntry[], content: Content, lang: Lang, seed: number, today?: number, crew: readonly CrewMember[] = []): Array<{ day: number; lines: LogLine[] }> {
   const days = [...new Set(log.map((e) => e.day))].sort((a, b) => a - b);
   return days
-    .map((day) => ({ day, lines: dayLines(log, day, content, lang).map((l) => withoutTodaysFaultOdds(l, today)) }))
+    .map((day) => ({ day, lines: dayLines(log, day, content, lang, seed, crew).map((l) => withoutTodaysFaultOdds(l, today)) }))
     .filter((d) => d.lines.length > 0);
 }
 
 export interface DayGrowth { voice: TrainableVoice; xp: number; causes: string[] }
 
 /** XP the captain earned on `day`, grouped by voice in the fixed voice order, with human causes. */
-export function dayGrowth(log: readonly LogEntry[], day: number, content: Content, lang: Lang): DayGrowth[] {
+export function dayGrowth(log: readonly LogEntry[], day: number, content: Content, lang: Lang, who: Who): DayGrowth[] {
   return TRAINABLE_VOICES.flatMap((voice) => {
     const mine = log.filter((e) => e.day === day && e.cause.startsWith(`xp:${voice}:`));
     if (mine.length === 0) return [];
-    const causes = mine.flatMap((e) => xpCauseText(e.cause.split(':').slice(2), content, lang) ?? []);
+    const causes = mine.flatMap((e) => xpCauseText(e.cause.split(':').slice(2), content, lang, who, e.day) ?? []);
     return [{ voice, xp: mine.reduce((sum, e) => sum + num(e, 'xp'), 0), causes: [...new Set(causes)] }];
   });
 }

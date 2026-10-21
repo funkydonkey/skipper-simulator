@@ -149,3 +149,21 @@ describe('previewPlan with broken systems', () => {
     expect(towed(calm(broken('engine_cooling')))).toBe(true);
   });
 });
+
+describe('previewPlan: anchor ashore (F2)', async () => {
+  const { loadContentDir } = await import('../../src/content/load-node');
+  const loaded = await loadContentDir('content');
+  const real = loaded.content!;
+  const st = makeState({ locationId: 'base_marina', weatherTemplateId: 'meltemi_week', boatId: real.boats[0]!.id, systems: {} });
+  const toLagoon = (berth: DayPlan['berth']): DayPlan => ({ ...plan([motor('r_base_marina_blue_lagoon')], 15), berth });
+
+  it('arrives half an hour later than plain anchoring and rests that much less, as arrive() does', () => {
+    const anchor = previewPlan(st, real, toLagoon('anchor'));
+    const ashore = previewPlan(st, real, toLagoon('anchor_ashore'));
+    const extra = real.balance.berths.ashoreTimeHours * 60;
+    expect(ashore.arrivalMin! - anchor.arrivalMin!).toBe(extra);
+    expect(anchor.restHours - ashore.restHours).toBeCloseTo(extra / 60, 6);
+    const day = planDay(st, { ...real, events: [] }, toLagoon('anchor_ashore'));
+    expect(day.log.some((e) => e.cause === 'anchor:ashore')).toBe(true);
+  });
+});

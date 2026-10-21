@@ -1,3 +1,6 @@
+import { BERTH_KIND, pointBerthProblem } from '../engine/berths';
+import { CREW_PLACEHOLDER } from '../engine/crew';
+import { eventTexts } from '../engine/events';
 import { MANEUVER_KINDS, type Content, type Effect } from '../engine/types';
 import type { ContentError } from './parse';
 
@@ -14,6 +17,10 @@ function uniqueIds(name: string, items: ReadonlyArray<{ id: string }>, add: Add)
 function checkMap(c: Content, add: Add): void {
   const bases = c.map.filter((p) => p.kind === 'base');
   if (bases.length !== 1) add('map', `exactly one base point required, found ${bases.length}`);
+  c.map.forEach((p, i) => {
+    const problem = pointBerthProblem(p);
+    if (problem) add(`map[${i}].berths`, problem);
+  });
   const ids = new Set(c.map.map((p) => p.id));
   c.routes.forEach((r, i) => {
     if (!ids.has(r.from)) add(`routes[${i}].from`, `unknown point "${r.from}"`);
@@ -45,9 +52,17 @@ function checkWeatherAndBriefing(c: Content, add: Add): void {
 
 function checkManeuvers(c: Content, add: Add): void {
   for (const kind of MANEUVER_KINDS) {
-    if (!c.maneuvers.some((m) => m.kind === kind)) add('maneuvers', `no maneuver of kind "${kind}"`);
+    const defaults = c.maneuvers.filter((m) => m.kind === kind && m.berth === undefined).length;
+    if (defaults !== 1) add('maneuvers', `kind "${kind}" needs exactly one default maneuver (without berth), found ${defaults}`);
   }
+  const seen = new Set<string>();
   c.maneuvers.forEach((m, i) => {
+    if (m.berth !== undefined) {
+      if (BERTH_KIND[m.berth] !== m.kind) add(`maneuvers[${i}].berth`, `berth "${m.berth}" does not fit kind "${m.kind}"`);
+      const key = `${m.kind}:${m.berth}`;
+      if (seen.has(key)) add(`maneuvers[${i}].berth`, `second ${m.kind} maneuver for berth "${m.berth}"`);
+      seen.add(key);
+    }
     uniqueIds(`maneuvers[${i}].steps`, m.steps, add);
     const steps = new Set(m.steps.map((s) => s.id));
     m.errors.forEach((e, j) => {
@@ -74,6 +89,28 @@ function checkEvents(c: Content, add: Add): void {
         else if (!d.contexts.includes(context)) add(`events[${i}].options[${j}]`, `dialogue "${d.id}" has no "${context}" context`);
       }
     });
+  });
+}
+
+/** Crew names are placeholders, never literals: names go through `{crew.any}` / `{crew.role:<role>}` (nominative only). */
+function checkCrewNames(c: Content, add: Add): void {
+  const roles = new Set(c.crew.map((a) => a.role));
+  const names = c.crew.flatMap((a) => a.names.flatMap((n) => [n.ru, n.en]));
+  const literal = names.map((n) => ({ n, re: new RegExp(`(?<![\\p{L}\\p{N}_])${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\p{L}\\p{N}_])`, 'u') }));
+  const scan = (path: string, text: string): void => {
+    for (const { n, re } of literal) if (re.test(text)) add(path, `literal crew name "${n}": use {crew.any} or {crew.role:<role>}`);
+    for (const m of text.matchAll(/\{crew[^}]*\}/g)) {
+      const ok = new RegExp(`^${CREW_PLACEHOLDER.source}$`).exec(m[0]);
+      if (!ok) add(path, `unknown placeholder "${m[0]}"`);
+      else if (ok[2] !== undefined && !roles.has(ok[2])) add(path, `unknown crew role "${ok[2]}"`);
+    }
+  };
+  const both = (path: string, t: { ru: string; en: string }): void => { scan(`${path}.ru`, t.ru); scan(`${path}.en`, t.en); };
+  c.events.forEach((ev, i) => {
+    eventTexts(ev).forEach((t, k) => both(`events[${i}].text[${k}]`, t));
+    ev.voices.forEach((v, j) => both(`events[${i}].voices[${j}].text`, v.text));
+    ev.options.forEach((o, j) => both(`events[${i}].options[${j}].text`, o.text));
+    if (ev.debrief) both(`events[${i}].debrief`, ev.debrief);
   });
 }
 
@@ -131,6 +168,7 @@ export function crossValidate(c: Content): ContentError[] {
   checkWeatherAndBriefing(c, add);
   checkManeuvers(c, add);
   checkEvents(c, add);
+  checkCrewNames(c, add);
   checkSystemRefs(c, add);
   checkFailureEvents(c, add);
   checkWeaknessTargets(c, add);

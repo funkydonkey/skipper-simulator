@@ -404,8 +404,8 @@
     },
     "scene": "galley",
     "text": {
-      "ru": "У плиты пахнет газом. Света уже чиркает спичкой.",
-      "en": "The stove reeks of gas. Sveta is already striking a match."
+      "ru": "У плиты пахнет газом. {crew.any} уже чиркает спичкой.",
+      "en": "The stove reeks of gas. {crew.any} is already striking a match."
     },
     "voices": [
       {
@@ -896,13 +896,26 @@
         "at_bay",
         "wind >= 15"
       ],
-      "chance": 0.4
+      "chance": 0.4,
+      "once": false,
+      "cooldownDays": 2,
+      "maxPerWeek": 2
     },
     "scene": "anchorage_night",
-    "text": {
-      "ru": "Зыбь заходит в бухту. Посуда звенит, цепь стонет.",
-      "en": "Swell creeps into the bay. Dishes rattle, the chain groans."
-    },
+    "text": [
+      {
+        "ru": "Зыбь заходит в бухту. Посуда звенит, цепь стонет.",
+        "en": "Swell creeps into the bay. Dishes rattle, the chain groans."
+      },
+      {
+        "ru": "Ночью бухту качает: ветер дует против зыби, и лодку разворачивает бортом.",
+        "en": "The bay rocks at night: the wind blows against the swell and the boat swings beam-on."
+      },
+      {
+        "ru": "Всё шкрябает и стучит. Зыбь добралась и сюда.",
+        "en": "Everything scrapes and bangs. The swell has found its way in here too."
+      }
+    ],
     "voices": [
       {
         "voice": "caution",
@@ -974,15 +987,29 @@
     "trigger": {
       "phase": "passage",
       "conditions": [
-        "wind >= 18"
+        "leg.feature.strait",
+        "wind >= 16"
       ],
-      "chance": 0.4
+      "chance": 0.4,
+      "once": false,
+      "cooldownDays": 2,
+      "maxPerWeek": 2
     },
     "scene": "deck_spray",
-    "text": {
-      "ru": "В проливе ветер против течения. Короткая злая волна бьёт в скулу.",
-      "en": "In the strait the wind fights the current. A short, vicious chop hammers the bow."
-    },
+    "text": [
+      {
+        "ru": "В проливе ветер против течения. Короткая злая волна бьёт в скулу.",
+        "en": "In the strait the wind fights the current. A short, vicious chop hammers the bow."
+      },
+      {
+        "ru": "Короткая злая волна колотит в борт: ветер и течение в проливе сошлись лоб в лоб.",
+        "en": "Wind and current meet head-on in the strait, and a short, angry sea slaps the hull."
+      },
+      {
+        "ru": "Пролив кипит барашками, лодку бросает с волны на волну.",
+        "en": "The strait is full of whitecaps, and the boat is thrown from one wave to the next."
+      }
+    ],
     "voices": [
       {
         "voice": "sea_sense",
@@ -1242,10 +1269,20 @@
       "chance": 0.3
     },
     "scene": "bay_lunch",
-    "text": {
-      "ru": "Обеденная стоянка. Гости в воде и явно никуда не торопятся.",
-      "en": "Lunch stop. The guests are in the water and clearly in no hurry."
-    },
+    "text": [
+      {
+        "ru": "Обеденная стоянка. Гости в воде и явно никуда не торопятся.",
+        "en": "Lunch stop. The guests are in the water and clearly in no hurry."
+      },
+      {
+        "ru": "На обеденной стоянке вода так хороша, что вылезать никто не хочет.",
+        "en": "The water at the lunch stop is so good that nobody wants to get out."
+      },
+      {
+        "ru": "Стоянка затягивается: гости плавают, фотографируют и ни в какую не возвращаются на борт.",
+        "en": "The stop drags on: the guests swim, take photos and flatly refuse to come back aboard."
+      }
+    ],
     "voices": [
       {
         "voice": "crew_voice",
@@ -1313,10 +1350,20 @@
       "chance": 0.8
     },
     "scene": "dusk_harbour",
-    "text": {
-      "ru": "Солнце садится. Входим в сумерках, огни на берегу путают глаз.",
-      "en": "The sun is going down. We enter at dusk, shore lights confusing the eye."
-    },
+    "text": [
+      {
+        "ru": "Солнце садится. Входим в сумерках, огни на берегу путают глаз.",
+        "en": "The sun is going down. We enter at dusk, shore lights confusing the eye."
+      },
+      {
+        "ru": "Заходим на закате. Огни на берегу слепят, створы не разобрать.",
+        "en": "We come in at sunset. Shore lights dazzle and the leading marks are hard to make out."
+      },
+      {
+        "ru": "Темнеет быстро. До входа ещё полмили, а свет уже плохой.",
+        "en": "It is getting dark fast. Half a mile to the entrance and the light is already poor."
+      }
+    ],
     "voices": [
       {
         "voice": "order",
@@ -1372,13 +1419,26 @@
         "at_marina",
         "fuel_pct < 40"
       ],
-      "chance": 0.5
+      "chance": 0.5,
+      "once": false,
+      "cooldownDays": 2,
+      "maxPerWeek": 2
     },
     "scene": "fuel_dock",
-    "text": {
-      "ru": "На заправке три лодки и один заправщик, у которого обед.",
-      "en": "Three boats at the fuel dock and one attendant, who is at lunch."
-    },
+    "text": [
+      {
+        "ru": "На заправке три лодки и один заправщик, у которого обед.",
+        "en": "Three boats at the fuel dock and one attendant, who is at lunch."
+      },
+      {
+        "ru": "У заправочного пирса очередь, а заправщик пропал.",
+        "en": "There is a queue at the fuel dock and the attendant has vanished."
+      },
+      {
+        "ru": "К заправке не подойти: две яхты уже ждут, а шланг держит один человек.",
+        "en": "The fuel dock is blocked: two yachts are already waiting and one man holds the only hose."
+      }
+    ],
     "voices": [
       {
         "voice": "mechanic",
@@ -1444,8 +1504,8 @@
     },
     "scene": "marina_berth",
     "text": {
-      "ru": "Маринер кричит «Давай-давай!», и Олег бросает ему кормовой, хотя команды не было.",
-      "en": "The marinero yells \"Dai-dai!\" and Oleg tosses him the stern line, though no order was given."
+      "ru": "Маринер кричит «Давай-давай!», и {crew.any} бросает ему кормовой, хотя команды не было.",
+      "en": "The marinero yells \"Dai-dai!\" and {crew.any} tosses him the stern line, though no order was given."
     },
     "voices": [
       {
@@ -1701,8 +1761,8 @@
     },
     "scene": "deck_wind",
     "text": {
-      "ru": "Шляпа Иры улетает за борт. Все кричат, никто не показывает рукой.",
-      "en": "Ira's hat flies overboard. Everyone shouts, nobody points."
+      "ru": "{crew.any} провожает взглядом улетевшую за борт шляпу. Все кричат, никто не показывает рукой.",
+      "en": "{crew.any} watches a hat fly overboard. Everyone shouts, nobody points."
     },
     "voices": [
       {
@@ -1879,8 +1939,8 @@
     },
     "scene": "anchorage_sunset",
     "text": {
-      "ru": "Аня смотрит на огни на берегу: «А завтра будет таверна?»",
-      "en": "Anya gazes at the lights ashore: \"Will there be a taverna tomorrow?\""
+      "ru": "{crew.role:guest} смотрит на огни на берегу: «А завтра будет таверна?»",
+      "en": "{crew.role:guest} gazes at the lights ashore: \"Will there be a taverna tomorrow?\""
     },
     "voices": [
       {
@@ -1960,8 +2020,8 @@
     },
     "scene": "cockpit_morning",
     "text": {
-      "ru": "Макс уже у мачты: «Сегодня ведь весь день под парусом?»",
-      "en": "Max is already at the mast: \"We're sailing all day today, right?\""
+      "ru": "{crew.role:sailor} уже у мачты: «Сегодня ведь весь день под парусом?»",
+      "en": "{crew.role:sailor} is already at the mast: \"We're sailing all day today, right?\""
     },
     "voices": [
       {
@@ -2029,8 +2089,8 @@
     },
     "scene": "deck_winch",
     "text": {
-      "ru": "Денис тянется снять шкот с лебёдки голыми руками. Шкот звенит от нагрузки.",
-      "en": "Denis reaches to pull the sheet off the winch with bare hands. The sheet hums under load."
+      "ru": "{crew.role:sailor} тянется снять шкот с лебёдки голыми руками. Шкот звенит от нагрузки.",
+      "en": "{crew.role:sailor} reaches to pull the sheet off the winch with bare hands. The sheet hums under load."
     },
     "voices": [
       {
@@ -2045,8 +2105,8 @@
         "voice": "pride",
         "min_level": 1,
         "text": {
-          "ru": "Пусть учится, он взрослый.",
-          "en": "Let him learn, he's an adult."
+          "ru": "Пусть учится — взрослые люди.",
+          "en": "Let them learn, they're adults."
         }
       },
       {
@@ -2063,7 +2123,7 @@
         "id": "let_him",
         "text": {
           "ru": "Пусть попробует",
-          "en": "Let him try"
+          "en": "Let them try"
         },
         "check": {
           "voice": "order",
@@ -2079,7 +2139,7 @@
         "id": "stop_explain",
         "text": {
           "ru": "Остановить и показать, как правильно",
-          "en": "Stop him and show the right way"
+          "en": "Stop and show the right way"
         },
         "effects": {
           "time_hours": 0.25,
@@ -2104,8 +2164,8 @@
     },
     "scene": "anchorage_day",
     "text": {
-      "ru": "Двигатель ещё работает на заднем, а Олег уже прыгает с кормы.",
-      "en": "The engine is still running astern, and Oleg is already jumping off the stern."
+      "ru": "Двигатель ещё работает на заднем, а {crew.role:guest} уже прыгает с кормы.",
+      "en": "The engine is still running astern, and {crew.role:guest} is already jumping off the stern."
     },
     "voices": [
       {
@@ -2129,8 +2189,8 @@
       {
         "id": "ignore",
         "text": {
-          "ru": "Он же умеет плавать",
-          "en": "He can swim, can't he"
+          "ru": "Плавать-то умеют",
+          "en": "They can swim, can't they"
         },
         "check": {
           "voice": "caution",
@@ -2166,13 +2226,26 @@
       "conditions": [
         "wind >= 16"
       ],
-      "chance": 0.4
+      "chance": 0.4,
+      "once": false,
+      "cooldownDays": 2,
+      "maxPerWeek": 2
     },
     "scene": "deck_spray",
-    "text": {
-      "ru": "Света побледнела и просится вниз полежать.",
-      "en": "Sveta has gone pale and wants to lie down below."
-    },
+    "text": [
+      {
+        "ru": "{crew.role:guest} бледнеет и просится вниз полежать.",
+        "en": "{crew.role:guest} goes pale and asks to lie down below."
+      },
+      {
+        "ru": "Кто-то из гостей позеленел и тихо спрашивает, скоро ли берег.",
+        "en": "One of the guests has turned green and quietly asks how long until land."
+      },
+      {
+        "ru": "Один из гостей у леера смотрит в одну точку — явно укачало.",
+        "en": "A guest at the lifelines stares at a single spot, clearly seasick."
+      }
+    ],
     "voices": [
       {
         "voice": "caution",
@@ -2186,8 +2259,8 @@
         "voice": "caution",
         "min_level": 3,
         "text": {
-          "ru": "Через час она не сможет стоять. Посади к рулю и дай ей горизонт.",
-          "en": "In an hour she won't be able to stand. Put her at the helm and give her the horizon."
+          "ru": "Через час стоять будет трудно. Посади к рулю, дай горизонт.",
+          "en": "In an hour standing will be hard. Put a guest at the helm and give them the horizon."
         }
       }
     ],
@@ -2196,7 +2269,7 @@
         "id": "send_below",
         "text": {
           "ru": "Отправить вниз отдохнуть",
-          "en": "Send her below to rest"
+          "en": "Send them below to rest"
         },
         "effects": {
           "mood": -12
@@ -2206,7 +2279,7 @@
         "id": "horizon",
         "text": {
           "ru": "Посадить на подветренный борт, смотреть на горизонт",
-          "en": "Seat her on the lee side, eyes on the horizon"
+          "en": "Seat them on the lee side, eyes on the horizon"
         },
         "effects": {
           "mood": -4
@@ -2237,13 +2310,26 @@
       "conditions": [
         "moored_berth"
       ],
-      "chance": 0.3
+      "chance": 0.3,
+      "once": false,
+      "cooldownDays": 2,
+      "maxPerWeek": 2
     },
     "scene": "marina_berth",
-    "text": {
-      "ru": "Сосед по пирсу стучит в борт: «Музыка! Дети спят!»",
-      "en": "The neighbour on the pier knocks on your hull: \"The music! The kids are asleep!\""
-    },
+    "text": [
+      {
+        "ru": "Сосед по пирсу стучит в борт: «Музыка! Дети спят!»",
+        "en": "The neighbour on the pier knocks on your hull: \"The music! The kids are asleep!\""
+      },
+      {
+        "ru": "С соседней яхты просят потише: у них спят дети.",
+        "en": "From the next yacht they ask you to keep it down: their children are asleep."
+      },
+      {
+        "ru": "Сосед выходит на палубу в халате и многозначительно смотрит на ваши колонки.",
+        "en": "The neighbour comes on deck in a bathrobe and gives your speakers a long, meaningful look."
+      }
+    ],
     "voices": [
       {
         "voice": "diplomat",
@@ -2332,13 +2418,26 @@
         "at_marina",
         "hour >= 14"
       ],
-      "chance": 0.35
+      "chance": 0.35,
+      "once": false,
+      "cooldownDays": 2,
+      "maxPerWeek": 2
     },
     "scene": "marina_entrance",
-    "text": {
-      "ru": "Маринеро показывает на свободное место у входа и замирает с протянутой ладонью.",
-      "en": "The marinero points to a free berth by the entrance and freezes with his palm out."
-    },
+    "text": [
+      {
+        "ru": "Маринеро показывает на свободное место у входа и замирает с протянутой ладонью.",
+        "en": "The marinero points to a free berth by the entrance and freezes with his palm out."
+      },
+      {
+        "ru": "Маринеро машет рукой на свободное место и многозначительно потирает пальцы.",
+        "en": "The marinero waves toward a free berth and rubs his fingers together meaningfully."
+      },
+      {
+        "ru": "Маринеро сам нашёл вам место и теперь стоит рядом, глядя в сторону и подставив руку.",
+        "en": "The marinero found you a berth himself and now stands by, looking away with his hand out."
+      }
+    ],
     "voices": [
       {
         "voice": "diplomat",

@@ -7,7 +7,7 @@ import { makeContent } from '../fixtures/content';
 
 const b = makeContent().balance;
 interface AnchorInput { seabed: Seabed; windKn: number; briefed: boolean; night: boolean }
-const anchorCtx = (i: AnchorInput) => ({ 'place.seabed': i.seabed, wind: i.windKn, 'briefing.anchor': i.briefed, night: i.night });
+const anchorCtx = (i: AnchorInput) => ({ 'place.seabed': i.seabed, 'place.berth': 'anchor', wind: i.windKn, 'briefing.anchor': i.briefed, night: i.night });
 const anchorFailChance = (i: AnchorInput, bal: typeof b): number => evaluateChance(anchorFailSpec(bal), anchorCtx(i)).value;
 
 describe('time budget', () => {

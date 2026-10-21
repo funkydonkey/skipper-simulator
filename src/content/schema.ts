@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { pointBerthProblem } from '../engine/berths';
 import {
-  CHANCE_LABELS, CHECKPOINTS, DIRS, MANEUVER_KINDS, PILLARS, TRAINABLE_VOICES, VOICES,
+  BERTH_TYPES, CHANCE_LABELS, CHECKPOINTS, DIRS, MANEUVER_KINDS, PILLARS, TRAINABLE_VOICES, VOICES,
   type Balance, type Boat, type ChanceInput, type ChanceMod, type BriefingTopic, type CrewArchetype, type DebriefRule, type Dialogue, type Effect,
   type EventOption, type GameEvent, type Maneuver, type MapPoint, type Region, type SystemDef, type Route, type WeatherTemplate,
 } from '../engine/types';
@@ -97,7 +98,12 @@ export const MapPointSchema: z.ZodType<MapPoint> = z.object({
   seabed: z.enum(SEABEDS), shelter: fullRecord(DIRS, Prob),
   priceEur: NonNeg, placesGoneHour: Hour.nullable(),
   services: z.object({ water: z.boolean(), fuel: z.boolean(), shorePower: z.boolean(), gas: z.boolean(), taverna: z.boolean(), beach: z.boolean() }).strict(),
-}).strict();
+  berths: z.array(z.object({ type: z.enum(BERTH_TYPES), headingDeg: z.number().min(0).max(360) }).strict()).min(1),
+  marineroChance: Prob, tight: z.boolean().optional(),
+}).strict().superRefine((p, ctx) => {
+  const problem = pointBerthProblem(p);
+  if (problem) ctx.addIssue({ code: 'custom', path: ['berths'], message: problem });
+});
 
 export const RouteSchema: z.ZodType<Route> = z.object({
   id: Id, from: Id, to: Id, distanceNm: Pos, kLocal: Pos, features: z.array(z.enum(FEATURES)),
@@ -107,13 +113,15 @@ export const RegionSchema: z.ZodType<Region> = z.object({
   id: Id, name: Text, map: z.array(MapPointSchema).min(2), routes: z.array(RouteSchema).min(1),
 }).strict();
 
+const WeatherJitterSchema = z.object({ dirSteps: Int.min(0), kn: NonNeg }).strict();
+
 export const WeatherTemplateSchema: z.ZodType<WeatherTemplate> = z.object({
-  id: Id, name: Text, afternoonFactor: Pos,
+  id: Id, name: Text, afternoonFactor: Pos, jitter: WeatherJitterSchema.optional(),
   days: z.array(z.object({ day: Int.positive(), windKn: NonNeg, gustKn: NonNeg, dir: z.enum(DIRS), frontChance: Prob, barometerHpa: Pos }).strict()).min(1),
 }).strict();
 
 export const CrewArchetypeSchema: z.ZodType<CrewArchetype> = z.object({
-  id: Id, name: Text, names: z.array(Text).min(1), wishes: z.array(z.enum(WISHES)),
+  id: Id, role: Id, name: Text, names: z.array(Text).min(1), wishes: z.array(z.enum(WISHES)),
   seasickness: Prob, patience: Prob, promiseSensitivity: Pos,
 }).strict();
 
@@ -141,18 +149,18 @@ const OptionSchema: z.ZodType<EventOption> = z.object({
 
 export const GameEventSchema: z.ZodType<GameEvent> = z.object({
   id: Id, pillar: z.enum(PILLARS),
-  trigger: z.object({ phase: z.enum(EVENT_PHASES), conditions: z.array(z.string().min(1)), chance: ChanceInputSchema, once: z.boolean().optional() }).strict(),
-  scene: Id, text: Text,
+  trigger: z.object({ phase: z.enum(EVENT_PHASES), conditions: z.array(z.string().min(1)), chance: ChanceInputSchema, once: z.boolean().optional(), cooldownDays: Int.min(1).optional(), maxPerWeek: Int.min(1).optional() }).strict(),
+  scene: Id, text: z.union([Text, z.array(Text).min(2)]),
   voices: z.array(z.object({ voice: z.enum(VOICES), min_level: Int.min(0), text: Text, when: z.string().min(1).optional() }).strict()),
   options: z.array(OptionSchema).min(2),
   debrief: Text,
 }).strict();
 
 export const ManeuverSchema: z.ZodType<Maneuver> = z.object({
-  id: Id, kind: z.enum(MANEUVER_KINDS), title: Text,
-  steps: z.array(z.object({ id: Id, text: Text }).strict()).min(2),
+  id: Id, kind: z.enum(MANEUVER_KINDS), berth: z.enum(BERTH_TYPES).optional(), title: Text,
+  steps: z.array(z.object({ id: Id, text: Text, when: z.string().min(1).optional() }).strict()).min(2),
   errors: z.array(z.object({
-    id: Id, wrongIf: z.object({ first: Id, then: Id }).strict(), effect: EffectSchema,
+    id: Id, when: z.string().min(1).optional(), wrongIf: z.object({ first: Id, then: Id }).strict(), effect: EffectSchema,
     injuryChance: Prob, mitigatedBy: z.string().min(1).optional(), xp: NonNeg.optional(), text: Text,
   }).strict()),
   injuryMods: z.array(ChanceModSchema).optional(),
@@ -194,7 +202,9 @@ export const BalanceSchema: z.ZodType<Balance> = z.object({
   checks: z.object({ base: Prob, perLevel: NonNeg, min: Prob, max: Prob }).strict(),
   checkin: z.object({ budgetMin: Pos, costMin: fullRecord(CHECKPOINTS, NonNeg) }).strict(),
   briefing: z.object({ slots: Int.positive(), maxDialogues: Int.min(0) }).strict(),
-  weather: z.object({ frontAddKn: Pair, frontShiftSteps: Int, barometerDropHpa: NonNeg, afternoonFromHour: Hour }).strict(),
+  situation: z.object({ calmKn: NonNeg }).strict(),
+  berths: z.object({ sideToPriceFactor: Pos, ashoreTimeHours: NonNeg, ashoreAnchorFailMul: z.number().min(-1) }).strict(),
+  weather: z.object({ frontAddKn: Pair, frontShiftSteps: Int, barometerDropHpa: NonNeg, afternoonFromHour: Hour, jitter: WeatherJitterSchema }).strict(),
   schedule: z.object({ days: Int.positive(), returnDeadlineHour: Hour, lateFeeEur: NonNeg }).strict(),
   rescue: z.object({ jumpStartEur: NonNeg, jumpStartDelayMin: NonNeg, moodPenalty: NonNeg, towEur: NonNeg, towHours: NonNeg, towMoodPenalty: NonNeg }).strict(),
   budget: z.object({ weekEur: Pos, okFactor: Pos }).strict(),
@@ -210,6 +220,7 @@ export const BalanceSchema: z.ZodType<Balance> = z.object({
     weakness: z.record(Id, z.object({ systems: z.array(Id), causes: z.array(z.string().min(1)) }).strict()),
     weaknessMinRate: Prob,
     careful: z.object({ minMeanScore: NonNeg, weekInjuryRate: Band }).strict(),
+    variety: z.object({ minMooringStepSets: Int.min(0), minMeanWeeklyMooringSets: NonNeg, minTemplatesSeen: Int.min(0) }).strict(),
   }).strict(),
 }).strict();
 

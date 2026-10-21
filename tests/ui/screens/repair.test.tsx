@@ -11,7 +11,7 @@ import { renderShell, renderWithSession } from '../render';
 /** Evening at anchor in a bay, with the given systems broken and the given money. */
 function eveningAtAnchor(broken: string[], moneyEur = 500): GameState {
   const base = gameAt('evening');
-  const systems = Object.fromEntries(Object.entries(base.systems).map(([id, s]) => [id, broken.includes(id) ? { ...s, broken: true } : s]));
+  const systems = Object.fromEntries(Object.entries(base.systems).map(([id, s]) => [id, { ...s, broken: broken.includes(id) }]));
   return {
     ...base, systems, locationId: 'cala_azzurra', resources: { ...base.resources, moneyEur },
     dayFacts: base.dayFacts && { ...base.dayFacts, mooring: 'anchor' },
@@ -85,7 +85,7 @@ describe('Planning preview', () => {
   it('marks a marina destination "no money" when the berth is unaffordable', () => {
     const game = gameAt('planning');
     const preview = { ...previewPlan(game, content, { departureHour: 9, legs: [], swimStops: 0, shower: 'normal', autopilot: false }), marinaAffordable: false };
-    renderWithSession(<PreviewPanel preview={preview} />, game);
+    renderWithSession(<PreviewPanel preview={preview} onBerth={() => {}} />, game);
     expect(screen.getByText(/нет денег/)).toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadContentDir } from '../../src/content/load-node';
+import { eventTexts } from '../../src/engine/events';
 import { PILLARS } from '../../src/engine/types';
 
 const CAUSE_ROOTS = ['voices', 'boat', 'checkin', 'defect', 'briefing', 'dialogue', 'barometer', 'signal', 'plan', 'order', 'leg', 'weather', 'engine', 'zero', 'consumption', 'sail', 'injury', 'maneuver', 'anchor', 'marina', 'activity', 'rest', 'fatigue', 'event', 'choice', 'promise', 'charge', 'refill', 'mood_per_day', 'night', 'return', 'deposit'];
@@ -22,7 +23,7 @@ describe('narrative content', () => {
   it('every event has a voice line and a real translation', () => {
     for (const e of content!.events) {
       expect(e.voices.length, e.id).toBeGreaterThanOrEqual(1);
-      expect(e.text.ru, e.id).not.toBe(e.text.en);
+      for (const v of eventTexts(e)) expect(v.ru, e.id).not.toBe(v.en);
     }
   });
 

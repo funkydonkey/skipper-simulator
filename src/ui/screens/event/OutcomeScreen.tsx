@@ -1,4 +1,4 @@
-import type { Resources } from '../../../engine';
+import { renderText, type Resources } from '../../../engine';
 import { Button } from '../../components/Button';
 import { SceneArt } from '../../components/SceneArt';
 import { ScreenFrame } from '../../components/ScreenFrame';
@@ -12,7 +12,7 @@ import styles from './Event.module.css';
 import { EVENT } from './strings';
 
 export function OutcomeScreen() {
-  const { content, lang } = useGame();
+  const { game, content, lang } = useGame();
   const { session } = useSession();
   const act = useAct();
   const t = useT(EVENT);
@@ -21,11 +21,11 @@ export function OutcomeScreen() {
   if (!outcome) return null;
   const event = content.events.find((e) => e.id === outcome.eventId);
   const option = event?.options.find((o) => o.id === outcome.optionId);
-  const lines = outcome.entries.filter((e) => !isNoise(e) && !isLogbookOnly(e)).flatMap((e) => describeEntry(e, content, lang) ?? []);
+  const lines = outcome.entries.filter((e) => !isNoise(e) && !isLogbookOnly(e)).flatMap((e) => describeEntry(e, content, lang, game.seed, game.crew) ?? []);
   const deltas = Object.entries(sumDeltas(outcome.entries)) as [keyof Resources, number][];
   const hours = timeSpentHours(outcome.entries);
   return (
-    <ScreenFrame screen="outcome" title={t('outcomeTitle')} subtitle={option?.text[lang]} actions={<Button onClick={() => act({ type: 'outcome_seen' })}>{tc('next')}</Button>}>
+    <ScreenFrame screen="outcome" title={t('outcomeTitle')} subtitle={event && option ? renderText(option.text[lang], game, content, `${event.id}:${game.day}`) : undefined} actions={<Button onClick={() => act({ type: 'outcome_seen' })}>{tc('next')}</Button>}>
       <div className={styles.layout}>
         {event && <SceneArt scene={event.scene} className={styles.scene} />}
         <div className={styles.panel}>

@@ -86,7 +86,8 @@ export interface LogEntry {
   cause: string;
   pillar?: Pillar;
   delta?: Partial<Record<keyof Resources, number>>;
-  data?: Record<string, string | number | boolean>;
+  /** `string[]` only for ordered ids, e.g. the reconciled steps of an `order:*` entry. */
+  data?: Record<string, string | number | boolean | string[]>;
   /** Chance of a `roll` entry, with its per-source breakdown. */
   odds?: ChanceValue;
 }
@@ -179,6 +180,13 @@ export interface PointServices {
   beach: boolean;
 }
 
+export type BerthType = 'stern_to' | 'side_to' | 'anchor' | 'anchor_ashore';
+export const BERTH_TYPES = ['stern_to', 'side_to', 'anchor', 'anchor_ashore'] as const;
+/** Bow heading when moored. */
+export interface Berth { type: BerthType; headingDeg: number }
+export type WindSide = 'bow' | 'stern' | 'port' | 'starboard' | 'none';
+export const WIND_SIDES = ['bow', 'stern', 'port', 'starboard', 'none'] as const;
+
 export interface MapPoint {
   id: string;
   name: LocalizedText;
@@ -193,6 +201,12 @@ export interface MapPoint {
   /** Hour after which berths run out (refusal chance applies). null = never. */
   placesGoneHour: number | null;
   services: PointServices;
+  /** Ways to moor here; bays offer anchor types, marinas/quays/base offer stern_to/side_to. */
+  berths: Berth[];
+  /** Chance a marinero meets the boat (0..1); 0 for bays. */
+  marineroChance: number;
+  /** A tight berth: little room to manoeuvre. */
+  tight?: boolean;
 }
 
 /** Routes are bidirectional. */
@@ -214,16 +228,22 @@ export interface WeatherDay {
   barometerHpa: number;
 }
 
+export interface WeatherJitter { dirSteps: number; kn: number }
+
 export interface WeatherTemplate {
   id: string;
   name: LocalizedText;
   /** Multiplier on forecast wind after balance.weather.afternoonFromHour. */
   afternoonFactor: number;
+  /** Overrides balance.weather.jitter for this template. */
+  jitter?: WeatherJitter;
   days: WeatherDay[];
 }
 
 export interface CrewArchetype {
   id: string;
+  /** What `{crew.role:<role>}` in event texts looks for. */
+  role: string;
   name: LocalizedText;
   names: LocalizedText[];
   wishes: CrewWish[];
@@ -251,7 +271,7 @@ export interface Dialogue {
   expectation: ExpectationSpec;
 }
 
-export interface EventTrigger { phase: EventPhase; conditions: string[]; chance: ChanceInput; once?: boolean }
+export interface EventTrigger { phase: EventPhase; conditions: string[]; chance: ChanceInput; once?: boolean; cooldownDays?: number; maxPerWeek?: number }
 export interface VoiceLine { voice: VoiceId; min_level: number; text: LocalizedText; when?: string }
 export interface VoiceCheck { voice: VoiceId; difficulty: number }
 /** Either `check + success + fail`, or `effects`. Option[0] is the instinctive newbie choice. */
@@ -271,15 +291,23 @@ export interface GameEvent {
   pillar: Pillar;
   trigger: EventTrigger;
   scene: string;
-  text: LocalizedText;
+  /** One text, or several variants: the variant is picked by `seedHash(seed, id, day)`. */
+  text: LocalizedText | LocalizedText[];
   voices: VoiceLine[];
   options: EventOption[];
   debrief: LocalizedText;
 }
 
-export interface ManeuverStep { id: string; text: LocalizedText }
+export interface ManeuverStep {
+  id: string;
+  text: LocalizedText;
+  /** Condition (situation keys such as `wind.side`): the step exists only when true. Absent = always. */
+  when?: string;
+}
 export interface ManeuverError {
   id: string;
+  /** Condition: the error is judged only when true. Absent = always. */
+  when?: string;
   /** Error fires if step `first` is placed before step `then`. */
   wrongIf: { first: string; then: string };
   effect: Effect;
@@ -293,6 +321,8 @@ export interface ManeuverError {
 export interface Maneuver {
   id: string;
   kind: ManeuverKind;
+  /** Picks this maneuver over the kind's default (the one without `berth`) at that berth. */
+  berth?: BerthType;
   title: LocalizedText;
   /** Listed in the CORRECT order. UI shuffles. */
   steps: ManeuverStep[];
@@ -365,7 +395,9 @@ export interface Balance {
   checks: { base: number; perLevel: number; min: number; max: number };
   checkin: { budgetMin: number; costMin: Record<CheckpointId, number> };
   briefing: { slots: number; maxDialogues: number };
-  weather: { frontAddKn: [number, number]; frontShiftSteps: number; barometerDropHpa: number; afternoonFromHour: number };
+  situation: { calmKn: number };
+  berths: { sideToPriceFactor: number; ashoreTimeHours: number; ashoreAnchorFailMul: number };
+  weather: { frontAddKn: [number, number]; frontShiftSteps: number; barometerDropHpa: number; afternoonFromHour: number; jitter: WeatherJitter };
   schedule: { days: number; returnDeadlineHour: number; lateFeeEur: number };
   rescue: { jumpStartEur: number; jumpStartDelayMin: number; moodPenalty: number; towEur: number; towHours: number; towMoodPenalty: number };
   budget: { weekEur: number; okFactor: number };
@@ -381,6 +413,8 @@ export interface Balance {
     weakness: Record<string, { systems: SystemId[]; causes: string[] }>;
     weaknessMinRate: number;
     careful: { minMeanScore: number; weekInjuryRate: [number, number] };
+    /** R8: careful weeks per boat must show this much variety (sim acceptance). */
+    variety: { minMooringStepSets: number; minMeanWeeklyMooringSets: number; minTemplatesSeen: number };
   };
 }
 
@@ -447,6 +481,8 @@ export interface DayPlan {
   autopilot: boolean;
   /** Step-id order chosen by the player, per maneuver kind. Absent = correct order. */
   maneuverOrders?: Partial<Record<ManeuverKind, string[]>>;
+  /** One of the destination's berths; absent = its first berth. */
+  berth?: BerthType;
 }
 
 export interface DayFacts {
@@ -465,7 +501,7 @@ export interface DayFacts {
 }
 
 export interface GameState {
-  version: 3;
+  version: 4;
   seed: number;
   rng: number;
   lang: Lang;
@@ -498,9 +534,20 @@ export interface GameState {
   startBalanceEur: number;
   /** Set by `performCheckin` when a defect with a system was found; kept after `resolveDefects` for the record. */
   checkin: { found: string[]; fixed: string[]; minutesLeft: number } | null;
+  /** The berth situation after arrival; null before arrival and after `endDay`. */
+  situation: Situation | null;
 }
 
-export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn', 'thruster', 'broken', 'wear'] as const;
+export interface Situation {
+  berth: BerthType; windSide: WindSide; windKn: number; windDir: Dir8;
+  /** Fact (arrival) or most likely (forecast). */
+  marinero: boolean;
+  /** Odds behind `marinero`, filled on both forecast and fact; null when the point has no marinero. */
+  marineroOdds: ChanceValue | null;
+  seabed: Seabed; tight: boolean; source: 'forecast' | 'fact';
+}
+
+export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn', 'thruster', 'broken', 'wear', 'marinero', 'berth'] as const;
 export type ChanceLabel = (typeof CHANCE_LABELS)[number];
 /**
  * add: value += add * scale. mul: always a delta factor, value *= (1 + mul * scale); write deltas such as (weight - 1).

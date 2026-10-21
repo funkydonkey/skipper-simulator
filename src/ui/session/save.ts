@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { DIRS, PILLARS, TRAINABLE_VOICES } from '../../engine';
+import { BERTH_TYPES, DIRS, PILLARS, TRAINABLE_VOICES, WIND_SIDES } from '../../engine';
 import type { Content, GameState, Lang } from '../../engine';
 
 export const SAVE_KEY = 'skipper.save.v2';
 /** GameState.version this build reads; any other stored version is dropped as legacy. */
-const SAVE_VERSION = 3;
+const SAVE_VERSION = 4;
 /** Older formats are not migrated: readSave always drops them and reports 'legacy' once when no current slot exists. */
 export const LEGACY_SAVE_KEYS: readonly string[] = ['skipper.save.v1'];
 export const LANG_KEY = 'skipper.lang';
@@ -37,13 +37,21 @@ const DayFactsSchema = z.object({
   motorHours: num, sailHours: num, autopilotHours: num, maxWindKn: num, shower: z.enum(['strict', 'normal', 'loose']),
 });
 
+const OddsSchema = z.object({
+  value: num,
+  parts: z.array(z.object({ source: z.string(), delta: num, kind: z.enum(['add', 'mul']).optional(), factor: num.optional() })),
+});
+
+const SituationSchema = z.object({
+  berth: z.enum(BERTH_TYPES), windSide: z.enum(WIND_SIDES), windKn: num, windDir: z.enum(DIRS),
+  marinero: z.boolean(), marineroOdds: OddsSchema.nullable(),
+  seabed: z.enum(['sand', 'mud', 'weed', 'rock']), tight: z.boolean(), source: z.enum(['forecast', 'fact']),
+}).strict();
+
 const LogEntrySchema = z.object({
   day: num, clockMin: num, kind: z.enum(LOG_KINDS), cause: z.string(),
   pillar: z.enum(PILLARS).optional(),
-  odds: z.object({
-    value: num,
-    parts: z.array(z.object({ source: z.string(), delta: num, kind: z.enum(['add', 'mul']).optional(), factor: num.optional() })),
-  }).optional(),
+  odds: OddsSchema.optional(),
 }).passthrough();
 
 /** Shape check of a stored game. Deep engine invariants are trusted: the slot is written only by writeSave. */
@@ -64,6 +72,7 @@ const SlotSchema = z.object({
     firedEvents: z.array(z.string()), eventQueue: z.array(z.string()),
     weather: DayWeatherSchema.nullable(), dayFacts: DayFactsSchema.nullable(), returnedOnTime: z.boolean().nullable(),
     defects: z.array(z.string()), startBalanceEur: num,
+    situation: SituationSchema.nullable(),
     checkin: z.object({ found: z.array(z.string()), fixed: z.array(z.string()), minutesLeft: num }).strict().nullable(),
   }).passthrough().refine((g) => g.phase !== 'defects' || g.checkin !== null, { message: 'phase defects needs a check-in', path: ['checkin'] }),
 });

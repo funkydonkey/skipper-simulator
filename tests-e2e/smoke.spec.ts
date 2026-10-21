@@ -165,6 +165,7 @@ test('the week ends in a debrief with the voices block, without horizontal scrol
   await page.getByRole('button', { name: 'Начать неделю' }).click();
 
   const heading = page.getByRole('heading', { name: 'Голоса недели' });
+  let maneuverDays = 0;
   for (let step = 0; step < 400 && (await screenName(page)) !== 'debrief'; step++) {
     switch (await screenName(page)) {
       case 'morning': await page.getByRole('button', { name: 'Начать день' }).click(); break;
@@ -179,6 +180,10 @@ test('the week ends in a debrief with the voices block, without horizontal scrol
         break;
       }
       case 'maneuvers':
+        await expect(page.locator('[data-screen="maneuvers"] [data-situation="forecast"]'), 'the forecast situation card').toBeVisible();
+        await expect(page.getByText('Прогноз — на месте может отличаться')).toBeVisible();
+        await noHorizontalScroll(page, 'maneuvers');
+        maneuverDays++;
         await fillManeuverPools(page);
         await page.getByRole('button', { name: 'Готово' }).click();
         break;
@@ -192,6 +197,7 @@ test('the week ends in a debrief with the voices block, without horizontal scrol
     }
   }
   expect(await screenName(page)).toBe('debrief');
+  expect(maneuverDays, 'the week sailed somewhere at least once').toBeGreaterThan(0);
   await actionsInViewport(page, 'debrief');
   await expect(heading).toBeVisible();
   await noHorizontalScroll(page, 'debrief');

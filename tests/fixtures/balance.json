@@ -52,7 +52,9 @@
   "checks": { "base": 0.5, "perLevel": 0.15, "min": 0.05, "max": 0.95 },
   "checkin": { "budgetMin": 72, "costMin": { "anchor": 15, "impeller": 20, "gas": 10, "toilets": 15, "sails": 25, "electrics": 20, "damage_photos": 15 } },
   "briefing": { "slots": 4, "maxDialogues": 2 },
-  "weather": { "frontAddKn": [8, 12], "frontShiftSteps": 2, "barometerDropHpa": 5, "afternoonFromHour": 13 },
+  "situation": { "calmKn": 4 },
+  "berths": { "sideToPriceFactor": 1.5, "ashoreTimeHours": 0.5, "ashoreAnchorFailMul": -0.5 },
+  "weather": { "frontAddKn": [8, 12], "frontShiftSteps": 2, "barometerDropHpa": 5, "afternoonFromHour": 13, "jitter": { "dirSteps": 1, "kn": 2 } },
   "schedule": { "days": 6, "returnDeadlineHour": 17, "lateFeeEur": 400 },
   "rescue": { "jumpStartEur": 120, "jumpStartDelayMin": 180, "moodPenalty": 5, "towEur": 250, "towHours": 2, "towMoodPenalty": 10 },
   "budget": { "weekEur": 1500, "okFactor": 1.5 },
@@ -68,6 +70,7 @@
       "test_boat": { "systems": ["engine_cooling", "rig"], "causes": ["fault:engine_cooling", "break:engine_cooling", "fault:rig", "break:rig"] }
     },
     "weaknessMinRate": 0.6,
-    "careful": { "minMeanScore": 6, "weekInjuryRate": [0, 0.25] }
+    "careful": { "minMeanScore": 6, "weekInjuryRate": [0, 0.25] },
+    "variety": { "minMooringStepSets": 3, "minMeanWeeklyMooringSets": 1.5, "minTemplatesSeen": 4 }
   }
 }
