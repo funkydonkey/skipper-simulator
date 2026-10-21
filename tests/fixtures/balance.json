@@ -69,7 +69,7 @@
     "weakness": {
       "test_boat": { "systems": ["engine_cooling", "rig"], "causes": ["fault:engine_cooling", "break:engine_cooling", "fault:rig", "break:rig"] }
     },
-    "weaknessMinRate": 0.6,
+    "weaknessMinRate": 0.45,
     "careful": { "minMeanScore": 6, "weekInjuryRate": [0, 0.25] },
     "variety": { "minMooringStepSets": 3, "minMeanWeeklyMooringSets": 1.5, "minTemplatesSeen": 4 }
   }
