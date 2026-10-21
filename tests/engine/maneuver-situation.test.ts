@@ -150,7 +150,7 @@ describe('anchor ashore', () => {
 });
 
 describe('arrival by berth (bundled world)', () => {
-  const quiet: Content = { ...real, events: [], maneuvers: [...real.maneuvers, sideTo(real.maneuvers.find((x) => x.kind === 'mooring' && !x.berth)!)] };
+  const quiet: Content = { ...real, events: [] };
   const stateAt = (locationId: string, over = {}) => makeState({
     locationId, weatherTemplateId: 'meltemi_week', boatId: real.boats[0]!.id, systems: {}, ...over,
   });
@@ -163,7 +163,7 @@ describe('arrival by berth (bundled world)', () => {
   it('side-to runs the side-to maneuver and pays the fee x1.5; the situation and marinero roll are recorded', () => {
     const start = deepFreeze(stateAt('cala_azzurra'));
     const s = planDay(start, quiet, toNisi());
-    expect(s.log.some((e) => e.cause === 'order:ok:mooring_side_to_fx')).toBe(true);
+    expect(s.log.some((e) => e.cause === 'order:ok:mooring_side_to')).toBe(true);
     const fee = s.log.find((e) => e.cause === 'marina:fee')!;
     expect(fee.delta!.moneyEur).toBeCloseTo(-sideFee(start).eur, 6);
     expect(s.situation).toMatchObject({ berth: 'side_to', source: 'fact' });
@@ -176,7 +176,7 @@ describe('arrival by berth (bundled world)', () => {
     const start = stateAt('cala_azzurra');
     const s = planDay(start, quiet, toNisi({ berth: undefined }));
     expect(s.situation!.berth).toBe('stern_to');
-    expect(s.log.some((e) => e.cause.startsWith('order:') && e.cause.endsWith(':mooring_side_to_fx'))).toBe(false);
+    expect(s.log.some((e) => e.cause.startsWith('order:') && e.cause.endsWith(':mooring_side_to'))).toBe(false);
     expect(s.log.find((e) => e.cause === 'marina:fee')!.delta!.moneyEur).toBeCloseTo(-priceFor(40, start.voices.economist, b).eur, 6);
   });
   it('anchor_ashore at a quay is INVALID_INPUT', () => {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { maneuverRisk, type ManeuverKind } from '../../../engine';
+import { correctOrder, maneuverRisk, type ManeuverKind } from '../../../engine';
 import { Button } from '../../components/Button';
 import { ChanceBadge } from '../../components/ChanceBadge';
 import { ScreenFrame } from '../../components/ScreenFrame';
@@ -22,7 +22,7 @@ export function ManeuversScreen() {
   const plan = session.ui.draftPlan;
   if (!plan) return null;
   const specs = maneuversFor(game, content, plan);
-  const complete = specs.every((s) => (orders[s.kind]?.length ?? 0) === s.maneuver.steps.length);
+  const complete = specs.every((s) => (orders[s.kind]?.length ?? 0) === correctOrder(s.maneuver).length);
   const set = (kind: ManeuverKind) => (order: string[]) => setOrders((o) => ({ ...o, [kind]: order }));
 
   return (

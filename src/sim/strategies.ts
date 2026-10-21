@@ -3,7 +3,7 @@ import { tavernaBill, tavernaOpen, type EveningChoice } from '../engine/day/even
 import type { MorningChoice } from '../engine/day/morning';
 import { optionAvailable } from '../engine/events';
 import { buildConditionContext } from '../engine/expr';
-import { correctOrder } from '../engine/maneuver';
+import { correctOrder, maneuverFor } from '../engine/maneuver';
 import { MANEUVER_KINDS, type CheckpointId, type Content, type DayPlan, type Effect, type EventOption, type GameEvent, type GameState, type LegPlan, type ManeuverKind, type TrainableVoice } from '../engine/types';
 import { checkChance } from '../engine/voices';
 import type { RepairChoice } from '../engine/repair';
@@ -103,7 +103,7 @@ const hasTaverna = (s: GameState, c: Content): boolean => {
 function reversedOrders(c: Content): Partial<Record<ManeuverKind, string[]>> {
   const orders: Partial<Record<ManeuverKind, string[]>> = {};
   for (const kind of MANEUVER_KINDS) {
-    const m = c.maneuvers.find((x) => x.kind === kind);
+    const m = maneuverFor(c, kind);
     if (m) orders[kind] = [...correctOrder(m)].reverse();
   }
   return orders;

@@ -22,7 +22,7 @@ describe('ManeuversScreen', () => {
     expect(done).toBeDisabled();
     for (const kind of ['departure', 'anchoring'] as const) {
       const m = content.maneuvers.find((x) => x.kind === kind)!;
-      for (const step of m.steps) await r.user.click(screen.getByRole('button', { name: step.text.ru }));
+      for (const step of m.steps.filter((x) => x.when === undefined)) await r.user.click(screen.getByRole('button', { name: step.text.ru }));
     }
     expect(done).toBeEnabled();
     await r.user.click(done);
