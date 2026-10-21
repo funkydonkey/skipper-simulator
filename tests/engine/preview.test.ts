@@ -12,6 +12,13 @@ const motor = (routeId: string): LegPlan => ({ routeId, mode: 'motor', reefs: 0,
 const plan = (legs: LegPlan[], departureHour = 9, swimStops = 0): DayPlan => ({ departureHour, legs, swimStops, shower: 'normal', autopilot: false });
 
 describe('previewPlan', () => {
+  it("a boat's own motorLph replaces the balance burn rate in the fuel estimate", () => {
+    const thirsty = { ...content, boats: content.boats.map((x) => ({ ...x, motorLph: content.balance.fuel.motorLph * 2 })) };
+    const base = previewPlan(makeState(), content, plan([motor('r_base_bay_a')]));
+    const own = previewPlan(makeState(), thirsty, plan([motor('r_base_bay_a')]));
+    expect(own.fuelNeededL).toBeCloseTo(base.fuelNeededL * 2, 0);
+  });
+
   it('estimates departure, legs and arrival for a one-leg day without touching state', () => {
     const state = deepFreeze(makeState());
     const p = previewPlan(state, content, plan([motor('r_base_bay_a')]));

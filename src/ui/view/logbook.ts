@@ -184,7 +184,10 @@ const DESCRIBE: Record<string, Describer> = {
     if (what === 'late_fee') return say('lateFee', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0) }, 'bad');
     return what === 'on_time' ? say('returnOnTime', lang, {}, 'good') : say('returnLate', lang, {}, 'bad');
   },
-  deposit: ([, id = ''], _e, c, lang) => say('depositCharged', lang, { what: defectText(c, id, lang) }, 'bad'),
+  deposit: ([kind, id = ''], e, c, lang) => {
+    if (kind === 'broken') return say('returnedBroken', lang, { system: systemInline(c, id, lang), eur: num(e, 'eur') }, 'bad');
+    return say('depositCharged', lang, { what: defectText(c, id, lang) }, 'bad');
+  },
 };
 
 export function describeEntry(e: LogEntry, content: Content, lang: Lang): LogLine | null {

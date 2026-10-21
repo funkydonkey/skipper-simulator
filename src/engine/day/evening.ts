@@ -114,5 +114,10 @@ export function finishWeek(state: GameState, content: Content): GameState {
       s = applyOutcome(s, boat, { cause: `deposit:unrecorded:${d.id}`, pillar: 'boat', effect: { damage: d.chargedOnReturn } });
     }
   }
+  for (const def of content.systems) {
+    if (s.systems[def.id]?.broken && def.returnCostEur) {
+      s = appendLog(s, { kind: 'effect', cause: `deposit:broken:${def.id}`, pillar: 'boat', data: { eur: def.returnCostEur } });
+    }
+  }
   return { ...s, phase: 'debrief' };
 }

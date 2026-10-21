@@ -78,7 +78,7 @@ const DefectSchema = z.object({
 
 export const BoatSchema: z.ZodType<Boat> = z.object({
   id: Id, name: Text, lengthFt: Pos, cabins: Int.positive(), berths: Int.positive(),
-  waterTankL: Pos, fuelTankL: Pos, serviceBankAh: Pos, serviceBanks: Int.positive(), starterSeparate: z.boolean(),
+  waterTankL: Pos, fuelTankL: Pos, motorLph: Pos.optional(), serviceBankAh: Pos, serviceBanks: Int.positive(), starterSeparate: z.boolean(),
   solarW: NonNeg, electricToilet: z.boolean(),
   motorKn: Pos, hullSpeedKn: Pos, priceEur: NonNeg, depositEur: NonNeg,
   shinyFeatures: z.array(Text),
@@ -237,4 +237,5 @@ export const SystemDefSchema: z.ZodType<SystemDef> = z.object({
     dailyEffect: EffectSchema.optional(), anchorEffect: EffectSchema.optional(),
   }).strict(),
   repairs: z.array(RepairOptionSchema),
+  returnCostEur: NonNeg.optional(),
 }).strict();

@@ -105,7 +105,7 @@ export function runLeg(state: GameState, content: Content, boat: Boat, leg: LegP
   }
   let extraMin = 0;
   if (mode === 'motor') {
-    s = applyOutcome(s, boat, { cause: 'consumption:fuel', pillar: 'boat', effect: { fuel: -round1(res.hours * b.fuel.motorLph) } });
+    s = applyOutcome(s, boat, { cause: 'consumption:fuel', pillar: 'boat', effect: { fuel: -round1(res.hours * (boat.motorLph ?? b.fuel.motorLph)) } });
     if (s.resources.fuelL <= 0) s = applyOutcome(s, boat, { cause: 'zero:fuel', pillar: 'boat', effect: {} });
   } else {
     const risks = sailRisks(s, content, boat, route, res);

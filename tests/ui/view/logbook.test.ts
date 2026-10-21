@@ -144,6 +144,12 @@ describe('logbook does not spoil the weather', () => {
 describe('logbook boat systems', () => {
   const text = (cause: string, lang: 'ru' | 'en', extra: Partial<LogEntry> = {}) => describeEntry(entry(cause, extra), content, lang)?.text;
 
+  it('describes a system returned broken with its deposit charge', () => {
+    const data = { eur: 600 };
+    expect(text('deposit:broken:rig', 'ru', { data })).toBe('Вернули сломанным: паруса и такелаж — 600 € из депозита');
+    expect(text('deposit:broken:rig', 'en', { data })).toBe('Returned broken: sails and rig — €600 from the deposit');
+  });
+
   it('describes a fault, a real break, a tow and a marina without money', () => {
     expect(text('fault:rig:genoa_seam_rip', 'ru')).toBe('Неисправность: паруса и такелаж');
     expect(text('fault:rig:genoa_seam_rip', 'en')).toBe('Fault: sails and rig');

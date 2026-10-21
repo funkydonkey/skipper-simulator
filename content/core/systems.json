@@ -1,6 +1,7 @@
 [
   {
     "id": "engine_cooling",
+    "returnCostEur": 400,
     "name": {
       "ru": "Охлаждение двигателя",
       "en": "Engine cooling"
@@ -73,6 +74,7 @@
   },
   {
     "id": "heads",
+    "returnCostEur": 150,
     "name": {
       "ru": "Гальюны",
       "en": "Heads"
@@ -174,6 +176,7 @@
   },
   {
     "id": "windlass",
+    "returnCostEur": 250,
     "name": {
       "ru": "Якорное устройство",
       "en": "Anchor gear"
@@ -249,6 +252,7 @@
   },
   {
     "id": "electrical",
+    "returnCostEur": 300,
     "name": {
       "ru": "Электрика",
       "en": "Electrics"
@@ -321,6 +325,7 @@
   },
   {
     "id": "rig",
+    "returnCostEur": 600,
     "name": {
       "ru": "Паруса и такелаж",
       "en": "Sails and rig"
@@ -403,6 +408,7 @@
   },
   {
     "id": "gas",
+    "returnCostEur": 100,
     "name": {
       "ru": "Газ",
       "en": "Gas"
@@ -471,6 +477,7 @@
   },
   {
     "id": "bow_thruster",
+    "returnCostEur": 450,
     "name": {
       "ru": "Подруливающее устройство",
       "en": "Bow thruster"

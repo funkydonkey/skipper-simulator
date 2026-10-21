@@ -50,6 +50,12 @@ describe('brokenFlags', () => {
 });
 
 describe('legs with broken systems', () => {
+  it('a motor leg burns the boat motorLph, not the balance default', () => {
+    const run = (c: Content) => planDay(makeState(), c, plan([leg('motor')])).log.find((e) => e.cause === 'consumption:fuel')!.delta!.fuelL!;
+    const thirsty = { ...content, boats: content.boats.map((x) => ({ ...x, motorLph: content.balance.fuel.motorLph * 2 })) };
+    expect(run(thirsty)).toBeCloseTo(run(content) * 2, 0);
+  });
+
   it('engine_cooling: a motor leg runs as sail, burns no fuel, logs the cause, skips engine start', () => {
     const s = planDay(deepFreeze(brokenState('engine_cooling')), content, plan([leg('motor')]));
     expect(legMode(s)).toBe('sail');

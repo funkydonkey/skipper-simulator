@@ -12,8 +12,12 @@ export function depositLoss(damages: readonly string[], b: Balance): number {
   return damages.reduce((sum, d) => sum + (b.deposit.damageCostEur[d] ?? b.deposit.defaultDamageEur), 0);
 }
 
+/** Charges logged at the return for systems handed back broken. */
+const brokenReturnLoss = (log: readonly LogEntry[]): number =>
+  log.reduce((sum, e) => (causeMatches(e.cause, 'deposit:broken') ? sum + (typeof e.data?.eur === 'number' ? e.data.eur : 0) : sum), 0);
+
 export function gradeWeek(state: GameState, boat: Boat, b: Balance): { scales: WeekScales; depositLossEur: number; depositReturnedEur: number } {
-  const loss = depositLoss(state.damages, b);
+  const loss = depositLoss(state.damages, b) + brokenReturnLoss(state.log);
   const nearMiss = state.log.some((e) => e.kind === 'effect' && causeMatches(e.cause, 'maneuver'));
   const mood = state.resources.mood;
   const crew: Grade = mood >= b.grading.crewGoodMood ? 'good' : mood >= b.grading.crewOkMood ? 'ok' : 'bad';

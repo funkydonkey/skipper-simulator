@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { findDeadContent } from '../../src/content/dead';
+import { SystemDefSchema } from '../../src/content/schema';
 import { content } from '../ui/fixtures';
 
 const FAILURES = content.systems.flatMap((s) => s.failures.map((f) => ({ system: s.id, ...f })));
@@ -25,6 +26,13 @@ describe('system failures content', () => {
 
   it('a torn genoa breaks the rig whichever option is chosen', () => {
     for (const o of eventOf('genoa_seam_rip')!.options) expect(o.effects?.break, o.id).toBe('rig');
+  });
+
+  it('every system carries a non-negative returnCostEur and the schema rejects a negative one', () => {
+    for (const d of content.systems) expect(d.returnCostEur, d.id).toBeGreaterThanOrEqual(0);
+    const rig = content.systems.find((d) => d.id === 'rig')!;
+    expect(SystemDefSchema.safeParse(rig).success).toBe(true);
+    expect(SystemDefSchema.safeParse({ ...rig, returnCostEur: -1 }).success).toBe(false);
   });
 
   it('migrated events no longer read defect flags', () => {

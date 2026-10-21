@@ -133,6 +133,7 @@ export const LOG = dict({
   returnOnTime: { ru: 'Вернулись на базу вовремя', en: 'Back at base on time' },
   returnLate: { ru: 'Не успели на базу к сроку', en: 'Missed the base deadline' },
   lateFee: { ru: 'Штраф за опоздание: {eur} €', en: 'Late return fee: €{eur}' },
+  returnedBroken: { ru: 'Вернули сломанным: {system} — {eur} € из депозита', en: 'Returned broken: {system} — €{eur} from the deposit' },
   depositCharged: { ru: 'С депозита удержали: {what}', en: 'Deducted from the deposit: {what}' },
   unknown: { ru: 'Запись: {cause}', en: 'Entry: {cause}' },
 });

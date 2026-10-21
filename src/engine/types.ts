@@ -114,6 +114,8 @@ export interface Boat {
   berths: number;
   waterTankL: number;
   fuelTankL: number;
+  /** Fuel burn of this boat's engine, L/h; falls back to balance.fuel.motorLph. */
+  motorLph?: number;
   serviceBankAh: number;
   serviceBanks: number;
   /** false = one shared bank: service drain also drains the starter. */
@@ -164,6 +166,8 @@ export interface SystemDef {
   id: SystemId; name: LocalizedText; checkpoint?: CheckpointId;
   wearPer?: Partial<Record<'motor_hour' | 'sail_hour' | 'night' | 'anchoring', number>>;
   failures: SystemFailure[]; brokenEffect: BrokenEffect; repairs: RepairOption[];
+  /** Charged to the deposit when the system is still broken at the return. */
+  returnCostEur?: number;
 }
 
 export interface PointServices {

@@ -153,7 +153,7 @@ export function previewPlan(state: GameState, content: Content, plan: DayPlan): 
     legs, departureMin, arrivalMin, destinationId: at, swimStops: swims.count,
     arrivalAfterSunset: swims.clockMin >= b.time.sunsetHour * 60,
     marinaLate,
-    fuelNeededL: round1(motorHours * b.fuel.motorLph),
+    fuelNeededL: round1(motorHours * (requireBoat(content, state).motorLph ?? b.fuel.motorLph)),
     restHours: restHours(arrivalMin, b),
     ...arrivalOdds(ctx, dest, swims.clockMin, marinaLate),
     marinaAffordable: dest.kind === 'bay' || dest.priceEur <= 0 || canAfford(state, priceFor(dest.priceEur, state.voices.economist, b).eur),

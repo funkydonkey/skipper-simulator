@@ -167,4 +167,15 @@ describe('finishWeek charges', () => {
     const absent = finishWeek(atReturn(performCheckin(atCheckin(['worn_impeller', 'toilet_valve']), content, [])), content);
     expect(absent.damages).not.toContain('hull_scratch');
   });
+  it('charges returnCostEur for every system still broken, once, and only for broken ones', () => {
+    const priced = { ...content, systems: content.systems.map((d) => (d.returnCostEur === undefined && ['rig', 'heads'].includes(d.id) ? { ...d, returnCostEur: d.id === 'rig' ? 600 : 150 } : d)) };
+    const base = atReturn(atCheckin([]));
+    const broken = { ...base, systems: { ...base.systems, rig: { ...base.systems.rig!, broken: true } } };
+    const s = finishWeek(broken, priced);
+    const charges = s.log.filter((e) => e.cause.startsWith('deposit:broken:'));
+    expect(charges.map((e) => e.cause)).toEqual(['deposit:broken:rig']);
+    expect(charges[0]!.data).toEqual({ eur: 600 });
+    expect(charges[0]!.pillar).toBe('boat');
+    expect(finishWeek(atReturn(atCheckin([])), priced).log.some((e) => e.cause.startsWith('deposit:broken:'))).toBe(false);
+  });
 });
