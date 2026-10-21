@@ -1,8 +1,11 @@
 import { screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { previewPlan, type GameState } from '../../../src/engine';
+import { previewPlan, tavernaBill, type GameState } from '../../../src/engine';
 import { PreviewPanel } from '../../../src/ui/screens/planning/PreviewPanel';
 import { content, gameAt } from '../fixtures';
+import { EveningScreen } from '../../../src/ui/screens/evening/EveningScreen';
+import { useSession } from '../../../src/ui/session/SessionContext';
+import type { Session } from '../../../src/ui/session/types';
 import { renderShell, renderWithSession } from '../render';
 
 /** Evening at anchor in a bay, with the given systems broken and the given money. */
@@ -84,5 +87,79 @@ describe('Planning preview', () => {
     const preview = { ...previewPlan(game, content, { departureHour: 9, legs: [], swimStops: 0, shower: 'normal', autopilot: false }), marinaAffordable: false };
     renderWithSession(<PreviewPanel preview={preview} />, game);
     expect(screen.getByText(/нет денег/)).toBeInTheDocument();
+  });
+});
+
+describe('the dinner choice is never stale', () => {
+  const radio = (name: RegExp | string) => screen.getByLabelText(name) as HTMLInputElement;
+  const TAVERNA = /^\s*Таверна ·/;
+  const COOK = 'Готовим на борту';
+  /** Evening alongside at the base marina (taverna open until 23:00). */
+  function atBase(broken: string[], moneyEur: number, clockMin = 19 * 60): GameState {
+    const g = eveningAtAnchor(broken, moneyEur);
+    return { ...g, locationId: 'base_marina', clockMin, dayFacts: g.dayFacts && { ...g.dayFacts, mooring: 'berth' } };
+  }
+
+  it('with the gas broken, the taverna is chosen by default and lights out eats there', async () => {
+    const r = renderShell(atBase(['gas'], 1000));
+    expect(radio(COOK).checked).toBe(false);
+    expect(radio(TAVERNA).checked).toBe(true);
+    await r.user.click(screen.getByRole('button', { name: 'Отбой' }));
+    expect(r.session().error).toBeNull();
+    expect(r.session().game!.log.some((e) => e.cause === 'activity:taverna')).toBe(true);
+  });
+
+  it('with the gas broken and no taverna, dinner is cold, with the warning, and lights out works', async () => {
+    const r = renderShell(eveningAtAnchor(['gas']));
+    expect(radio(COOK).checked).toBe(true);
+    expect(radio(TAVERNA).checked).toBe(false);
+    expect(screen.getByText(/Газ сломан/)).toBeInTheDocument();
+    await r.user.click(screen.getByRole('button', { name: 'Отбой' }));
+    expect(r.session().error).toBeNull();
+    expect(r.session().game!.day).toBe(2);
+  });
+
+  it('falls back to cooking when a repair spends the money for the taverna', async () => {
+    const start = atBase(['engine_cooling'], 0);
+    const bill = tavernaBill(start, content.balance).eur;
+    const r = renderShell({ ...start, resources: { ...start.resources, moneyEur: bill + 10 } });
+    await r.user.click(radio(TAVERNA));
+    expect(radio(TAVERNA).checked).toBe(true);
+    await r.user.click(screen.getByRole('button', { name: /Починить самим/ }));
+    expect(radio(TAVERNA)).toBeDisabled();
+    expect(radio(TAVERNA).checked).toBe(false);
+    expect(radio(COOK).checked).toBe(true);
+    await r.user.click(screen.getByRole('button', { name: 'Отбой' }));
+    expect(r.session().error).toBeNull();
+    expect(r.session().game!.day).toBe(2);
+  });
+
+  it('falls back to cooking even when the screen is not remounted after the repair', async () => {
+    const seen: { session: Session | null } = { session: null };
+    function Probe() {
+      seen.session = useSession().session;
+      return null;
+    }
+    const start = atBase(['engine_cooling'], 0);
+    const game = { ...start, resources: { ...start.resources, moneyEur: tavernaBill(start, content.balance).eur + 10 } };
+    const { user } = renderWithSession(<><EveningScreen /><Probe /></>, game);
+    await user.click(radio(TAVERNA));
+    await user.click(screen.getByRole('button', { name: /Починить самим/ }));
+    expect(radio(TAVERNA).checked).toBe(false);
+    expect(radio(COOK).checked).toBe(true);
+    await user.click(screen.getByRole('button', { name: 'Отбой' }));
+    expect(seen.session!.error).toBeNull();
+    expect(seen.session!.game!.day).toBe(2);
+  });
+
+  it('falls back to cooking when a repair runs past the taverna closing time', async () => {
+    const r = renderShell(atBase(['engine_cooling'], 2000, 22 * 60));
+    await r.user.click(radio(TAVERNA));
+    await r.user.click(screen.getByRole('button', { name: /Сервис в марине/ }));
+    expect(screen.getByText(/Таверна уже закрыта/)).toBeInTheDocument();
+    expect(radio(COOK).checked).toBe(true);
+    await r.user.click(screen.getByRole('button', { name: 'Отбой' }));
+    expect(r.session().error).toBeNull();
+    expect(r.session().game!.log.some((e) => e.cause === 'activity:taverna')).toBe(false);
   });
 });

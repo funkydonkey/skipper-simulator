@@ -13,6 +13,19 @@ import { Expectations } from '../morning/Expectations';
 import { RepairBlock } from './RepairBlock';
 import { EVENING } from './strings';
 
+type Dinner = 'cook' | 'taverna';
+
+/**
+ * The dinner "Lights out" will send, derived each render so it is never stale: a taverna that closed or became
+ * unaffordable (e.g. after a repair) falls back to cooking; with the gas broken the default is the taverna when
+ * it is available, else a cold dinner on board.
+ */
+function effectiveDinner(picked: Dinner | null, noCook: boolean, tavernaAvailable: boolean): Dinner {
+  if (picked === 'taverna') return tavernaAvailable ? 'taverna' : 'cook';
+  if (picked === 'cook' && !noCook) return 'cook';
+  return noCook && tavernaAvailable ? 'taverna' : 'cook';
+}
+
 export function EveningScreen() {
   const { game, content, lang } = useGame();
   const act = useAct();
@@ -26,7 +39,8 @@ export function EveningScreen() {
     : !open ? t('tavernaClosed', { time: formatHour(b.time.tavernaCloseHour) })
       : game.resources.moneyEur < bill.eur ? t('noMoney') : null;
   const noCook = brokenFlags(game, content).noCook;
-  const [dinner, setDinner] = useState<'cook' | 'taverna'>('cook');
+  const [picked, setDinner] = useState<Dinner | null>(null);
+  const dinner = effectiveDinner(picked, noCook, tavernaReason === null);
   const [line, setLine] = useState<string | null>(null);
   const dialogues = content.dialogues.filter((d) => d.contexts.includes('evening'));
   const chosen = dialogues.find((d) => d.id === line);
