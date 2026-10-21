@@ -1,6 +1,5 @@
 import { canAfford } from '../engine/budget';
-import { priceFor } from '../engine/perks';
-import { tavernaOpen, type EveningChoice } from '../engine/day/evening';
+import { tavernaBill, tavernaOpen, type EveningChoice } from '../engine/day/evening';
 import type { MorningChoice } from '../engine/day/morning';
 import { optionAvailable } from '../engine/events';
 import { buildConditionContext } from '../engine/expr';
@@ -97,7 +96,7 @@ const available = (s: GameState, c: Content, ev: GameEvent): EventOption[] => {
 };
 
 const hasTaverna = (s: GameState, c: Content): boolean => {
-  const bill = priceFor(s.crew.length * c.balance.mood.tavernaEurPerPerson, s.voices.economist, c.balance).eur;
+  const bill = tavernaBill(s, c.balance).eur;
   return (c.map.find((p) => p.id === s.locationId)?.services.taverna ?? false) && tavernaOpen(s.clockMin, c.balance) && canAfford(s, bill);
 };
 
