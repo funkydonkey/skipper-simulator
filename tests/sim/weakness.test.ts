@@ -16,6 +16,19 @@ describe('weaknessHit', () => {
   const state = makeState({ log: [entry('zero:water:3')] });
   it('is true when a log cause starts with one of the boat causes', () => expect(weaknessHit(state, 'calypso_38', targets)).toBe(true));
   it('is false for a boat whose causes do not match', () => expect(weaknessHit(state, 'aurora_45', targets)).toBe(false));
+  it('counts a fault on a weak system as a hit, and a real break too', () => {
+    expect(weaknessHit(makeState({ log: [entry('fault:rig:genoa_seam_rip')] }), 'meltemi_40', targets)).toBe(true);
+    expect(weaknessHit(makeState({ log: [entry('break:rig')] }), 'meltemi_40', targets)).toBe(true);
+    expect(weaknessHit(makeState({ log: [entry('fault:electrical:alternator_fault')] }), 'aurora_45', targets)).toBe(true);
+    expect(weaknessHit(makeState({ log: [entry('fault:bow_thruster:thruster_trip')] }), 'aurora_45', targets)).toBe(true);
+  });
+  it('lists fault:<x> and break:<x> together for every weak system named in a system cause', () => {
+    for (const [boat, w] of Object.entries(targets.weakness)) {
+      const named = new Set(w.causes.filter((c) => /^(fault|break):/.test(c)).map((c) => c.split(':')[1]));
+      for (const sys of named) expect(w.causes, `${boat}:${sys}`).toEqual(expect.arrayContaining([`fault:${sys}`, `break:${sys}`]));
+      for (const sys of named) expect(w.systems, `${boat}:${sys}`).toContain(sys);
+    }
+  });
   it('is false for an empty log and for an unknown boat', () => {
     expect(weaknessHit(makeState({ log: [] }), 'calypso_38', targets)).toBe(false);
     expect(weaknessHit(state, 'ghost', targets)).toBe(false);

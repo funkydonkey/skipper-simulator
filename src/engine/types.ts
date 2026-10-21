@@ -61,7 +61,7 @@ export interface Effect {
   damage?: string;
   /** Clears `broken` on a boat system (no-op when the boat lacks it). Does not touch `damages`. */
   repair?: string;
-  /** Marks a boat system broken (no-op when the boat lacks it). */
+  /** Marks a boat system broken (no-op when the boat lacks it); logs `break:<system>` when it was working. */
   break?: SystemId;
   /** Adds wear to boat systems (ignores systems the boat lacks). */
   wear?: Record<SystemId, number>;
@@ -75,8 +75,8 @@ export interface Effect {
   xp?: Partial<Record<TrainableVoice, number>>;
 }
 
-/** `saved`: euros the economist took off a money spend; logged as a separate info entry. */
-export interface Outcome { cause: string; pillar?: Pillar; effect: Effect; saved?: number }
+/** `saved`: euros the economist took off a money spend; logged as a separate info entry. `odds`: the roll that caused it, kept on the entry. */
+export interface Outcome { cause: string; pillar?: Pillar; effect: Effect; saved?: number; odds?: ChanceValue }
 
 export type LogKind = 'decision' | 'effect' | 'event' | 'signal' | 'info' | 'roll';
 export interface LogEntry {
@@ -146,7 +146,7 @@ export interface BrokenEffect {
 }
 export interface SystemFailure {
   id: string; phase: EventPhase; when?: string; chance: ChanceInput;
-  /** Applied on failure, before any queued event. Usually { break: <system> }. */
+  /** Applied on failure (logged as `fault:<system>:<id>`), before any queued event. */
   effect?: Effect;
   /** Existing event queued for the player's choice. */
   event?: string;

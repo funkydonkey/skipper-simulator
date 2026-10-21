@@ -41,10 +41,10 @@ function routeName(c: Content, id: string, lang: Lang): string {
   return r ? `${pointName(c, r.from, lang)} — ${pointName(c, r.to, lang)}` : id;
 }
 
-/** Human reason for an xp grant, from the inner cause (`roll:check:<event>:<option>`, `order:wrong:<m>:<err>`, `order:ok:<m>`); null when unknown. */
+/** Human reason for an xp grant, from the inner cause (`fault:<sys>:<f>`, `roll:check:<event>:<option>`, `order:wrong:<m>:<err>`, `order:ok:<m>`); null when unknown. */
 export function xpCauseText(inner: string[], c: Content, lang: Lang): string | null {
   const [root, a = '', b = ''] = inner;
-  if (root === 'break') return fmt(LOG.xpBreak[lang], { system: systemInline(c, a, lang) });
+  if (root === 'fault') return fmt(LOG.xpFault[lang], { system: systemInline(c, a, lang) });
   if (root === 'roll' && a === 'check' && inner[2] === 'repair') return fmt(LOG.xpRepair[lang], { system: systemInline(c, inner[3] ?? '', lang) });
   if (root === 'roll' && a === 'check') return fmt(LOG.xpCheck[lang], { option: optionText(c, inner[2] ?? '', inner[3] ?? '', lang) });
   if (root === 'order' && a === 'wrong') return fmt(LOG.xpManeuverWrong[lang], { title: maneuverTitle(c, b, lang) });
@@ -121,6 +121,8 @@ const DESCRIBE: Record<string, Describer> = {
     const key = ({ overpowered: 'sailOverpowered', break: 'sailBreak', reef_underway: 'sailReefUnderway' } as const)[what as 'break'];
     return key ? say(key, lang, {}, 'bad') : null;
   },
+  // `fault:<sys>:<f>` is a failure that fired (it may or may not break the system); `break:<sys>` is the system going broken.
+  fault: ([systemId = ''], _e, c, lang) => say('systemFault', lang, { system: systemInline(c, systemId, lang) }, 'bad'),
   break: ([systemId = ''], _e, c, lang) => say('systemBroke', lang, { system: systemInline(c, systemId, lang) }, 'bad'),
   system: ([what, id = ''], _e, c, lang) => {
     const system = systemName(c, id, lang);
@@ -162,7 +164,7 @@ const DESCRIBE: Record<string, Describer> = {
       case 'marina': return p === 0 ? null : outcome('rollMarinaHit', 'rollMarinaMiss'); // early arrival: no real roll
       case 'sail_break': return outcome('rollSailHit', 'rollSailMiss');
       case 'injury': return outcome('rollInjuryHit', 'rollInjuryMiss');
-      case 'failure': return null; // one roll per eligible failure per phase; a hit shows as its `break:` line
+      case 'failure': return null; // one roll per eligible failure per phase; a hit shows as its `fault:` line, with these odds
       default: return null;
     }
   },
@@ -218,9 +220,19 @@ export function dayLines(log: readonly LogEntry[], day: number, content: Content
   return log.filter((e) => e.day === day && !isNoise(e)).flatMap((e) => describeEntry(e, content, lang) ?? []);
 }
 
-export function logbookDays(log: readonly LogEntry[], content: Content, lang: Lang): Array<{ day: number; lines: LogLine[] }> {
+/** A fault's odds are shown once its day is over; on `today` the line stays without them (no spoilers). */
+function withoutTodaysFaultOdds(line: LogLine, today: number | undefined): LogLine {
+  if (line.day !== today || !line.odds || !line.cause.startsWith('fault:')) return line;
+  const { odds: _odds, ...rest } = line;
+  return rest;
+}
+
+/** `today`: the current game day, whose fault odds stay hidden. */
+export function logbookDays(log: readonly LogEntry[], content: Content, lang: Lang, today?: number): Array<{ day: number; lines: LogLine[] }> {
   const days = [...new Set(log.map((e) => e.day))].sort((a, b) => a - b);
-  return days.map((day) => ({ day, lines: dayLines(log, day, content, lang) })).filter((d) => d.lines.length > 0);
+  return days
+    .map((day) => ({ day, lines: dayLines(log, day, content, lang).map((l) => withoutTodaysFaultOdds(l, today)) }))
+    .filter((d) => d.lines.length > 0);
 }
 
 export interface DayGrowth { voice: TrainableVoice; xp: number; causes: string[] }

@@ -15,7 +15,7 @@ export function LogbookDrawer() {
   const tc = useT(COMMON);
   const game = session.game;
   if (!game) return null;
-  const days = open ? logbookDays(game.log, session.content, session.lang) : [];
+  const days = open ? logbookDays(game.log, session.content, session.lang, game.day) : [];
   const onKey = (e: KeyboardEvent<HTMLDivElement>): void => { if (e.key === 'Escape') setOpen(false); };
   return (
     <>

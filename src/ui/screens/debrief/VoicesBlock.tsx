@@ -18,7 +18,7 @@ function impactText(i: VoiceImpact, t: TFn<keyof typeof DEBRIEF>): string | null
   }
 }
 
-/** Roots are two segments (`break:<system>`); a root may also be labelled by its first segment alone. */
+/** Roots are two segments (`fault:<system>`); a root may also be labelled by its first segment alone. */
 const xpRootLabel = (cause: string, lang: Lang): string => {
   const key = [cause, cause.split(':')[0] ?? ''].find((k) => Object.hasOwn(XP_ROOTS, k));
   return (key ? XP_ROOTS[key]! : XP_ROOT_OTHER)[lang];

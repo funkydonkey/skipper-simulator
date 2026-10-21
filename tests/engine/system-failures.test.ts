@@ -28,15 +28,30 @@ const facts = (over: Partial<DayFacts> = {}): DayFacts => ({
 const causes = (s: GameState): string[] => s.log.map((e) => e.cause);
 
 describe('rollFailures', () => {
-  it('a hit breaks the system, logs the break and grants XP', () => {
+  it('a hit logs the fault, breaks the system, logs the break and grants XP for the fault', () => {
     const s0 = deepFreeze(onBoat());
     const r = rollFailures(s0, withSys([failure()]), 'passage');
     expect(r.state.systems.test_sys!.broken).toBe(true);
-    expect(causes(r.state)).toEqual(expect.arrayContaining(['roll:failure:test_sys:f', 'break:test_sys:f', 'xp:mechanic:break:test_sys:f']));
+    expect(causes(r.state)).toEqual(['roll:failure:test_sys:f', 'fault:test_sys:f', 'break:test_sys', 'xp:mechanic:fault:test_sys:f']);
     expect(r.state.voiceXp.mechanic).toBe(3);
     expect(r.state.log.find((e) => e.cause === 'roll:failure:test_sys:f')).toMatchObject({ kind: 'roll', data: { hit: true } });
     expect(r.state.rng).not.toBe(s0.rng);
     expect(r.queuedEvent).toBeUndefined();
+  });
+
+  it('the fault line carries the odds it fired with', () => {
+    const f = failure({ chance: { base: 0.5, mods: [{ add: 0.5 }] } });
+    const r = rollFailures(onBoat(), withSys([f]), 'passage');
+    const fault = r.state.log.find((e) => e.cause === 'fault:test_sys:f')!;
+    expect(fault).toMatchObject({ kind: 'effect', pillar: 'boat' });
+    expect(fault.odds).toEqual(r.state.log.find((e) => e.cause === 'roll:failure:test_sys:f')!.odds);
+    expect(fault.odds!.value).toBe(1);
+  });
+
+  it('a failure without a break effect logs a fault, never a break', () => {
+    const r = rollFailures(onBoat(), withSys([failure({ effect: undefined, xp: undefined })]), 'passage');
+    expect(r.state.systems.test_sys!.broken).toBe(false);
+    expect(causes(r.state)).toEqual(['roll:failure:test_sys:f', 'fault:test_sys:f']);
   });
 
   it('a miss logs the roll only', () => {
@@ -90,7 +105,7 @@ describe('rollFailures', () => {
     ]);
     const r = rollFailures(onBoat(), c, 'evening');
     expect(r.queuedEvent).toBe('toilet_clog');
-    expect(causes(r.state)).toEqual(['roll:failure:test_sys:ev', 'break:test_sys:ev']);
+    expect(causes(r.state)).toEqual(['roll:failure:test_sys:ev', 'fault:test_sys:ev']);
   });
 
   it('a no-event failure keeps rolling later ones', () => {
@@ -131,7 +146,7 @@ describe('queueEvent with failure events', () => {
     const s = queueEvent(onBoat({ day: 3 }), c, 'evening');
     expect(s.eventQueue).toEqual(['toilet_clog']);
     expect(s.firedEvents).toContain('toilet_clog');
-    expect(causes(s)).toEqual(['roll:failure:test_sys:ev', 'break:test_sys:ev', 'event:toilet_clog']);
+    expect(causes(s)).toEqual(['roll:failure:test_sys:ev', 'fault:test_sys:ev', 'event:toilet_clog']);
   });
 
   it('failure events never appear as eligible generic events', () => {

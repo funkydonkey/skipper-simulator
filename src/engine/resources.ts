@@ -88,7 +88,11 @@ export function applyOutcome(state: GameState, boat: Boat | null, o: Outcome, b?
     ...(o.pillar ? { pillar: o.pillar } : {}),
     ...(Object.keys(delta).length ? { delta } : {}),
     ...(data ? { data } : {}),
+    ...(o.odds ? { odds: o.odds } : {}),
   });
+  if (e.break && state.systems[e.break]?.broken === false) {
+    s = appendLog(s, { kind: 'effect', cause: `break:${e.break}`, pillar: 'boat' });
+  }
   if (e.injury && !causeMatches(o.cause, 'injury')) {
     s = appendLog(s, { kind: 'effect', cause: `injury:${o.cause}`, ...(o.pillar ? { pillar: o.pillar } : {}) });
   }

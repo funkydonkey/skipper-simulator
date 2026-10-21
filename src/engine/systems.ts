@@ -90,8 +90,8 @@ function rollFailure(state: GameState, content: Content, def: SystemDef, f: Syst
     kind: 'roll', cause: `roll:failure:${def.id}:${f.id}`, pillar: 'boat', odds: r.value.odds, data: { hit: r.value.hit },
   });
   if (!r.value.hit) return { state: s, hit: false };
-  const cause = `break:${def.id}:${f.id}`;
-  s = applyOutcome(s, requireBoat(content, s), { cause, pillar: 'boat', effect: f.effect ?? {} });
+  const cause = `fault:${def.id}:${f.id}`;
+  s = applyOutcome(s, requireBoat(content, s), { cause, pillar: 'boat', effect: f.effect ?? {}, odds: r.value.odds });
   return { state: f.xp ? grantXp(s, f.xp, cause, content.balance) : s, hit: true };
 }
 

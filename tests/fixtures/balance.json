@@ -65,8 +65,8 @@
     "weekInjuryRate": { "newbie": [0.5, 1.0], "expert": [0, 0.2] },
     "zeroFireAllow": ["fuel_dock_queue", "gas_smell"],
     "weakness": {
-      "aurora_45": { "systems": ["electrical", "bow_thruster"], "causes": ["zero:service", "event:dead_starter_morning", "break:bow_thruster", "break:electrical"] },
-      "meltemi_40": { "systems": ["rig"], "causes": ["break:rig", "marina:refused"] },
+      "aurora_45": { "systems": ["electrical", "bow_thruster"], "causes": ["zero:service", "event:dead_starter_morning", "fault:bow_thruster", "break:bow_thruster", "fault:electrical", "break:electrical"] },
+      "meltemi_40": { "systems": ["rig"], "causes": ["fault:rig", "break:rig", "marina:refused"] },
       "calypso_38": { "systems": ["heads", "gas"], "causes": ["zero:water", "zero:fuel", "rescue:tow"] }
     },
     "weaknessMinRate": 0.6,

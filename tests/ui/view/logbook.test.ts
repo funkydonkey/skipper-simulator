@@ -144,9 +144,11 @@ describe('logbook does not spoil the weather', () => {
 describe('logbook boat systems', () => {
   const text = (cause: string, lang: 'ru' | 'en', extra: Partial<LogEntry> = {}) => describeEntry(entry(cause, extra), content, lang)?.text;
 
-  it('describes a failure, a tow and a marina without money', () => {
-    expect(text('break:engine_cooling:impeller_overheat', 'ru')).toBe('Сломалось: охлаждение двигателя');
-    expect(text('break:engine_cooling:impeller_overheat', 'en')).toBe('Broke down: engine cooling');
+  it('describes a fault, a real break, a tow and a marina without money', () => {
+    expect(text('fault:rig:genoa_seam_rip', 'ru')).toBe('Неисправность: паруса и такелаж');
+    expect(text('fault:rig:genoa_seam_rip', 'en')).toBe('Fault: sails and rig');
+    expect(text('break:engine_cooling', 'ru')).toBe('Сломалось: охлаждение двигателя');
+    expect(text('break:engine_cooling', 'en')).toBe('Broke down: engine cooling');
     expect(text('rescue:tow:r1', 'ru', { delta: { moneyEur: -250 }, data: { time_hours: 2 } })).toBe('Буксир: 250 €, +2 ч');
     expect(text('rescue:tow:r1', 'en', { delta: { moneyEur: -250 }, data: { time_hours: 2 } })).toBe('Tow: €250, +2 h');
     expect(text('marina:no_money', 'ru')).toBe('Марина: не хватило денег');
@@ -172,9 +174,21 @@ describe('logbook boat systems', () => {
     expect(isNoise(entry('wear:sail_hour', { kind: 'effect' }))).toBe(true);
   });
 
-  it('explains xp from failures and repairs', () => {
+  it('shows a fault\'s odds on past days only, never today', () => {
+    const odds = { value: 0.25, parts: [{ source: 'base', delta: 0.25 }] };
+    const log: LogEntry[] = [
+      entry('fault:rig:genoa_seam_rip', { day: 2, kind: 'effect', pillar: 'boat', odds }),
+      entry('fault:rig:genoa_seam_rip', { day: 3, kind: 'effect', pillar: 'boat', odds }),
+    ];
+    const lines = logbookDays(log, content, 'ru', 3).flatMap((d) => d.lines);
+    expect(lines.map((l) => [l.day, l.odds?.value])).toEqual([[2, 0.25], [3, undefined]]);
+    expect(logbookDays(log, content, 'ru').flatMap((d) => d.lines).every((l) => l.odds?.value === 0.25)).toBe(true);
+  });
+
+  it('explains xp from faults and repairs', () => {
     const xp = (cause: string) => text(`xp:mechanic:${cause}`, 'ru', { kind: 'info', data: { xp: 2 } });
-    expect(xp('break:engine_cooling:impeller_overheat')).toContain('отказ');
+    expect(xp('fault:engine_cooling:impeller_overheat')).toBe('+2 Механик — неисправность: охлаждение двигателя');
+    expect(text('xp:mechanic:fault:rig:genoa_seam_rip', 'en', { kind: 'info', data: { xp: 2 } })).toContain('fault: sails and rig');
     expect(xp('roll:check:repair:gas:self')).toContain('ремонт');
   });
 });

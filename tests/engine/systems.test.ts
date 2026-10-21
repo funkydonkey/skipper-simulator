@@ -61,6 +61,16 @@ describe('system effects', () => {
     expect(apply(apply(s0, { wear: { rig: 3 } }), { wear: { rig: 2 } }).systems.rig!.wear).toBe(5);
   });
 
+  it('logs break:<system> only when the system goes from working to broken', () => {
+    const breaks = (s: GameState): string[] => s.log.map((e) => e.cause).filter((c) => c.startsWith('break:'));
+    const once = apply(s0, { break: 'rig' });
+    expect(breaks(once)).toEqual(['break:rig']);
+    expect(once.log.find((e) => e.cause === 'break:rig')).toMatchObject({ kind: 'effect', pillar: 'boat' });
+    expect(breaks(apply(once, { break: 'rig' }))).toEqual(['break:rig']);
+    expect(breaks(apply(on('calypso_38'), { break: 'bow_thruster' }, calypso))).toEqual([]);
+    expect(breaks(apply(s0, { mood: -1 }))).toEqual([]);
+  });
+
   it('is a no-op for a system not on the boat', () => {
     const c = on('calypso_38');
     const after = apply(c, { break: 'bow_thruster', repair: 'bow_thruster', wear: { bow_thruster: 4 } }, calypso);

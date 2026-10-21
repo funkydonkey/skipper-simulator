@@ -31,7 +31,7 @@ function assertHealthy(lang: Lang): void {
 
 interface Week { r: ReturnType<typeof renderShell>; eveningXpLines: number }
 
-export async function playWeek(lang: Lang, random = 0.123): Promise<Week> {
+async function playWeek(lang: Lang, random = 0.123): Promise<Week> {
   let eveningXpLines = 0;
   const repairedOn = new Set<number>();
   vi.spyOn(Math, 'random').mockReturnValue(random);
@@ -112,8 +112,8 @@ export async function playWeek(lang: Lang, random = 0.123): Promise<Week> {
 // Seed chosen by scanning: this week breaks the windlass and the first repair attempt fails, the second succeeds.
 const FAILURE_WEEK_RANDOM = 0.3;
 const LOGBOOK_LINES = {
-  ru: { broke: 'Сломалось: якорное устройство', fixed: 'Починили: якорное устройство', failed: 'Починить не вышло: якорное устройство' },
-  en: { broke: 'Broke down: anchor gear', fixed: 'Repaired: anchor gear', failed: "Couldn't repair: anchor gear" },
+  ru: { fault: 'Неисправность: якорное устройство', broke: 'Сломалось: якорное устройство', fixed: 'Починили: якорное устройство', failed: 'Починить не вышло: якорное устройство' },
+  en: { fault: 'Fault: anchor gear', broke: 'Broke down: anchor gear', fixed: 'Repaired: anchor gear', failed: "Couldn't repair: anchor gear" },
 } as const;
 
 describe('a whole week in the browser UI', () => {
