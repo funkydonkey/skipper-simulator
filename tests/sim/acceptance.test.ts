@@ -142,7 +142,9 @@ describe('ТЗ 7.4 acceptance', () => {
     }
 
     for (const boat of boats) {
-      // meltemi_40 measures 0.59 < 0.6 with seeded templates: re-enabled in 3c Task 7
+      // meltemi_40 measures 0.57 < 0.6 after 3c (Task 7): its only weakness hits are rig failures, which need
+      // day.max_wind >= 14 under sail; variable_week gives 6/22 hits. The 3c knobs the brief allows (maneuver error
+      // injuries, marinero chances, cooldowns) do not reach rig failures. Skipped pending a ruling; see task-7-report.md.
       const weaknessIt = boat === 'meltemi_40' ? it.skip : it;
       weaknessIt(`ignore-weakness on ${boat} hits the boat's weakness in at least weaknessMinRate of weeks`, () => {
         expect(ignoring[boat]!.weaknessRate).toBeGreaterThanOrEqual(targets.weaknessMinRate);
@@ -152,6 +154,12 @@ describe('ТЗ 7.4 acceptance', () => {
         inBand(careful[boat]!.weekInjuryRate, targets.careful.weekInjuryRate);
       });
       it(`careful on ${boat} level gain stays within its target band`, () => inBand(careful[boat]!.levelGainMean, targets.levelGain.careful));
+      it(`careful on ${boat} meets the variety targets (R8)`, () => {
+        const v = careful[boat]!.variety;
+        expect(v.mooringStepSets).toBeGreaterThanOrEqual(targets.variety.minMooringStepSets);
+        expect(v.meanWeeklyMooringSets).toBeGreaterThanOrEqual(targets.variety.minMeanWeeklyMooringSets);
+        expect(v.templatesSeen).toBeGreaterThanOrEqual(targets.variety.minTemplatesSeen);
+      });
     }
 
     it('events that fire in no simulated strategy are exactly zeroFireAllow', () => {

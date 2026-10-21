@@ -72,6 +72,7 @@
       "calypso_38": { "systems": ["heads", "gas"], "causes": ["zero:water", "zero:fuel", "rescue:tow"] }
     },
     "weaknessMinRate": 0.6,
-    "careful": { "minMeanScore": 6, "weekInjuryRate": [0, 0.25] }
+    "careful": { "minMeanScore": 6, "weekInjuryRate": [0, 0.25] },
+    "variety": { "minMooringStepSets": 3, "minMeanWeeklyMooringSets": 1.5, "minTemplatesSeen": 4 }
   }
 }

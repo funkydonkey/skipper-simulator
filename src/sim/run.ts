@@ -7,10 +7,11 @@ import { repairOptions, repairSystem } from '../engine/repair';
 import { resolvePendingEvent } from '../engine/events';
 import { assignVoices, chooseBoat, newGame, performBriefing, performCheckin } from '../engine/setup';
 import { requireEvent } from '../engine/state';
-import type { Content, GameState, Grade, Lang, Pillar } from '../engine/types';
+import type { Content, Dir8, GameState, Grade, Lang, Pillar } from '../engine/types';
 import type { Strategy } from './strategies';
 
-export interface WeekResult { state: GameState; debrief: Debrief }
+/** `forecastDirs`: each sailed day's forecast wind direction (the engine clears `weather` at day end). */
+export interface WeekResult { state: GameState; debrief: Debrief; forecastDirs: Dir8[] }
 
 const GRADE_POINTS: Record<Grade, number> = { good: 2, ok: 1, bad: 0 };
 
@@ -44,18 +45,28 @@ function repairEvening(state: GameState, content: Content, strategy: Strategy): 
   }
 }
 
-export function playDay(state: GameState, content: Content, strategy: Strategy): GameState {
+function playTrackedDay(state: GameState, content: Content, strategy: Strategy): { state: GameState; forecastDir: Dir8 | null } {
   let s = drainEvents(startDay(state, content, strategy.morning(state, content)), content, strategy);
+  const forecastDir = s.weather?.forecastDir ?? null;
   s = drainEvents(planDay(s, content, strategy.plan(s, content)), content, strategy);
   s = repairEvening(s, content, strategy);
-  return endDay(s, content, strategy.evening(s, content));
+  return { state: endDay(s, content, strategy.evening(s, content)), forecastDir };
+}
+
+export function playDay(state: GameState, content: Content, strategy: Strategy): GameState {
+  return playTrackedDay(state, content, strategy).state;
 }
 
 export function runWeek(content: Content, seed: number, strategy: Strategy): WeekResult {
   let s = setupWeek(content, seed, strategy);
-  while (s.phase === 'morning') s = playDay(s, content, strategy);
+  const forecastDirs: Dir8[] = [];
+  while (s.phase === 'morning') {
+    const day = playTrackedDay(s, content, strategy);
+    if (day.forecastDir) forecastDirs.push(day.forecastDir);
+    s = day.state;
+  }
   s = finishWeek(s, content);
-  return { state: s, debrief: buildDebrief(s, content) };
+  return { state: s, debrief: buildDebrief(s, content), forecastDirs };
 }
 
 export function weekScore(d: Debrief): number {

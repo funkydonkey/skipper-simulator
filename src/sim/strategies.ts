@@ -4,7 +4,9 @@ import type { MorningChoice } from '../engine/day/morning';
 import { optionAvailable } from '../engine/events';
 import { buildConditionContext } from '../engine/expr';
 import { correctOrder, maneuverFor } from '../engine/maneuver';
-import { MANEUVER_KINDS, type CheckpointId, type Content, type DayPlan, type Effect, type EventOption, type GameEvent, type GameState, type LegPlan, type ManeuverKind, type TrainableVoice } from '../engine/types';
+import { previewPlan } from '../engine/preview';
+import { pointShelter } from '../engine/weather';
+import { MANEUVER_KINDS, type BerthType, type CheckpointId, type Content, type DayPlan, type Effect, type EventOption, type GameEvent, type GameState, type LegPlan, type ManeuverKind, type TrainableVoice } from '../engine/types';
 import { checkChance } from '../engine/voices';
 import type { RepairChoice } from '../engine/repair';
 import { weakSystems } from './weakness';
@@ -195,6 +197,23 @@ export function buildItinerary(c: Content, style: Style): Record<number, string[
   return Object.fromEntries(legs.map((id, i) => [i + 1, [id]]));
 }
 
+/**
+ * The careful captain's berth from the plan's forecast: side-to at a quay when the default berth would take the wind
+ * on the bow or stern; stern line ashore in a tight bay exposed to the wind; else the default (undefined).
+ */
+export function carefulBerth(s: GameState, c: Content, plan: DayPlan): BerthType | undefined {
+  if (plan.legs.length === 0) return undefined;
+  const p = previewPlan(s, c, plan);
+  const at = p.situation;
+  if (!at) return undefined;
+  const dest = c.map.find((x) => x.id === p.destinationId)!;
+  if (p.berths.includes('side_to') && (at.windSide === 'bow' || at.windSide === 'stern')) {
+    return previewPlan(s, c, { ...plan, berth: 'side_to' }).marinaAffordable ? 'side_to' : undefined;
+  }
+  if (p.berths.includes('anchor_ashore') && dest.tight && pointShelter(dest, at.windDir, c.balance) === 'exposed') return 'anchor_ashore';
+  return undefined;
+}
+
 /** Greedy by cost within the check-in budget; `first` checkpoints are tried before the rest. */
 function greedyCheckpoints(c: Content, first: readonly CheckpointId[], skip: readonly CheckpointId[]): CheckpointId[] {
   const costs = c.balance.checkin.costMin;
@@ -249,7 +268,11 @@ function weaknessStrategy(style: Style, boatId: string): Strategy {
       const weak = weakCheckpoints(c, boatId);
       return style === 'careful' ? greedyCheckpoints(c, weak, []) : greedyCheckpoints(c, [], weak);
     },
-    plan: (s, c) => expertPlan(todaysLegs(buildItinerary(c, style), s, c), s, c),
+    plan: (s, c) => {
+      const plan = expertPlan(todaysLegs(buildItinerary(c, style), s, c), s, c);
+      const berth = style === 'careful' ? carefulBerth(s, c, plan) : undefined;
+      return berth ? { ...plan, berth } : plan;
+    },
     fixDefects: style === 'careful' ? fixWhatFits : fixNothing,
     repair: style === 'careful' ? bestRepair : repairNothing,
   };

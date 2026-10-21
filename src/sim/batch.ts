@@ -1,10 +1,13 @@
-import { TRAINABLE_VOICES, type Content, type GameState } from '../engine/types';
+import { TRAINABLE_VOICES, type Content, type Dir8, type GameState } from '../engine/types';
 import { runWeek, weekScore } from './run';
 import type { Strategy } from './strategies';
 import { weaknessHit } from './weakness';
 
 const RESOURCES = ['water', 'service', 'fuel', 'gas'] as const;
 type Resource = (typeof RESOURCES)[number];
+
+const sum = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0);
+const mean = (xs: readonly number[]) => (xs.length === 0 ? 0 : sum(xs) / xs.length);
 
 export interface BatchStats {
   weeks: number;
@@ -16,10 +19,28 @@ export interface BatchStats {
   meanScore: number;
   /** Share of weeks where one of the strategy's boat's weakness causes showed up in the log. */
   weaknessRate: number;
+  variety: Variety;
 }
 
-const sum = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0);
-const mean = (xs: readonly number[]) => (xs.length === 0 ? 0 : sum(xs) / xs.length);
+/** Spec §6.6 / R8: how much the weeks differ. Step sets are `mooring_med` reconciled orders joined into a key. */
+export interface Variety { mooringStepSets: number; meanWeeklyMooringSets: number; templatesSeen: number; windDirsSeen: number }
+export interface VarietyWeek { state: GameState; forecastDirs: readonly Dir8[] }
+
+const MOORING_ORDER = /^order:(ok|wrong):mooring_med$/;
+
+function mooringKeys(state: GameState): Set<string> {
+  return new Set(state.log.flatMap((e) => (MOORING_ORDER.test(e.cause) && Array.isArray(e.data?.steps) ? [e.data.steps.join('>')] : [])));
+}
+
+export function varietyOf(weeks: readonly VarietyWeek[]): Variety {
+  const perWeek = weeks.map((w) => mooringKeys(w.state));
+  return {
+    mooringStepSets: new Set(perWeek.flatMap((k) => [...k])).size,
+    meanWeeklyMooringSets: mean(perWeek.map((k) => k.size)),
+    templatesSeen: new Set(weeks.map((w) => w.state.weatherTemplateId)).size,
+    windDirsSeen: new Set(weeks.flatMap((w) => w.forecastDirs)).size,
+  };
+}
 
 function levelGain(state: GameState): number {
   const start = sum(
@@ -57,6 +78,7 @@ export function runBatch(content: Content, strategy: Strategy, seeds: readonly n
     resourceZeroDay,
     meanScore: mean(runs.map((r) => weekScore(r.debrief))),
     weaknessRate: weeks === 0 ? 0 : runs.filter((r) => weaknessHit(r.state, strategy.boatId, content.balance.simTargets)).length / weeks,
+    variety: varietyOf(runs),
   };
 }
 
@@ -69,6 +91,7 @@ export function formatBatch(stats: BatchStats, name: string): string {
     `- level gain (mean): ${f(stats.levelGainMean)}`,
     `- week injury rate: ${f(stats.weekInjuryRate)}`,
     `- weakness rate: ${f(stats.weaknessRate)}`,
+    `- variety: ${stats.variety.mooringStepSets} mooring_med step sets (${f(stats.variety.meanWeeklyMooringSets)} per week), ${stats.variety.templatesSeen} templates, ${stats.variety.windDirsSeen} wind dirs`,
     `- first zero day: ${RESOURCES.map((r) => `${r} ${stats.resourceZeroDay[r] === null ? 'never' : `day ${f(stats.resourceZeroDay[r], 1)}`}`).join(', ')}`,
     `- never fired: ${stats.zeroFire.length ? stats.zeroFire.join(', ') : 'none'}`,
     '',

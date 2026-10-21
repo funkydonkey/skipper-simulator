@@ -220,6 +220,7 @@ export const BalanceSchema: z.ZodType<Balance> = z.object({
     weakness: z.record(Id, z.object({ systems: z.array(Id), causes: z.array(z.string().min(1)) }).strict()),
     weaknessMinRate: Prob,
     careful: z.object({ minMeanScore: NonNeg, weekInjuryRate: Band }).strict(),
+    variety: z.object({ minMooringStepSets: Int.min(0), minMeanWeeklyMooringSets: NonNeg, minTemplatesSeen: Int.min(0) }).strict(),
   }).strict(),
 }).strict();
 

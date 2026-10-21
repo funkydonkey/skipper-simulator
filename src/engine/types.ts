@@ -413,6 +413,8 @@ export interface Balance {
     weakness: Record<string, { systems: SystemId[]; causes: string[] }>;
     weaknessMinRate: number;
     careful: { minMeanScore: number; weekInjuryRate: [number, number] };
+    /** R8: careful weeks per boat must show this much variety (sim acceptance). */
+    variety: { minMooringStepSets: number; minMeanWeeklyMooringSets: number; minTemplatesSeen: number };
   };
 }
 
