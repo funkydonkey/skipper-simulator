@@ -1,6 +1,7 @@
 import { TRAINABLE_VOICES, type Content, type GameState } from '../engine/types';
 import { runWeek, weekScore } from './run';
 import type { Strategy } from './strategies';
+import { weaknessHit } from './weakness';
 
 const RESOURCES = ['water', 'service', 'fuel', 'gas'] as const;
 type Resource = (typeof RESOURCES)[number];
@@ -13,6 +14,8 @@ export interface BatchStats {
   weekInjuryRate: number;
   resourceZeroDay: Record<Resource, number | null>;
   meanScore: number;
+  /** Share of weeks where one of the strategy's boat's weakness causes showed up in the log. */
+  weaknessRate: number;
 }
 
 const sum = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0);
@@ -53,6 +56,7 @@ export function runBatch(content: Content, strategy: Strategy, seeds: readonly n
     weekInjuryRate: weeks === 0 ? 0 : runs.filter((r) => r.state.injuries > 0).length / weeks,
     resourceZeroDay,
     meanScore: mean(runs.map((r) => weekScore(r.debrief))),
+    weaknessRate: weeks === 0 ? 0 : runs.filter((r) => weaknessHit(r.state, strategy.boatId, content.balance.simTargets)).length / weeks,
   };
 }
 
@@ -61,9 +65,10 @@ export function formatBatch(stats: BatchStats, name: string): string {
   const lines = [
     `## ${name} (${stats.weeks} weeks)`,
     '',
-    `- mean score: ${f(stats.meanScore, 1)}/8`,
+    `- mean score: ${f(stats.meanScore, 1)}/10`,
     `- level gain (mean): ${f(stats.levelGainMean)}`,
     `- week injury rate: ${f(stats.weekInjuryRate)}`,
+    `- weakness rate: ${f(stats.weaknessRate)}`,
     `- first zero day: ${RESOURCES.map((r) => `${r} ${stats.resourceZeroDay[r] === null ? 'never' : `day ${f(stats.resourceZeroDay[r], 1)}`}`).join(', ')}`,
     `- never fired: ${stats.zeroFire.length ? stats.zeroFire.join(', ') : 'none'}`,
     '',

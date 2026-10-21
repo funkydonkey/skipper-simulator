@@ -18,7 +18,7 @@ export function gameAt(phase: Phase, seed = 42): GameState {
   if (phase === 'boat_select') return s;
   s = chooseBoat(s, content, expert.boatId);
   if (phase === 'checkin') return s;
-  s = performCheckin(s, content, expert.checkpoints);
+  s = performCheckin(s, content, expert.checkpoints(content));
   if (s.phase === 'defects') s = resolveDefects(s, content, []);
   if (phase === 'briefing') return s;
   s = performBriefing(s, content, expert.briefingTopics, expert.briefingDialogues);

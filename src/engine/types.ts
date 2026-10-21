@@ -367,7 +367,15 @@ export interface Balance {
   deposit: { damageCostEur: Record<string, number>; defaultDamageEur: number };
   grading: { crewGoodMood: number; crewOkMood: number; boatOkLossEur: number };
   drama: { pillarWeightByDay: Record<string, Partial<Record<Pillar, number>>> };
-  simTargets: { levelGain: Record<'newbie' | 'expert', [number, number]>; weekInjuryRate: Record<'newbie' | 'expert', [number, number]>; zeroFireAllow: string[] };
+  simTargets: {
+    levelGain: Record<'newbie' | 'expert' | 'careful', [number, number]>;
+    weekInjuryRate: Record<'newbie' | 'expert', [number, number]>;
+    zeroFireAllow: string[];
+    /** Per boat: its weak systems and the log-cause prefixes that count as a weakness hit. */
+    weakness: Record<string, { systems: SystemId[]; causes: string[] }>;
+    weaknessMinRate: number;
+    careful: { minMeanScore: number; weekInjuryRate: [number, number] };
+  };
 }
 
 /** Region pack header plus its world; Content exposes the header as `region` and the world as `map`/`routes`. */

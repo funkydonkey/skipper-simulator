@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { expert, newbie } from '../../src/sim/strategies';
+import { loadContentDir } from '../../src/content/load-node';
+import { runBatch } from '../../src/sim/batch';
+import { runWeek } from '../../src/sim/run';
+import { expert, makeStrategy, newbie } from '../../src/sim/strategies';
 import type { DayFacts } from '../../src/engine/types';
 import { makeContent } from '../fixtures/content';
 import { makeState } from '../fixtures/state';
 
 const content = makeContent();
+const loaded = await loadContentDir('content');
+if (!loaded.content) throw new Error(JSON.stringify(loaded.errors));
+const realContent = loaded.content;
 const facts: DayFacts = {
   day: 1, departureHour: 9, arrivalHour: 14, arrivalPointKind: 'marina', mooring: 'berth', activities: [],
   motorHours: 2, sailHours: 0, autopilotHours: 0, maxWindKn: 0, shower: 'normal',
@@ -17,5 +23,40 @@ describe('strategies', () => {
     expect(newbie.evening(open, content).dinner).toBe('taverna');
     expect(newbie.evening(closed, content).dinner).toBe('cook');
     expect(expert.evening(closed, content).dinner).toBe('cook');
+  });
+});
+
+describe('makeStrategy', () => {
+  it('careful and ignore-weakness take the requested boat', () => {
+    expect(makeStrategy('careful', 'calypso_38').boatId).toBe('calypso_38');
+    expect(makeStrategy('ignore-weakness', 'aurora_45').boatId).toBe('aurora_45');
+  });
+  it('newbie and expert keep their boats and have no-op hooks', () => {
+    expect(makeStrategy('newbie').boatId).toBe('aurora_45');
+    expect(makeStrategy('expert').boatId).toBe('meltemi_40');
+    expect(expert.fixDefects(['x'], makeState(), content)).toEqual([]);
+    expect(newbie.repair([], makeState())).toBeNull();
+  });
+});
+
+describe('weakness strategies on the real content', () => {
+  const real = realContent;
+  const checked = (name: 'careful' | 'ignore-weakness', boat: string) =>
+    runWeek(real, 1, makeStrategy(name, boat)).state.log.filter((e) => e.cause.startsWith('checkin:check:')).map((e) => e.cause.slice('checkin:check:'.length));
+  it('ignore-weakness on Meltemi never checks sails; careful does', () => {
+    expect(checked('ignore-weakness', 'meltemi_40')).not.toContain('sails');
+    expect(checked('careful', 'meltemi_40')).toContain('sails');
+  });
+  it.each(['aurora_45', 'meltemi_40', 'calypso_38'])('both play a full week on %s and finish at base on day 6', (boat) => {
+    for (const name of ['careful', 'ignore-weakness'] as const) {
+      const r = runWeek(real, 2, makeStrategy(name, boat));
+      expect(r.state.phase).toBe('debrief');
+      expect(r.state.locationId).toBe('base_marina');
+    }
+  });
+  it('runBatch reports a weaknessRate in [0, 1]', () => {
+    const stats = runBatch(real, makeStrategy('ignore-weakness', 'meltemi_40'), [1, 2, 3]);
+    expect(stats.weaknessRate).toBeGreaterThanOrEqual(0);
+    expect(stats.weaknessRate).toBeLessThanOrEqual(1);
   });
 });
