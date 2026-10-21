@@ -1,4 +1,5 @@
 import { rollChance } from './chance';
+import { renderText } from './crew';
 import { EngineError } from './errors';
 import { buildConditionContext, evaluateAll, type CondContext } from './expr';
 import { appendLog } from './log';
@@ -91,16 +92,18 @@ export function resolveOption(
   return { value: { outcomes: [{ cause, pillar: event.pillar, effect: o.effects ?? {} }], check: null }, next: rng };
 }
 
-export function presentEvent(event: GameEvent, state: GameState, ctx: CondContext, b: Balance): EventView {
+export function presentEvent(event: GameEvent, state: GameState, ctx: CondContext, content: Content): EventView {
+  const b = content.balance;
   const lang = state.lang;
+  const render = (text: string): string => renderText(text, state, content, `${event.id}:${state.day}`);
   return {
     id: event.id,
     scene: event.scene,
-    text: eventText(event, state)[lang],
-    voices: audibleLines(event.voices, state.voices, ctx).map((l) => ({ voice: l.voice, text: l.text[lang] })),
+    text: render(eventText(event, state)[lang]),
+    voices: audibleLines(event.voices, state.voices, ctx).map((l) => ({ voice: l.voice, text: render(l.text[lang]) })),
     options: event.options.map((o) => ({
       id: o.id,
-      text: o.text[lang],
+      text: render(o.text[lang]),
       available: optionAvailable(o, ctx),
       chance: o.check ? checkChance(o.check, ctx, b) : null,
     })),

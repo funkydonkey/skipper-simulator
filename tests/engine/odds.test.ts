@@ -169,7 +169,7 @@ describe('event check odds', () => {
   it('presentEvent shows the same odds that resolvePendingEvent logs (Review Focus 1)', () => {
     const clog = fixture.events[0]!;
     const state = makeState({ day: 3, phase: 'evening', eventQueue: [clog.id], resources: { ...makeState().resources, fatigue: 37 } });
-    const view = presentEvent(clog, state, buildConditionContext(state, fixture), b);
+    const view = presentEvent(clog, state, buildConditionContext(state, fixture), fixture);
     const i = clog.options.findIndex((o) => o.check);
     const done = resolvePendingEvent(state, fixture, clog.options[i]!.id);
     const roll = done.log.find((e) => e.kind === 'roll')!;

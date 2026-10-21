@@ -404,8 +404,8 @@
     },
     "scene": "galley",
     "text": {
-      "ru": "У плиты пахнет газом. Света уже чиркает спичкой.",
-      "en": "The stove reeks of gas. Sveta is already striking a match."
+      "ru": "У плиты пахнет газом. {crew.any} уже чиркает спичкой.",
+      "en": "The stove reeks of gas. {crew.any} is already striking a match."
     },
     "voices": [
       {
@@ -1504,8 +1504,8 @@
     },
     "scene": "marina_berth",
     "text": {
-      "ru": "Маринер кричит «Давай-давай!», и Олег бросает ему кормовой, хотя команды не было.",
-      "en": "The marinero yells \"Dai-dai!\" and Oleg tosses him the stern line, though no order was given."
+      "ru": "Маринер кричит «Давай-давай!», и {crew.any} бросает ему кормовой, хотя команды не было.",
+      "en": "The marinero yells \"Dai-dai!\" and {crew.any} tosses him the stern line, though no order was given."
     },
     "voices": [
       {
@@ -1761,8 +1761,8 @@
     },
     "scene": "deck_wind",
     "text": {
-      "ru": "Шляпа Иры улетает за борт. Все кричат, никто не показывает рукой.",
-      "en": "Ira's hat flies overboard. Everyone shouts, nobody points."
+      "ru": "{crew.any} провожает взглядом улетевшую за борт шляпу. Все кричат, никто не показывает рукой.",
+      "en": "{crew.any} watches a hat fly overboard. Everyone shouts, nobody points."
     },
     "voices": [
       {
@@ -1939,8 +1939,8 @@
     },
     "scene": "anchorage_sunset",
     "text": {
-      "ru": "Аня смотрит на огни на берегу: «А завтра будет таверна?»",
-      "en": "Anya gazes at the lights ashore: \"Will there be a taverna tomorrow?\""
+      "ru": "{crew.role:guest} смотрит на огни на берегу: «А завтра будет таверна?»",
+      "en": "{crew.role:guest} gazes at the lights ashore: \"Will there be a taverna tomorrow?\""
     },
     "voices": [
       {
@@ -2020,8 +2020,8 @@
     },
     "scene": "cockpit_morning",
     "text": {
-      "ru": "Макс уже у мачты: «Сегодня ведь весь день под парусом?»",
-      "en": "Max is already at the mast: \"We're sailing all day today, right?\""
+      "ru": "{crew.role:sailor} уже у мачты: «Сегодня ведь весь день под парусом?»",
+      "en": "{crew.role:sailor} is already at the mast: \"We're sailing all day today, right?\""
     },
     "voices": [
       {
@@ -2089,8 +2089,8 @@
     },
     "scene": "deck_winch",
     "text": {
-      "ru": "Денис тянется снять шкот с лебёдки голыми руками. Шкот звенит от нагрузки.",
-      "en": "Denis reaches to pull the sheet off the winch with bare hands. The sheet hums under load."
+      "ru": "{crew.role:sailor} тянется снять шкот с лебёдки голыми руками. Шкот звенит от нагрузки.",
+      "en": "{crew.role:sailor} reaches to pull the sheet off the winch with bare hands. The sheet hums under load."
     },
     "voices": [
       {
@@ -2164,8 +2164,8 @@
     },
     "scene": "anchorage_day",
     "text": {
-      "ru": "Двигатель ещё работает на заднем, а Олег уже прыгает с кормы.",
-      "en": "The engine is still running astern, and Oleg is already jumping off the stern."
+      "ru": "Двигатель ещё работает на заднем, а {crew.role:guest} уже прыгает с кормы.",
+      "en": "The engine is still running astern, and {crew.role:guest} is already jumping off the stern."
     },
     "voices": [
       {
@@ -2234,8 +2234,8 @@
     "scene": "deck_spray",
     "text": [
       {
-        "ru": "Света побледнела и просится вниз полежать.",
-        "en": "Sveta has gone pale and wants to lie down below."
+        "ru": "{crew.role:guest} бледнеет и просится вниз полежать.",
+        "en": "{crew.role:guest} goes pale and asks to lie down below."
       },
       {
         "ru": "Кто-то из гостей позеленел и тихо спрашивает, скоро ли берег.",

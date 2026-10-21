@@ -13,6 +13,7 @@ export { buildConditionContext } from './expr';
 export { formatClock } from './time';
 export { resourceReadout, validateAllocation, checkChance } from './voices';
 export { seedHash } from './seed';
+export { renderText, type CrewView } from './crew';
 export { realWind, exposure, pointShelter, signalsVisible } from './weather';
 export { maneuverFor, stepsFor, errorsFor, correctOrder, reconcileOrder, situationHint, maneuverRisk } from './maneuver';
 export { evaluateChance } from './chance';

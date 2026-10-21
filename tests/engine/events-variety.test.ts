@@ -120,7 +120,7 @@ describe('text variants', () => {
     const s = makeState({ day: 3 });
     const later = { ...s, rng: 999 };
     expect(eventText(variants, s)).toBe(eventText(variants, later));
-    expect(presentEvent(variants, s, buildConditionContext(s, content), content.balance).text).toBe(eventText(variants, s).ru);
+    expect(presentEvent(variants, s, buildConditionContext(s, content), content).text).toBe(eventText(variants, s).ru);
   });
   it('over 6 days at least 2 variants appear', () => {
     const seen = new Set([1, 2, 3, 4, 5, 6].map((day) => eventText(variants, makeState({ day })).en));

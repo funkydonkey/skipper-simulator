@@ -19,7 +19,7 @@ describe('EventScreen', () => {
 
   it('shows each check as a badge with the engine odds and a breakdown on tap', async () => {
     const game = withEvent(gameAt('evening'), checkEvent.id);
-    const view = presentEvent(checkEvent, game, buildConditionContext(game, content), content.balance);
+    const view = presentEvent(checkEvent, game, buildConditionContext(game, content), content);
     const idx = view.options.findIndex((o) => o.chance !== null);
     const pct = Math.round(view.options[idx]!.chance!.value * 100);
     const r = renderShell(game);
@@ -33,7 +33,7 @@ describe('EventScreen', () => {
 
   it('describes each check option with its odds badge', () => {
     const game = withEvent(gameAt('evening'), checkEvent.id);
-    const view = presentEvent(checkEvent, game, buildConditionContext(game, content), content.balance);
+    const view = presentEvent(checkEvent, game, buildConditionContext(game, content), content);
     renderShell(game);
     for (const [i, o] of checkEvent.options.entries()) {
       const option = screen.getByRole('button', { name: esc(o.text.ru) });

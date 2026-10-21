@@ -54,8 +54,8 @@ export function makeContent(): Content {
       days: [1, 2, 3, 4, 5, 6].map((day) => ({ day, windKn: 12, gustKn: 18, dir: 'NW' as const, frontChance: day === 3 ? 0.5 : 0, barometerHpa: 1015 })),
     }],
     crew: [
-      { id: 'party', name: t('Тусовщик', 'Party guest'), names: [t('Аня', 'Anya'), t('Олег', 'Oleg')], wishes: ['taverna', 'beach', 'swim'], seasickness: 0.3, patience: 0.4, promiseSensitivity: 1.2 },
-      { id: 'sailor', name: t('Яхтсмен', 'Sailor'), names: [t('Ира', 'Ira'), t('Макс', 'Max')], wishes: ['sailing', 'early_start'], seasickness: 0.1, patience: 0.7, promiseSensitivity: 0.8 },
+      { id: 'party', role: 'guest', name: t('Тусовщик', 'Party guest'), names: [t('Аня', 'Anya'), t('Олег', 'Oleg'), t('Лена', 'Lena'), t('Паша', 'Pasha')], wishes: ['taverna', 'beach', 'swim'], seasickness: 0.3, patience: 0.4, promiseSensitivity: 1.2 },
+      { id: 'sailor', role: 'sailor', name: t('Яхтсмен', 'Sailor'), names: [t('Ира', 'Ira'), t('Макс', 'Max'), t('Катя', 'Katya'), t('Глеб', 'Gleb')], wishes: ['sailing', 'early_start'], seasickness: 0.1, patience: 0.7, promiseSensitivity: 0.8 },
     ],
     briefing: ['sails', 'cleats', 'fenders', 'captain_only', 'anchor', 'loaded_lines', 'toilet', 'mob'].map((id) => ({
       id, title: t(`Тема ${id}`, `Topic ${id}`), description: t(`Описание ${id}`, `Description ${id}`),

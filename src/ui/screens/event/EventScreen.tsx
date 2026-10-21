@@ -15,7 +15,7 @@ export function EventScreen() {
   const act = useAct();
   const t = useT(EVENT);
   const event = requireEvent(content, game.eventQueue[0] ?? '');
-  const view = presentEvent(event, game, buildConditionContext(game, content), content.balance);
+  const view = presentEvent(event, game, buildConditionContext(game, content), content);
   return (
     <ScreenFrame screen="event" title={PILLAR_NAMES[event.pillar][lang]} subtitle={t('when', { day: game.day, clock: formatClock(game.clockMin) })}>
       <div className={styles.layout}>

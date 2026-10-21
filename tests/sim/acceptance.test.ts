@@ -67,7 +67,7 @@ describe('ТЗ 7.4 acceptance', () => {
   it('#5 texts come out in both languages', () => {
     const s = setupWeek(content, 1, expert, 'en');
     const ev = content.events[0]!;
-    expect(presentEvent(ev, s, buildConditionContext(s, content), content.balance).text).toBe(eventText(ev, s).en);
+    expect(presentEvent(ev, s, buildConditionContext(s, content), content).text).toBe(eventText(ev, s).en);
   });
 
   it('#6 a new event works by editing JSON only', () => {

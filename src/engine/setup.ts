@@ -1,10 +1,11 @@
+import { makeCrew } from './crew';
 import { applyDefects, pickDefects } from './defects';
 import { assertPhase, EngineError } from './errors';
 import { appendLog } from './log';
 import { seedHash } from './seed';
 import { sayDialogue } from './promises';
 import { advanceClock, requireBoat, requireTemplate } from './state';
-import { CHECKPOINTS, TRAINABLE_VOICES, type Boat, type CheckpointId, type Content, type CrewMember, type GameState, type Lang, type TrainableVoice, type WeatherTemplate } from './types';
+import { CHECKPOINTS, TRAINABLE_VOICES, type Boat, type CheckpointId, type Content, type GameState, type Lang, type TrainableVoice, type WeatherTemplate } from './types';
 import { initialSystems } from './systems';
 import { initialVoices } from './voices';
 
@@ -13,14 +14,6 @@ export interface NewGameOptions { seed: number; lang: Lang; weatherTemplateId?: 
 function pickTemplate(content: Content, seed: number): WeatherTemplate | undefined {
   const sorted = [...content.weather].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   return sorted.length ? sorted[seedHash(seed, 'weather') % sorted.length] : undefined;
-}
-
-function makeCrew(content: Content, size: number): CrewMember[] {
-  const n = content.crew.length;
-  return Array.from({ length: size }, (_, i) => {
-    const a = content.crew[i % n]!;
-    return { id: `crew_${i + 1}`, archetypeId: a.id, name: a.names[Math.floor(i / n) % a.names.length]! };
-  });
 }
 
 export function newGame(content: Content, opts: NewGameOptions): GameState {
@@ -37,7 +30,7 @@ export function newGame(content: Content, opts: NewGameOptions): GameState {
     voices: initialVoicesZero(),
     voiceXp: { sea_sense: 0, caution: 0, order: 0, mechanic: 0, diplomat: 0, economist: 0 },
     resources: { waterL: 0, fuelL: 0, serviceBankPct: b.start.serviceBankPct, starterBankPct: b.start.starterBankPct, gasPct: b.start.gasPct, moneyEur: b.start.moneyEur, mood: b.start.mood, fatigue: b.start.fatigue },
-    flags: {}, damages: [], systems: {}, crew: makeCrew(content, crewSize), expectations: [], moodPerDay: 0, injuries: 0,
+    flags: {}, damages: [], systems: {}, crew: makeCrew(content, crewSize, opts.seed), expectations: [], moodPerDay: 0, injuries: 0,
     log: [], firedEvents: [], eventQueue: [], weather: null, dayFacts: null, returnedOnTime: null, defects: [], checkin: null, startBalanceEur: 0, situation: null,
   };
 }

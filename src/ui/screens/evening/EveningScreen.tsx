@@ -45,7 +45,7 @@ export function EveningScreen() {
   const dialogues = content.dialogues.filter((d) => d.contexts.includes('evening'));
   const chosen = dialogues.find((d) => d.id === line);
   const summary = facts?.arrivalHour != null ? t('arrived', { time: formatHour(facts.arrivalHour) }) : t('stayed');
-  const growth = dayGrowth(game.log, game.day, content, lang);
+  const growth = dayGrowth(game.log, game.day, content, lang, { seed: game.seed, crew: game.crew });
   const levelUps = pendingLevelUps(game, b);
   const mooring = facts?.mooring === 'anchor' ? t('atAnchor') : t('atBerth');
 

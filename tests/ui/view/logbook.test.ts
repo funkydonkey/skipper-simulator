@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eventText, startDay, type LogEntry } from '../../../src/engine';
+import { eventText, renderText, startDay, type LogEntry } from '../../../src/engine';
 import { runWeek } from '../../../src/sim/run';
 import { expert, newbie } from '../../../src/sim/strategies';
 import { dayLines, describeEntry, isLogbookOnly, isNoise, logbookDays } from '../../../src/ui/view/logbook';
@@ -14,9 +14,9 @@ describe('logbook', () => {
         const { state } = runWeek(content, seed, strategy);
         for (const e of state.log) {
           for (const lang of ['ru', 'en'] as const) {
-            const line = describeEntry(e, content, lang, 1);
+            const line = describeEntry(e, content, lang, state.seed, state.crew);
             if (!line) continue;
-            expect(line.text, e.cause).not.toMatch(/\{\w+\}|undefined|NaN/);
+            expect(line.text, e.cause).not.toMatch(/\{[\w.:]+\}|undefined|NaN/);
             expect(line.text.length, e.cause).toBeGreaterThan(3);
             expect(line.text, `no describer for ${e.cause}`).not.toMatch(/^(Запись|Entry):/);
           }
@@ -208,5 +208,19 @@ describe('logbook boat systems', () => {
       seen.add(line.text);
     }
     expect(seen.size).toBeGreaterThanOrEqual(2);
+  });
+
+  it('an event line and its option show the crew name the event screen shows', () => {
+    const base = content.events[0]!;
+    const ev = { ...base, id: 'named_ev', text: { ru: '{crew.any} молчит.', en: '{crew.any} is silent.' }, options: [{ ...base.options[0]!, id: 'o', text: { ru: 'Окликнуть: {crew.any}', en: 'Hail {crew.any}' } }] };
+    const c = { ...content, events: [...content.events, ev] };
+    const state = gameAt('morning', 5);
+    for (const day of [1, 2, 3]) {
+      const who = renderText('{crew.any}', { seed: state.seed, crew: state.crew, lang: 'en' }, c, `named_ev:${day}`);
+      const line = describeEntry(entry('event:named_ev', { kind: 'event', day }), c, 'en', state.seed, state.crew)!;
+      expect(line.text).toContain(who);
+      expect(line.text).not.toContain('{');
+      expect(describeEntry(entry('choice:named_ev:o', { day }), c, 'en', state.seed, state.crew)!.text).toContain(who);
+    }
   });
 });

@@ -114,6 +114,6 @@ describe('conditional voice lines', () => {
   it('presentEvent passes its context', () => {
     const ev = { ...content.events[0]!, voices: [line] };
     const s = makeState({ resources: { ...makeState().resources, mood: 40 } });
-    expect(presentEvent(ev, s, buildConditionContext(s, content), b).voices).toHaveLength(1);
+    expect(presentEvent(ev, s, buildConditionContext(s, content), content).voices).toHaveLength(1);
   });
 });

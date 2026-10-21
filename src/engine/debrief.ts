@@ -1,4 +1,5 @@
 import { budgetGrade, weekSpend } from './budget';
+import { renderLocalized } from './crew';
 import { causeMatches } from './log';
 import { requireBoat } from './state';
 import { voiceReport, type VoiceReport } from './voice-report';
@@ -89,8 +90,11 @@ export function buildDebrief(state: GameState, content: Content, maxItems = 5): 
     links.some((l) => causeMatches(l.consequence.cause, `event:${eventId}`) || causeMatches(l.consequence.cause, `injury:event:${eventId}`));
   const eventNotes = state.firedEvents
     .filter((id) => !covered(id))
-    .map((id) => content.events.find((e) => e.id === id)?.debrief)
-    .filter((t): t is LocalizedText => t !== undefined)
+    .flatMap((id) => {
+      const note = content.events.find((e) => e.id === id)?.debrief;
+      const day = state.log.find((e) => e.kind === 'event' && e.cause === `event:${id}`)?.day ?? state.day;
+      return note ? [renderLocalized(note, state, content, `${id}:${day}`)] : [];
+    })
     .slice(0, Math.max(0, maxItems - links.length));
   return { ...graded, links, eventNotes, voices: voiceReport(state) };
 }

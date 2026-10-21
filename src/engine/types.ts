@@ -242,6 +242,8 @@ export interface WeatherTemplate {
 
 export interface CrewArchetype {
   id: string;
+  /** What `{crew.role:<role>}` in event texts looks for. */
+  role: string;
   name: LocalizedText;
   names: LocalizedText[];
   wishes: CrewWish[];

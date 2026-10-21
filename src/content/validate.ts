@@ -1,4 +1,6 @@
 import { pointBerthProblem } from '../engine/berths';
+import { CREW_PLACEHOLDER } from '../engine/crew';
+import { eventTexts } from '../engine/events';
 import { MANEUVER_KINDS, type BerthType, type Content, type Effect, type ManeuverKind } from '../engine/types';
 import type { ContentError } from './parse';
 
@@ -93,6 +95,28 @@ function checkEvents(c: Content, add: Add): void {
   });
 }
 
+/** Crew names are placeholders, never literals: names go through `{crew.any}` / `{crew.role:<role>}` (nominative only). */
+function checkCrewNames(c: Content, add: Add): void {
+  const roles = new Set(c.crew.map((a) => a.role));
+  const names = c.crew.flatMap((a) => a.names.flatMap((n) => [n.ru, n.en]));
+  const literal = names.map((n) => ({ n, re: new RegExp(`(?<![\\p{L}\\p{N}_])${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\p{L}\\p{N}_])`, 'u') }));
+  const scan = (path: string, text: string): void => {
+    for (const { n, re } of literal) if (re.test(text)) add(path, `literal crew name "${n}": use {crew.any} or {crew.role:<role>}`);
+    for (const m of text.matchAll(/\{crew[^}]*\}/g)) {
+      const ok = new RegExp(`^${CREW_PLACEHOLDER.source}$`).exec(m[0]);
+      if (!ok) add(path, `unknown placeholder "${m[0]}"`);
+      else if (ok[2] !== undefined && !roles.has(ok[2])) add(path, `unknown crew role "${ok[2]}"`);
+    }
+  };
+  const both = (path: string, t: { ru: string; en: string }): void => { scan(`${path}.ru`, t.ru); scan(`${path}.en`, t.en); };
+  c.events.forEach((ev, i) => {
+    eventTexts(ev).forEach((t, k) => both(`events[${i}].text[${k}]`, t));
+    ev.voices.forEach((v, j) => both(`events[${i}].voices[${j}].text`, v.text));
+    ev.options.forEach((o, j) => both(`events[${i}].options[${j}].text`, o.text));
+    if (ev.debrief) both(`events[${i}].debrief`, ev.debrief);
+  });
+}
+
 /** `break` / `repair` / `wear` must name a system in content.systems; a typo would otherwise silently do nothing. */
 function checkSystemRefs(c: Content, add: Add): void {
   const known = new Set(c.systems.map((s) => s.id));
@@ -147,6 +171,7 @@ export function crossValidate(c: Content): ContentError[] {
   checkWeatherAndBriefing(c, add);
   checkManeuvers(c, add);
   checkEvents(c, add);
+  checkCrewNames(c, add);
   checkSystemRefs(c, add);
   checkFailureEvents(c, add);
   checkWeaknessTargets(c, add);

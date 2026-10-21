@@ -121,7 +121,7 @@ export const WeatherTemplateSchema: z.ZodType<WeatherTemplate> = z.object({
 }).strict();
 
 export const CrewArchetypeSchema: z.ZodType<CrewArchetype> = z.object({
-  id: Id, name: Text, names: z.array(Text).min(1), wishes: z.array(z.enum(WISHES)),
+  id: Id, role: Id, name: Text, names: z.array(Text).min(1), wishes: z.array(z.enum(WISHES)),
   seasickness: Prob, patience: Prob, promiseSensitivity: Pos,
 }).strict();
 
