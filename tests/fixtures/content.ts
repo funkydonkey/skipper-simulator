@@ -1,4 +1,7 @@
 import balanceJson from './balance.json';
+
+// balance.json mirrors content/core/balance.json except simTargets.weakness, which must name this fixture's own
+// boat and systems (crossValidate checks them against content.boats / content.systems).
 import type { Balance, Content, Dir8, LocalizedText, MapPoint } from '../../src/engine/types';
 
 const t = (ru: string, en: string): LocalizedText => ({ ru, en });

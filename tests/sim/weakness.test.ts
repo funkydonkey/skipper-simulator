@@ -43,5 +43,5 @@ describe('simTargets.weakness schema', () => {
   };
   it('accepts the fixture', () => expect(parseContent(toRaw(makeContent())).errors).toEqual([]));
   it('rejects an unknown boat', () => expect(mutated((w) => { w.ghost_boat = { systems: ['rig'], causes: [] }; }).content).toBeNull());
-  it('rejects an unknown system', () => expect(mutated((w) => { w.aurora_45.systems = ['sonar']; }).content).toBeNull());
+  it('rejects an unknown system', () => expect(mutated((w) => { w.test_boat.systems = ['sonar']; }).content).toBeNull());
 });

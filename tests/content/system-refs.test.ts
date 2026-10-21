@@ -35,3 +35,44 @@ describe('system ids in effects (R20)', () => {
     expect(msgs(c)).toEqual([]);
   });
 });
+
+describe('failure events', () => {
+  it('flags a failure whose event does not exist', () => {
+    const c = makeContent();
+    c.systems[0]!.failures = [{ id: 'f', phase: 'evening', chance: 0.1, event: 'toilet_clogg' }];
+    expect(msgs(c)).toEqual(['systems[0].failures[0].event: unknown event "toilet_clogg"']);
+  });
+
+  it('flags a failure whose event fires in another phase', () => {
+    const c = makeContent();
+    const ev = c.events.find((e) => e.id === 'toilet_clog')!;
+    expect(ev.trigger.phase).toBe('evening');
+    c.systems[0]!.failures = [{ id: 'f', phase: 'passage', chance: 0.1, event: 'toilet_clog' }];
+    expect(msgs(c)).toEqual(['systems[0].failures[0].event: event "toilet_clog" fires in phase "evening", the failure in "passage"']);
+  });
+
+  it('accepts a failure event in the same phase', () => {
+    const c = makeContent();
+    c.systems[0]!.failures = [{ id: 'f', phase: 'evening', chance: 0.1, event: 'toilet_clog' }];
+    expect(msgs(c)).toEqual([]);
+  });
+});
+
+describe('simTargets.weakness ids', () => {
+  const withWeakness = (weakness: Record<string, { systems: string[]; causes: string[] }>) => {
+    const c = makeContent();
+    return { ...c, balance: { ...c.balance, simTargets: { ...c.balance.simTargets, weakness } } };
+  };
+
+  it('accepts boats and systems that exist in content, whatever their ids', () => {
+    expect(msgs(withWeakness({ test_boat: { systems: ['rig', 'heads'], causes: ['fault:rig'] } }))).toEqual([]);
+  });
+
+  it('flags a boat that is not in content.boats', () => {
+    expect(msgs(withWeakness({ aurora_45: { systems: ['rig'], causes: [] } }))).toEqual(['balance.simTargets.weakness.aurora_45: unknown boat "aurora_45"']);
+  });
+
+  it('flags a system that is not in content.systems', () => {
+    expect(msgs(withWeakness({ test_boat: { systems: ['sonar'], causes: [] } }))).toEqual(['balance.simTargets.weakness.test_boat.systems[0]: unknown system "sonar"']);
+  });
+});

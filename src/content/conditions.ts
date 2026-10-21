@@ -1,5 +1,5 @@
 import { BOAT_KEYS, CONTEXT_KEYS, conditionIdentifiers } from '../engine/expr';
-import { CHECKPOINTS, VOICES, type Content, type Effect } from '../engine/types';
+import { CHECKPOINTS, VOICES, type ChanceMod, type Content, type Effect } from '../engine/types';
 import type { ContentError } from './parse';
 
 function allEffects(c: Content): Effect[] {
@@ -41,32 +41,32 @@ export function validateConditions(c: Content): ContentError[] {
       errors.push({ file: 'cross', path, message: (e as Error).message });
     }
   };
+  const checkMods = (mods: readonly ChanceMod[] | undefined, path: string): void => (mods ?? []).forEach((m, k) => {
+    if (m.if) check(m.if, `${path}[${k}].if`);
+    if (m.per && !known.has(m.per)) errors.push({ file: 'cross', path: `${path}[${k}].per`, message: `Unknown identifier "${m.per}"` });
+  });
   c.events.forEach((ev, i) => {
     ev.trigger.conditions.forEach((src, j) => check(src, `events[${i}].trigger.conditions[${j}]`));
     const chance = ev.trigger.chance;
-    if (typeof chance !== 'number') {
-      (chance.mods ?? []).forEach((m, j) => {
-        const path = `events[${i}].trigger.chance.mods[${j}]`;
-        if (m.if) check(m.if, `${path}.if`);
-        if (m.per && !known.has(m.per)) errors.push({ file: 'cross', path: `${path}.per`, message: `Unknown identifier "${m.per}"` });
-      });
-    }
+    if (typeof chance !== 'number') checkMods(chance.mods, `events[${i}].trigger.chance.mods`);
     ev.voices.forEach((l, j) => { if (l.when) check(l.when, `events[${i}].voices[${j}].when`); });
     ev.options.forEach((o, j) => (o.requires ?? []).forEach((src, k) => check(src, `events[${i}].options[${j}].requires[${k}]`)));
   });
-  c.systems.forEach((d, i) => d.failures.forEach((f, j) => {
-    const path = `systems[${i}].failures[${j}]`;
-    if (f.when) check(f.when, `${path}.when`);
-    if (typeof f.chance === 'number') return;
-    (f.chance.mods ?? []).forEach((m, k) => {
-      if (m.if) check(m.if, `${path}.chance.mods[${k}].if`);
-      if (m.per && !known.has(m.per)) errors.push({ file: 'cross', path: `${path}.chance.mods[${k}].per`, message: `Unknown identifier "${m.per}"` });
+  c.systems.forEach((d, i) => {
+    d.failures.forEach((f, j) => {
+      const path = `systems[${i}].failures[${j}]`;
+      if (f.when) check(f.when, `${path}.when`);
+      if (typeof f.chance !== 'number') checkMods(f.chance.mods, `${path}.chance.mods`);
     });
-  }));
-  c.maneuvers.forEach((m, i) => m.errors.forEach((e, j) => {
-    if (e.mitigatedBy && !known.has(e.mitigatedBy)) {
-      errors.push({ file: 'cross', path: `maneuvers[${i}].errors[${j}].mitigatedBy`, message: `Unknown identifier "${e.mitigatedBy}"` });
-    }
-  }));
+    d.repairs.forEach((r, j) => { if (r.requires) check(r.requires, `systems[${i}].repairs[${j}].requires`); });
+  });
+  c.maneuvers.forEach((m, i) => {
+    m.errors.forEach((e, j) => {
+      if (e.mitigatedBy && !known.has(e.mitigatedBy)) {
+        errors.push({ file: 'cross', path: `maneuvers[${i}].errors[${j}].mitigatedBy`, message: `Unknown identifier "${e.mitigatedBy}"` });
+      }
+    });
+    checkMods(m.injuryMods, `maneuvers[${i}].injuryMods`);
+  });
   return errors;
 }

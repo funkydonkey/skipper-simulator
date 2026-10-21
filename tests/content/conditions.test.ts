@@ -50,3 +50,32 @@ describe('condition validation', () => {
     expect(parseContent(raw).errors).toContainEqual(expect.objectContaining({ message: expect.stringMatching(/briefing\.toilets/) }));
   });
 });
+
+describe('conditions in systems and maneuvers (spec §3.2)', () => {
+  it('reports a typo in a repair `requires`', () => {
+    const c = makeContent();
+    c.systems[0]!.repairs[0]!.requires = 'at_marina || moored_bearth';
+    expect(validateConditions(c)).toEqual([{ file: 'cross', path: 'systems[0].repairs[0].requires', message: 'Unknown identifier "moored_bearth" in "at_marina || moored_bearth"' }]);
+  });
+
+  it('reports a syntax error in a repair `requires`', () => {
+    const c = makeContent();
+    c.systems[0]!.repairs[0]!.requires = 'at_marina ||';
+    expect(validateConditions(c).map((e) => e.path)).toEqual(['systems[0].repairs[0].requires']);
+  });
+
+  it('reports a typo in a maneuver injuryMods `if` and an unknown `per`', () => {
+    const c = makeContent();
+    c.maneuvers[0]!.injuryMods = [{ if: 'system.engine_colling.broken', add: 0.1 }, { per: 'voice.cautoin', add: 0.01 }];
+    expect(validateConditions(c).map((e) => `${e.path}: ${e.message}`)).toEqual([
+      'maneuvers[0].injuryMods[0].if: Unknown identifier "system.engine_colling.broken" in "system.engine_colling.broken"',
+      'maneuvers[0].injuryMods[1].per: Unknown identifier "voice.cautoin"',
+    ]);
+  });
+
+  it('accepts valid repair and injuryMods conditions', () => {
+    const c = makeContent();
+    c.maneuvers[0]!.injuryMods = [{ if: 'system.engine_cooling.broken && wind >= 12', add: 0.1 }];
+    expect(validateConditions(c)).toEqual([]);
+  });
+});

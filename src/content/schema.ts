@@ -166,9 +166,6 @@ export const DebriefRuleSchema: z.ZodType<DebriefRule> = z.object({
 const Pair = z.tuple([z.number(), z.number()]);
 const Triple = z.tuple([z.number(), z.number(), z.number()]);
 
-/** The spec's fixed boat and system ids: a typo in a weakness entry must fail validation, not silently match nothing. */
-const BOAT_IDS = ['aurora_45', 'meltemi_40', 'calypso_38'] as const;
-const SYSTEM_IDS = ['engine_cooling', 'heads', 'windlass', 'electrical', 'rig', 'gas', 'bow_thruster'] as const;
 const Band = z.tuple([z.number(), z.number()]).refine(([lo, hi]) => lo <= hi, 'band needs lo <= hi');
 export const BalanceSchema: z.ZodType<Balance> = z.object({
   start: z.object({ moneyEur: NonNeg, mood: NonNeg, fatigue: NonNeg, gasPct: NonNeg, serviceBankPct: NonNeg, starterBankPct: NonNeg, hour: Hour, crewSize: Int.positive() }).strict(),
@@ -209,7 +206,8 @@ export const BalanceSchema: z.ZodType<Balance> = z.object({
     levelGain: z.object({ newbie: Band, expert: Band, careful: Band }).strict(),
     weekInjuryRate: z.object({ newbie: Band, expert: Band }).strict(),
     zeroFireAllow: z.array(z.string()),
-    weakness: z.record(z.enum(BOAT_IDS), z.object({ systems: z.array(z.enum(SYSTEM_IDS)), causes: z.array(z.string().min(1)) }).strict()),
+    // Boat and system ids are checked against content.boats / content.systems in crossValidate.
+    weakness: z.record(Id, z.object({ systems: z.array(Id), causes: z.array(z.string().min(1)) }).strict()),
     weaknessMinRate: Prob,
     careful: z.object({ minMeanScore: NonNeg, weekInjuryRate: Band }).strict(),
   }).strict(),

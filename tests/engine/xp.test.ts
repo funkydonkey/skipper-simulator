@@ -46,8 +46,8 @@ describe('grantXp / applyLevelUps', () => {
     expect(s.log).toEqual([]);
   });
 
-  it('level 1 with 12 xp becomes level 2 with 2 xp and logs it', () => {
-    const s = applyLevelUps(makeState(withVoice('order', 1, 12)), b);
+  it('level 1 with 10 xp becomes level 2 with 2 xp and logs it', () => {
+    const s = applyLevelUps(makeState(withVoice('order', 1, 10)), b);
     expect(s.voices.order).toBe(2);
     expect(xp(s, 'order')).toBe(2);
     expect(s.log).toEqual([expect.objectContaining({ kind: 'info', cause: 'levelup:order:2', data: { from: 1, to: 2 } })]);
@@ -56,11 +56,11 @@ describe('grantXp / applyLevelUps', () => {
   it('raises at most one level per call', () => {
     const s = applyLevelUps(makeState(withVoice('order', 1, 40)), b);
     expect(s.voices.order).toBe(2);
-    expect(xp(s, 'order')).toBe(30);
+    expect(xp(s, 'order')).toBe(32);
   });
 
   it('leaves voices below the threshold alone and zeroes xp at max level', () => {
-    expect(applyLevelUps(makeState(withVoice('order', 1, 9)), b).voices.order).toBe(1);
+    expect(applyLevelUps(makeState(withVoice('order', 1, 7)), b).voices.order).toBe(1);
     const capped = applyLevelUps(makeState(withVoice('order', 4, 7)), b);
     expect(xp(capped, 'order')).toBe(0);
     expect(capped.log).toEqual([]);
@@ -143,12 +143,12 @@ describe('XP sources', () => {
     expect(xp(s, 'order')).toBe(2);
   });
 
-  it('clean maneuvers grant order +1 once per day', () => {
+  it('clean maneuvers grant order cleanManeuverXp (2) once per day', () => {
     let s = runManeuver(makeState(), base, 'departure', { departure: correct });
     s = runManeuver(s, base, 'mooring');
-    expect(xp(s, 'order')).toBe(1);
+    expect(xp(s, 'order')).toBe(2);
     expect(s.log.filter((e) => e.cause.startsWith('xp:order:order:ok:')).map((e) => e.cause)).toEqual(['xp:order:order:ok:dep_test']);
-    expect(xp(runManeuver({ ...s, day: 2 }, base, 'mooring'), 'order')).toBe(2);
+    expect(xp(runManeuver({ ...s, day: 2 }, base, 'mooring'), 'order')).toBe(4);
   });
 });
 
