@@ -144,7 +144,9 @@ describe('ТЗ 7.4 acceptance', () => {
     for (const boat of boats) {
       // meltemi_40 measures 0.57 < 0.6 after 3c (Task 7): its only weakness hits are rig failures, which need
       // day.max_wind >= 14 under sail; variable_week gives 6/22 hits. The 3c knobs the brief allows (maneuver error
-      // injuries, marinero chances, cooldowns) do not reach rig failures. Skipped pending a ruling; see task-7-report.md.
+      // injuries, marinero chances, cooldowns) do not reach rig failures. R22: +1..+3 kn on variable_week light days
+      // (and +1..+3 on calm_then_front calm days) gave 0.56-0.59, never 0.6; seeds 101-400 measure 0.40-0.51 at baseline.
+      // Templates left unchanged; skipped pending a further ruling. See task-7-report.md.
       const weaknessIt = boat === 'meltemi_40' ? it.skip : it;
       weaknessIt(`ignore-weakness on ${boat} hits the boat's weakness in at least weaknessMinRate of weeks`, () => {
         expect(ignoring[boat]!.weaknessRate).toBeGreaterThanOrEqual(targets.weaknessMinRate);
