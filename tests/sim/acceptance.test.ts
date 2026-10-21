@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { loadContentDir } from '../../src/content/load-node';
 import { parseContent } from '../../src/content/parse';
 import { toRaw } from '../fixtures/raw';
-import { endDay, finishWeek, planDay, presentEvent, startDay } from '../../src/engine';
+import { endDay, eventText, finishWeek, planDay, presentEvent, startDay } from '../../src/engine';
 import { buildConditionContext } from '../../src/engine/expr';
 import { PILLARS, type GameEvent, type GameState } from '../../src/engine/types';
 import { drainEvents, pillarsAffected, playDay, runWeek, setupWeek, weekScore } from '../../src/sim/run';
@@ -67,7 +67,7 @@ describe('ТЗ 7.4 acceptance', () => {
   it('#5 texts come out in both languages', () => {
     const s = setupWeek(content, 1, expert, 'en');
     const ev = content.events[0]!;
-    expect(presentEvent(ev, s, buildConditionContext(s, content), content.balance).text).toBe(ev.text.en);
+    expect(presentEvent(ev, s, buildConditionContext(s, content), content.balance).text).toBe(eventText(ev, s).en);
   });
 
   it('#6 a new event works by editing JSON only', () => {

@@ -269,7 +269,7 @@ export interface Dialogue {
   expectation: ExpectationSpec;
 }
 
-export interface EventTrigger { phase: EventPhase; conditions: string[]; chance: ChanceInput; once?: boolean }
+export interface EventTrigger { phase: EventPhase; conditions: string[]; chance: ChanceInput; once?: boolean; cooldownDays?: number; maxPerWeek?: number }
 export interface VoiceLine { voice: VoiceId; min_level: number; text: LocalizedText; when?: string }
 export interface VoiceCheck { voice: VoiceId; difficulty: number }
 /** Either `check + success + fail`, or `effects`. Option[0] is the instinctive newbie choice. */
@@ -289,7 +289,8 @@ export interface GameEvent {
   pillar: Pillar;
   trigger: EventTrigger;
   scene: string;
-  text: LocalizedText;
+  /** One text, or several variants: the variant is picked by `seedHash(seed, id, day)`. */
+  text: LocalizedText | LocalizedText[];
   voices: VoiceLine[];
   options: EventOption[];
   debrief: LocalizedText;

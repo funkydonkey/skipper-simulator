@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { buildConditionContext, presentEvent } from '../../../src/engine';
+import { buildConditionContext, eventTexts, presentEvent } from '../../../src/engine';
 import { content, gameAt, withEvent } from '../fixtures';
 import { renderShell } from '../render';
 
@@ -12,7 +12,7 @@ describe('EventScreen', () => {
   it('shows the scene, the text and each option, with check odds', () => {
     renderShell(withEvent(gameAt('evening'), checkEvent.id));
     expect(document.querySelector(`[data-scene="${checkEvent.scene}"]`)).not.toBeNull();
-    expect(screen.getByText(checkEvent.text.ru.split(/(?<=[.!?…])\s/)[0]!.trim(), { exact: false })).toBeInTheDocument();
+    expect(screen.getByText(eventTexts(checkEvent)[0]!.ru.split(/(?<=[.!?…])\s/)[0]!.trim(), { exact: false })).toBeInTheDocument();
     for (const o of checkEvent.options) expect(screen.getByRole('button', { name: esc(o.text.ru) })).toBeInTheDocument();
     expect(screen.getAllByText(/\d+%/).length).toBeGreaterThan(0);
   });

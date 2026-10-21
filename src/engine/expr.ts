@@ -15,6 +15,7 @@ export const CONTEXT_KEYS = [
   'mood', 'fatigue', 'injuries', 'wind', 'gust', 'front', 'location_kind', 'at_base', 'at_marina', 'at_bay', 'at_quay',
   'moored_berth', 'night', 'place.seabed', 'marina.late', 'day.motor_hours', 'day.sail_hours', 'day.max_wind',
   'wind.side', 'wind.kn', 'wind.dir', 'place.marinero', 'place.tight', 'place.berth',
+  'leg.feature.strait', 'leg.feature.cape', 'leg.feature.gulf', 'leg.feature.open',
 ] as const;
 export const BOAT_KEYS = ['boat.shared_bank', 'boat.electric_toilet'] as const;
 
@@ -207,6 +208,8 @@ export function buildConditionContext(state: GameState, content: Content): CondC
     'day.max_wind': state.dayFacts?.maxWindKn ?? 0,
     'boat.shared_bank': boat ? !boat.starterSeparate : false,
     'boat.electric_toilet': boat?.electricToilet ?? false,
+    // Passage events roll per leg and override these with the leg's route features.
+    'leg.feature.strait': false, 'leg.feature.cape': false, 'leg.feature.gulf': false, 'leg.feature.open': false,
     ...systemContext(state, content),
     ...situationContext(state.situation),
     // Without a situation the wind keys carry the day's plain wind (kLocal 1).

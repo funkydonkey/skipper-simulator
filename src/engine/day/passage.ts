@@ -1,5 +1,5 @@
 import { assertNoPendingEvent, assertPhase, EngineError } from '../errors';
-import { queueEvent } from '../events';
+import { queueEvent, queueFailureEvent, queuePassageEvent } from '../events';
 import { appendLog } from '../log';
 import { maneuverFor, validateOrder } from '../maneuver';
 import { applyOutcome } from '../resources';
@@ -129,8 +129,14 @@ function sail(state: GameState, content: Content, boat: Boat, plan: DayPlan): { 
   const sailed = plan.legs.reduce((acc, leg) => {
     const r = runLeg(acc.state, content, boat, leg, acc.at);
     const sum = acc.summary;
+    const route = requireRoute(content, leg.routeId);
+    const legCtx = {
+      wind: r.windKn, 'wind.dir': r.windDir,
+      'leg.feature.strait': route.features.includes('strait'), 'leg.feature.cape': route.features.includes('cape'),
+      'leg.feature.gulf': route.features.includes('gulf'), 'leg.feature.open': route.features.includes('open'),
+    };
     return {
-      state: r.state,
+      state: queuePassageEvent(r.state, content, legCtx),
       at: r.to,
       summary: { ...sum, motor: sum.motor + r.motorHours, sail: sum.sail + r.sailHours, legHours: sum.legHours + r.motorHours + r.sailHours, maxWind: Math.max(sum.maxWind, r.windKn) },
     };
@@ -158,7 +164,9 @@ export function planDay(state: GameState, content: Content, plan: DayPlan): Game
     summary = { moving: false, departureHour: null, mooring: here.kind === 'bay' ? 'anchor' : 'berth', motor: 0, sail: 0, legHours: 0, swum: swim.swum, maxWind: 0 };
   }
   s = settleDay(s, content, boat, plan, summary);
-  const phases: EventPhase[] = summary.moving ? ['passage', 'arrival', 'evening'] : ['evening'];
+  // Passage events roll per leg inside `sail`; 3b's passage failures stay day-level.
+  if (summary.moving) s = queueFailureEvent(s, content, 'passage');
+  const phases: EventPhase[] = summary.moving ? ['arrival', 'evening'] : ['evening'];
   s = phases.reduce((acc, phase) => queueEvent(acc, content, phase), s);
   return { ...s, phase: 'evening' };
 }

@@ -6,7 +6,7 @@ export { newGame, assignVoices, boatOffers, chooseBoat, performCheckin, performB
 export { startDay, type MorningChoice } from './day/morning';
 export { planDay, validatePlan } from './day/passage';
 export { endDay, finishWeek, tavernaOpen, tavernaBill, type EveningChoice } from './day/evening';
-export { presentEvent, resolvePendingEvent, optionAvailable, type EventView } from './events';
+export { presentEvent, eventText, eventTexts, resolvePendingEvent, optionAvailable, type EventView } from './events';
 export { buildDebrief, type Debrief, type DebriefLink, type WeekScales } from './debrief';
 export { voiceReport, type VoiceReport, type VoiceImpact } from './voice-report';
 export { buildConditionContext } from './expr';

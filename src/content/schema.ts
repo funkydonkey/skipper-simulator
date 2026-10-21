@@ -149,8 +149,8 @@ const OptionSchema: z.ZodType<EventOption> = z.object({
 
 export const GameEventSchema: z.ZodType<GameEvent> = z.object({
   id: Id, pillar: z.enum(PILLARS),
-  trigger: z.object({ phase: z.enum(EVENT_PHASES), conditions: z.array(z.string().min(1)), chance: ChanceInputSchema, once: z.boolean().optional() }).strict(),
-  scene: Id, text: Text,
+  trigger: z.object({ phase: z.enum(EVENT_PHASES), conditions: z.array(z.string().min(1)), chance: ChanceInputSchema, once: z.boolean().optional(), cooldownDays: Int.min(1).optional(), maxPerWeek: Int.min(1).optional() }).strict(),
+  scene: Id, text: z.union([Text, z.array(Text).min(2)]),
   voices: z.array(z.object({ voice: z.enum(VOICES), min_level: Int.min(0), text: Text, when: z.string().min(1).optional() }).strict()),
   options: z.array(OptionSchema).min(2),
   debrief: Text,

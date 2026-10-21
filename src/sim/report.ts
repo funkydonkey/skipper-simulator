@@ -1,3 +1,4 @@
+import { eventText } from '../engine/events';
 import { formatClock } from '../engine/time';
 import type { Content, Lang } from '../engine/types';
 import type { WeekResult } from './run';
@@ -16,7 +17,7 @@ export function formatWeek(result: WeekResult, content: Content, lang: Lang): st
     for (const e of result.state.log.filter((x) => x.day === day && (x.kind === 'event' || x.kind === 'signal' || x.delta || x.data?.damage || x.data?.injury))) {
       const ev = e.kind === 'event' ? content.events.find((x) => `event:${x.id}` === e.cause) : undefined;
       const delta = e.delta ? ` ${JSON.stringify(e.delta)}` : '';
-      lines.push(`  ${formatClock(e.clockMin)} ${e.cause}${delta}${ev ? ` — ${ev.text[lang]}` : ''}`);
+      lines.push(`  ${formatClock(e.clockMin)} ${e.cause}${delta}${ev ? ` — ${eventText(ev, { ...result.state, day: e.day })[lang]}` : ''}`);
     }
   }
   const d = result.debrief;

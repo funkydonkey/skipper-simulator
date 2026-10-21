@@ -14,8 +14,8 @@ const b = base.balance;
 const clog = base.events[0]!;
 const withEvent = (over: Partial<GameEvent> = {}): Content => ({ ...base, events: [{ ...clog, trigger: { ...clog.trigger, phase: 'morning', conditions: [] }, ...over }] });
 const checkOptions = [
-  { id: 'try', text: clog.text, check: { voice: 'mechanic' as const, difficulty: 2 }, success: {}, fail: {} },
-  { id: 'skip', text: clog.text, effects: {} },
+  { id: 'try', text: clog.options[0]!.text, check: { voice: 'mechanic' as const, difficulty: 2 }, success: {}, fail: {} },
+  { id: 'skip', text: clog.options[0]!.text, effects: {} },
 ];
 const xp = (s: GameState, v: TrainableVoice): number => s.voiceXp[v];
 const withVoice = (v: TrainableVoice, level: number, voiceXp = 0): Partial<GameState> => ({
@@ -118,7 +118,7 @@ describe('XP sources', () => {
   });
 
   it('explicit effect.xp is granted with the outcome cause', () => {
-    const o = withEvent({ options: [{ id: 'try', text: clog.text, effects: { xp: { diplomat: 2, economist: 4 } } }, checkOptions[1]!] });
+    const o = withEvent({ options: [{ id: 'try', text: clog.options[0]!.text, effects: { xp: { diplomat: 2, economist: 4 } } }, checkOptions[1]!] });
     const s = resolvePendingEvent(makeState({ phase: 'morning', eventQueue: ['toilet_clog'] }), o, 'try');
     expect(xp(s, 'diplomat')).toBe(2);
     expect(xp(s, 'economist')).toBe(0);

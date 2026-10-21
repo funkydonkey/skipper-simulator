@@ -1,4 +1,4 @@
-import { formatClock, TRAINABLE_VOICES, type ChanceValue, type Content, type Lang, type LogEntry, type LogKind, type Pillar, type TrainableVoice } from '../../engine';
+import { eventTexts, formatClock, TRAINABLE_VOICES, type ChanceValue, type Content, type Lang, type LogEntry, type LogKind, type Pillar, type TrainableVoice } from '../../engine';
 import { CHECKPOINT_NAMES, DAMAGE_NAMES, label, VOICE_NAMES } from '../i18n/glossary';
 import { fmt, type Vars } from '../i18n/t';
 import { formatHour, signed } from './format';
@@ -32,6 +32,11 @@ function topicTitle(c: Content, id: string, lang: Lang): string {
 }
 function optionText(c: Content, eventId: string, optionId: string, lang: Lang): string {
   return c.events.find((e) => e.id === eventId)?.options.find((o) => o.id === optionId)?.text[lang] ?? optionId;
+}
+/** The log keeps no variant, so the first one stands for the event. */
+function eventTextOf(c: Content, eventId: string, lang: Lang): string {
+  const e = c.events.find((x) => x.id === eventId);
+  return e ? eventTexts(e)[0]![lang] : eventId;
 }
 function maneuverTitle(c: Content, id: string, lang: Lang): string {
   return c.maneuvers.find((m) => m.id === id)?.title[lang] ?? id;
@@ -144,7 +149,7 @@ const DESCRIBE: Record<string, Describer> = {
   },
   mood_per_day: (_p, e, _c, lang) => say('moodPerDay', lang, { mood: signed(e.delta?.mood ?? 0) }, 'bad'),
   event: ([eventId = '', optionId, tag], _e, c, lang) => {
-    if (!optionId) return say('eventHappened', lang, { text: firstSentence(c.events.find((x) => x.id === eventId)?.text[lang] ?? eventId) });
+    if (!optionId) return say('eventHappened', lang, { text: firstSentence(eventTextOf(c, eventId, lang)) });
     return say('eventOption', lang, { option: optionText(c, eventId, optionId, lang) }, tag === 'fail' ? 'bad' : tag === 'success' ? 'good' : 'neutral');
   },
   choice: ([eventId = '', optionId = ''], _e, c, lang) => say('chose', lang, { option: optionText(c, eventId, optionId, lang) }),

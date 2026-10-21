@@ -63,7 +63,7 @@ describe('events', () => {
 
   it('presentEvent localises text, filters voices, shows check chances', () => {
     const view = presentEvent(clog, day3, buildConditionContext(day3, content), b);
-    expect(view.text).toBe(clog.text.ru);
+    expect(view.text).toBe((clog.text as { ru: string }).ru);
     expect(view.voices).toEqual([{ voice: 'mechanic', text: 'Клапан забит. Это час работы и перчатки.' }]);
     expect(view.options.map((o) => [o.id, o.available, o.chance === null ? null : Math.round(o.chance.value * 100)])).toEqual([
       ['fix_self', true, 46], ['call_base', true, null], ['endure', true, null],
