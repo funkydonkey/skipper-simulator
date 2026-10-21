@@ -12,6 +12,8 @@ export const PLANNING = dict({
   insightFrom: { ru: 'Чутьё: фронт после {time}', en: 'Sea Sense: front after {time}' },
   frontSigns: { ru: 'На западе собираются тучи, барометр падает. После обеда задует сильнее прогноза.', en: 'Clouds are gathering in the west and the barometer is falling. It will blow harder than forecast after lunch.' },
   noBarometer: { ru: 'На барометр сегодня не смотрели.', en: 'Nobody checked the barometer today.' },
+  steady: { ru: 'Барометр {hpa} гПа, за ночь не менялся.', en: 'Barometer {hpa} hPa, unchanged overnight.' },
+  noFront: { ru: 'Фронта сегодня не ждём.', en: 'No front expected today.' },
   legs: { ru: 'Переходы', en: 'Legs' },
   noLegs: { ru: 'Переходов нет: день на месте.', en: 'No legs: a day in place.' },
   leg: { ru: '{from} → {to} · {nm} миль', en: '{from} → {to} · {nm} nm' },

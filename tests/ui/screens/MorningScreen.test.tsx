@@ -14,8 +14,17 @@ describe('MorningScreen', () => {
     }
   });
 
+  it('a keen sea sense reads the weather anyway: the barometer box is ticked and locked', () => {
+    const game = gameAt('morning');
+    renderShell({ ...game, voices: { ...game.voices, sea_sense: content.balance.voices.seaSenseSignalLevel } });
+    const box = screen.getByLabelText('Посмотреть на барометр и небо');
+    expect(box).toBeChecked();
+    expect(box).toBeDisabled();
+  });
+
   it('starts the day with the barometer and a promise', async () => {
-    const r = renderShell(gameAt('morning'));
+    const game = gameAt('morning');
+    const r = renderShell({ ...game, voices: { ...game.voices, sea_sense: 0 } });
     await r.user.click(screen.getByLabelText('Посмотреть на барометр и небо'));
     await r.user.click(screen.getByLabelText(/Постараемся выйти пораньше/));
     expect(screen.getByText(/услышал: «Выходим в 8»/)).toBeInTheDocument();
