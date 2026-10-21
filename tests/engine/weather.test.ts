@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { exposure, realWind, rollDayWeather, shiftDir, signalsVisible } from '../../src/engine/weather';
+import { exposure, pointShelter, realWind, rollDayWeather, shiftDir, signalsVisible } from '../../src/engine/weather';
+import { DIRS } from '../../src/engine/types';
 import { makeContent } from '../fixtures/content';
 import type { DayWeather } from '../../src/engine/types';
 
@@ -17,8 +18,9 @@ describe('weather', () => {
   });
 
   it('rollDayWeather is deterministic and copies the forecast', () => {
-    const a = rollDayWeather(10, template, 1, b);
-    expect(a).toEqual(rollDayWeather(10, template, 1, b));
+    const flat = { ...template, jitter: { dirSteps: 0, kn: 0 } };
+    const a = rollDayWeather(10, flat, 1, b);
+    expect(a).toEqual(rollDayWeather(10, flat, 1, b));
     expect(a.value.weather.forecastKn).toBe(12);
     expect(a.value.weather.front).toBe(false);
     expect(a.value.weather.frontAddKn).toBe(0);
@@ -29,7 +31,7 @@ describe('weather', () => {
     let s = 1;
     let fronts = 0;
     for (let i = 0; i < 2000; i++) {
-      const r = rollDayWeather(s, template, 3, b);
+      const r = rollDayWeather(s, { ...template, jitter: { dirSteps: 0, kn: 0 } }, 3, b);
       if (r.value.weather.front) {
         fronts++;
         expect(r.value.weather.frontAddKn).toBeGreaterThanOrEqual(8);
@@ -71,5 +73,60 @@ describe('weather', () => {
     const bay = content.map.find((p) => p.id === 'bay_a')!;
     expect(exposure(bay, 'N')).toBeCloseTo(0.8);
     expect(exposure(bay, 'S')).toBeCloseTo(0);
+  });
+});
+
+describe('daily jitter', () => {
+  const tpl = { ...template, days: template.days.map((d) => ({ ...d, frontChance: 0 })) };
+  const stepDist = (a: string, c: string) => {
+    const d = Math.abs(DIRS.indexOf(a as never) - DIRS.indexOf(c as never));
+    return Math.min(d, 8 - d);
+  };
+
+  it('stays within 1 compass step and 2 kn of the template, and hits both extremes', () => {
+    const d = tpl.days[0]!;
+    let s = 5;
+    const dirDeltas = new Set<number>();
+    const knDeltas = new Set<number>();
+    for (let i = 0; i < 200; i++) {
+      const r = rollDayWeather(s, tpl, 1, b);
+      const w = r.value.weather;
+      expect(stepDist(w.forecastDir, d.dir)).toBeLessThanOrEqual(1);
+      expect(Math.abs(w.forecastKn - d.windKn)).toBeLessThanOrEqual(2);
+      expect(w.forecastGustKn - w.forecastKn).toBe(d.gustKn - d.windKn);
+      dirDeltas.add(DIRS.indexOf(w.forecastDir) - DIRS.indexOf(d.dir));
+      knDeltas.add(w.forecastKn - d.windKn);
+      s = r.next;
+    }
+    expect(knDeltas.has(-2) && knDeltas.has(2)).toBe(true);
+    expect(dirDeltas.size).toBe(3);
+  });
+
+  it('jitter { dirSteps: 0, kn: 0 } reproduces the template', () => {
+    const flat = { ...tpl, jitter: { dirSteps: 0, kn: 0 } };
+    const w = rollDayWeather(9, flat, 2, b).value.weather;
+    const d = flat.days[1]!;
+    expect([w.forecastKn, w.forecastGustKn, w.forecastDir]).toEqual([d.windKn, d.gustKn, d.dir]);
+  });
+
+  it('keeps wind non-negative', () => {
+    const calmTpl = { ...tpl, days: [{ ...tpl.days[0]!, windKn: 1, gustKn: 2 }], jitter: { dirSteps: 0, kn: 5 } };
+    let s = 1;
+    for (let i = 0; i < 100; i++) {
+      const r = rollDayWeather(s, calmTpl, 1, b);
+      expect(r.value.weather.forecastKn).toBeGreaterThanOrEqual(0);
+      expect(r.value.weather.forecastGustKn).toBeGreaterThanOrEqual(0);
+      s = r.next;
+    }
+  });
+});
+
+describe('pointShelter', () => {
+  it('is exposed when exposure exceeds rollyExposure', async () => {
+    const { loadContentDir } = await import('../../src/content/load-node');
+    const loaded = await loadContentDir('content');
+    const vela = loaded.content!.map.find((p) => p.id === 'vela_bay')!;
+    expect(pointShelter(vela, 'NW', loaded.content!.balance)).toBe('exposed');
+    expect(pointShelter(vela, 'SE', loaded.content!.balance)).toBe('sheltered');
   });
 });

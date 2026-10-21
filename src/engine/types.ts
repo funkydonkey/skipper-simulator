@@ -214,11 +214,15 @@ export interface WeatherDay {
   barometerHpa: number;
 }
 
+export interface WeatherJitter { dirSteps: number; kn: number }
+
 export interface WeatherTemplate {
   id: string;
   name: LocalizedText;
   /** Multiplier on forecast wind after balance.weather.afternoonFromHour. */
   afternoonFactor: number;
+  /** Overrides balance.weather.jitter for this template. */
+  jitter?: WeatherJitter;
   days: WeatherDay[];
 }
 
@@ -365,7 +369,7 @@ export interface Balance {
   checks: { base: number; perLevel: number; min: number; max: number };
   checkin: { budgetMin: number; costMin: Record<CheckpointId, number> };
   briefing: { slots: number; maxDialogues: number };
-  weather: { frontAddKn: [number, number]; frontShiftSteps: number; barometerDropHpa: number; afternoonFromHour: number };
+  weather: { frontAddKn: [number, number]; frontShiftSteps: number; barometerDropHpa: number; afternoonFromHour: number; jitter: WeatherJitter };
   schedule: { days: number; returnDeadlineHour: number; lateFeeEur: number };
   rescue: { jumpStartEur: number; jumpStartDelayMin: number; moodPenalty: number; towEur: number; towHours: number; towMoodPenalty: number };
   budget: { weekEur: number; okFactor: number };

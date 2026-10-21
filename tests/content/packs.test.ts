@@ -38,7 +38,7 @@ describe('content packs', () => {
     expect(content!.map).toHaveLength(9);
     expect(content!.routes).toHaveLength(13);
     expect(content!.events).toHaveLength(34);
-    expect(content!.weather).toHaveLength(1);
+    expect(content!.weather).toHaveLength(4);
   });
 
   it('missing region pack is an error, not a throw', async () => {
@@ -55,7 +55,7 @@ describe('content packs', () => {
     await writeFile(join(w, 'a.json'), JSON.stringify({ ...tpl, id: 'a_week' }));
     const r = await loadContentDir(dir);
     expect(r.errors).toEqual([]);
-    expect(r.content!.weather.map((t) => t.id)).toEqual(['a_week', 'b_week', 'meltemi_week']);
+    expect(r.content!.weather.map((t) => t.id)).toEqual(['a_week', 'b_week', 'calm_then_front', 'meltemi_week', 'sirocco_week', 'variable_week']);
   });
 
   it('rejects a region pack whose region.json id is not the requested region', async () => {

@@ -1,0 +1,13 @@
+{
+  "id": "variable_week",
+  "name": { "ru": "Переменная неделя", "en": "Variable week" },
+  "afternoonFactor": 1.2,
+  "days": [
+    { "day": 1, "windKn": 9, "gustKn": 14, "dir": "N", "frontChance": 0.1, "barometerHpa": 1014 },
+    { "day": 2, "windKn": 11, "gustKn": 16, "dir": "E", "frontChance": 0.15, "barometerHpa": 1012 },
+    { "day": 3, "windKn": 13, "gustKn": 19, "dir": "SW", "frontChance": 0.25, "barometerHpa": 1010 },
+    { "day": 4, "windKn": 10, "gustKn": 15, "dir": "W", "frontChance": 0.2, "barometerHpa": 1011 },
+    { "day": 5, "windKn": 14, "gustKn": 20, "dir": "NE", "frontChance": 0.3, "barometerHpa": 1009 },
+    { "day": 6, "windKn": 8, "gustKn": 12, "dir": "S", "frontChance": 0.1, "barometerHpa": 1013 }
+  ]
+}

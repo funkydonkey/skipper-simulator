@@ -107,8 +107,10 @@ export const RegionSchema: z.ZodType<Region> = z.object({
   id: Id, name: Text, map: z.array(MapPointSchema).min(2), routes: z.array(RouteSchema).min(1),
 }).strict();
 
+const WeatherJitterSchema = z.object({ dirSteps: Int.min(0), kn: NonNeg }).strict();
+
 export const WeatherTemplateSchema: z.ZodType<WeatherTemplate> = z.object({
-  id: Id, name: Text, afternoonFactor: Pos,
+  id: Id, name: Text, afternoonFactor: Pos, jitter: WeatherJitterSchema.optional(),
   days: z.array(z.object({ day: Int.positive(), windKn: NonNeg, gustKn: NonNeg, dir: z.enum(DIRS), frontChance: Prob, barometerHpa: Pos }).strict()).min(1),
 }).strict();
 
@@ -194,7 +196,7 @@ export const BalanceSchema: z.ZodType<Balance> = z.object({
   checks: z.object({ base: Prob, perLevel: NonNeg, min: Prob, max: Prob }).strict(),
   checkin: z.object({ budgetMin: Pos, costMin: fullRecord(CHECKPOINTS, NonNeg) }).strict(),
   briefing: z.object({ slots: Int.positive(), maxDialogues: Int.min(0) }).strict(),
-  weather: z.object({ frontAddKn: Pair, frontShiftSteps: Int, barometerDropHpa: NonNeg, afternoonFromHour: Hour }).strict(),
+  weather: z.object({ frontAddKn: Pair, frontShiftSteps: Int, barometerDropHpa: NonNeg, afternoonFromHour: Hour, jitter: WeatherJitterSchema }).strict(),
   schedule: z.object({ days: Int.positive(), returnDeadlineHour: Hour, lateFeeEur: NonNeg }).strict(),
   rescue: z.object({ jumpStartEur: NonNeg, jumpStartDelayMin: NonNeg, moodPenalty: NonNeg, towEur: NonNeg, towHours: NonNeg, towMoodPenalty: NonNeg }).strict(),
   budget: z.object({ weekEur: Pos, okFactor: Pos }).strict(),

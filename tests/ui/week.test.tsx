@@ -110,7 +110,7 @@ async function playWeek(lang: Lang, random = 0.123): Promise<Week> {
 }
 
 // Seed chosen by scanning: this week breaks the windlass and the first repair attempt fails, the second succeeds.
-const FAILURE_WEEK_RANDOM = 0.3;
+const FAILURE_WEEK_RANDOM = 0.6;
 const LOGBOOK_LINES = {
   ru: { fault: 'Неисправность: якорное устройство', broke: 'Сломалось: якорное устройство', fixed: 'Починили: якорное устройство', failed: 'Починить не вышло: якорное устройство' },
   en: { fault: 'Fault: anchor gear', broke: 'Broke down: anchor gear', fixed: 'Repaired: anchor gear', failed: "Couldn't repair: anchor gear" },

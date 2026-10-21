@@ -11,7 +11,7 @@ import { renderShell, renderWithSession } from '../render';
 /** Evening at anchor in a bay, with the given systems broken and the given money. */
 function eveningAtAnchor(broken: string[], moneyEur = 500): GameState {
   const base = gameAt('evening');
-  const systems = Object.fromEntries(Object.entries(base.systems).map(([id, s]) => [id, broken.includes(id) ? { ...s, broken: true } : s]));
+  const systems = Object.fromEntries(Object.entries(base.systems).map(([id, s]) => [id, { ...s, broken: broken.includes(id) }]));
   return {
     ...base, systems, locationId: 'cala_azzurra', resources: { ...base.resources, moneyEur },
     dayFacts: base.dayFacts && { ...base.dayFacts, mooring: 'anchor' },

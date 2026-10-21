@@ -12,7 +12,8 @@ export { voiceReport, type VoiceReport, type VoiceImpact } from './voice-report'
 export { buildConditionContext } from './expr';
 export { formatClock } from './time';
 export { resourceReadout, validateAllocation, checkChance } from './voices';
-export { realWind, exposure, signalsVisible } from './weather';
+export { seedHash } from './seed';
+export { realWind, exposure, pointShelter, signalsVisible } from './weather';
 export { maneuverForKind, correctOrder, maneuverRisk } from './maneuver';
 export { evaluateChance } from './chance';
 export { requirePoint, requireRoute, requireEvent, otherEnd } from './state';

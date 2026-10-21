@@ -1,13 +1,19 @@
 import { applyDefects, pickDefects } from './defects';
 import { assertPhase, EngineError } from './errors';
 import { appendLog } from './log';
+import { seedHash } from './seed';
 import { sayDialogue } from './promises';
 import { advanceClock, requireBoat, requireTemplate } from './state';
-import { CHECKPOINTS, TRAINABLE_VOICES, type Boat, type CheckpointId, type Content, type CrewMember, type GameState, type Lang, type TrainableVoice } from './types';
+import { CHECKPOINTS, TRAINABLE_VOICES, type Boat, type CheckpointId, type Content, type CrewMember, type GameState, type Lang, type TrainableVoice, type WeatherTemplate } from './types';
 import { initialSystems } from './systems';
 import { initialVoices } from './voices';
 
 export interface NewGameOptions { seed: number; lang: Lang; weatherTemplateId?: string; crewSize?: number }
+
+function pickTemplate(content: Content, seed: number): WeatherTemplate | undefined {
+  const sorted = [...content.weather].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  return sorted.length ? sorted[seedHash(seed, 'weather') % sorted.length] : undefined;
+}
 
 function makeCrew(content: Content, size: number): CrewMember[] {
   const n = content.crew.length;
@@ -21,7 +27,7 @@ export function newGame(content: Content, opts: NewGameOptions): GameState {
   const b = content.balance;
   const base = content.map.find((p) => p.kind === 'base');
   if (!base) throw new EngineError('CONTENT', 'Map has no base point');
-  const template = opts.weatherTemplateId ? requireTemplate(content, opts.weatherTemplateId) : content.weather[0];
+  const template = opts.weatherTemplateId ? requireTemplate(content, opts.weatherTemplateId) : pickTemplate(content, opts.seed);
   if (!template) throw new EngineError('CONTENT', 'No weather templates');
   const crewSize = opts.crewSize ?? b.start.crewSize;
   if (!Number.isInteger(crewSize) || crewSize < 1) throw new EngineError('INVALID_INPUT', `crewSize must be a positive integer, got ${crewSize}`);
