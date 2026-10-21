@@ -83,11 +83,31 @@ describe('per-leg passage events', () => {
     expect(s.eventQueue).toEqual([]);
   });
   it('planDay no longer rolls a generic passage phase at day end', () => {
-    const c = withEvents([ev('plain_passage', { phase: 'passage', conditions: [] })]);
-    const s = planDay(makeState(), c, plan(threeLegs));
-    // fires per leg: cooldown-less once event fires on leg 1 only
-    expect(s.log.filter((e) => e.cause === 'event:plain_passage')).toHaveLength(1);
-    expect(s.log.find((e) => e.cause === 'event:plain_passage')!.clockMin).toBe(s.log.filter((e) => e.cause.startsWith('leg:'))[1]!.clockMin);
+    // Two chance-1 passage events, one leg: the leg roll takes the first. A leftover day-end roll would
+    // queue the second one too (queued events are not eligible again, so a single event could not show it).
+    const c = withEvents([ev('pass_a', { phase: 'passage', once: false }), ev('pass_b', { phase: 'passage', once: false })]);
+    expect(planDay(makeState(), c, plan([sail('r_base_bay_a')])).eventQueue).toEqual(['pass_a']);
+  });
+
+  it('queueFailureEvent: a failure-named event queues once per moving day, after leg events, before arrival and evening', () => {
+    const failing: Content = {
+      ...content,
+      systems: [...content.systems, {
+        id: 'test_sys', name: t('Тест', 'Test'), wearPer: {}, brokenEffect: {}, repairs: [],
+        failures: [{ id: 'f', phase: 'passage', chance: 1, event: 'fail_ev' }],
+      }],
+      events: [
+        ev('fail_ev', { phase: 'passage', chance: 0 }),
+        ev('leg_ev', { phase: 'passage', once: false, conditions: ['leg.feature.strait'] }),
+        ev('arr_ev', { phase: 'arrival' }),
+        ev('eve_ev', { phase: 'evening' }),
+      ],
+    };
+    const on = makeState({ systems: { ...makeState().systems, test_sys: { state: 'ok', wear: 0, broken: false } } });
+    const moving = planDay(on, failing, plan(threeLegs));
+    expect(moving.eventQueue).toEqual(['leg_ev', 'fail_ev', 'arr_ev', 'eve_ev']);
+    const still = planDay(on, failing, plan([]));
+    expect(still.eventQueue).toEqual(['eve_ev']);
   });
 });
 
@@ -98,7 +118,8 @@ describe('text variants', () => {
   });
   it('the same seed and day give the same variant', () => {
     const s = makeState({ day: 3 });
-    expect(eventText(variants, s)).toBe(eventText(variants, { ...s, rng: 999 }));
+    const later = { ...s, rng: 999 };
+    expect(eventText(variants, s)).toBe(eventText(variants, later));
     expect(presentEvent(variants, s, buildConditionContext(s, content), content.balance).text).toBe(eventText(variants, s).ru);
   });
   it('over 6 days at least 2 variants appear', () => {

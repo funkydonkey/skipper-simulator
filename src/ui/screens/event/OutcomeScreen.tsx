@@ -12,7 +12,7 @@ import styles from './Event.module.css';
 import { EVENT } from './strings';
 
 export function OutcomeScreen() {
-  const { content, lang } = useGame();
+  const { game, content, lang } = useGame();
   const { session } = useSession();
   const act = useAct();
   const t = useT(EVENT);
@@ -21,7 +21,7 @@ export function OutcomeScreen() {
   if (!outcome) return null;
   const event = content.events.find((e) => e.id === outcome.eventId);
   const option = event?.options.find((o) => o.id === outcome.optionId);
-  const lines = outcome.entries.filter((e) => !isNoise(e) && !isLogbookOnly(e)).flatMap((e) => describeEntry(e, content, lang) ?? []);
+  const lines = outcome.entries.filter((e) => !isNoise(e) && !isLogbookOnly(e)).flatMap((e) => describeEntry(e, content, lang, game.seed) ?? []);
   const deltas = Object.entries(sumDeltas(outcome.entries)) as [keyof Resources, number][];
   const hours = timeSpentHours(outcome.entries);
   return (

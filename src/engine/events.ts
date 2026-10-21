@@ -39,7 +39,7 @@ function offCooldown(e: GameEvent, state: GameState): boolean {
 }
 
 /** The event's text, or for variants one picked by seed, id and day (never `state.rng`). */
-export function eventText(event: GameEvent, state: GameState): LocalizedText {
+export function eventText(event: GameEvent, state: Pick<GameState, 'seed' | 'day'>): LocalizedText {
   const t = event.text;
   return Array.isArray(t) ? t[seedHash(state.seed, event.id, state.day) % t.length]! : t;
 }

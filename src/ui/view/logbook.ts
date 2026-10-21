@@ -1,4 +1,4 @@
-import { eventTexts, formatClock, TRAINABLE_VOICES, type ChanceValue, type Content, type Lang, type LogEntry, type LogKind, type Pillar, type TrainableVoice } from '../../engine';
+import { eventText, formatClock, TRAINABLE_VOICES, type ChanceValue, type Content, type Lang, type LogEntry, type LogKind, type Pillar, type TrainableVoice } from '../../engine';
 import { CHECKPOINT_NAMES, DAMAGE_NAMES, label, VOICE_NAMES } from '../i18n/glossary';
 import { fmt, type Vars } from '../i18n/t';
 import { formatHour, signed } from './format';
@@ -9,7 +9,7 @@ export type Tone = 'neutral' | 'good' | 'bad';
 export interface LogLine { day: number; clock: string; text: string; tone: Tone; kind: LogKind; cause: string; pillar?: Pillar; odds?: ChanceValue }
 
 type Described = { text: string; tone?: Tone } | null;
-type Describer = (parts: string[], e: LogEntry, c: Content, lang: Lang) => Described;
+type Describer = (parts: string[], e: LogEntry, c: Content, lang: Lang, seed: number) => Described;
 type LogKey = keyof typeof LOG;
 
 const say = (key: LogKey, lang: Lang, vars: Vars = {}, tone: Tone = 'neutral'): Described => ({ text: fmt(LOG[key][lang], vars), tone });
@@ -33,10 +33,10 @@ function topicTitle(c: Content, id: string, lang: Lang): string {
 function optionText(c: Content, eventId: string, optionId: string, lang: Lang): string {
   return c.events.find((e) => e.id === eventId)?.options.find((o) => o.id === optionId)?.text[lang] ?? optionId;
 }
-/** The log keeps no variant, so the first one stands for the event. */
-function eventTextOf(c: Content, eventId: string, lang: Lang): string {
+/** The same variant the event screen showed: `eventText` is pure in (seed, id, day). */
+function eventTextOf(c: Content, eventId: string, day: number, lang: Lang, seed: number): string {
   const e = c.events.find((x) => x.id === eventId);
-  return e ? eventTexts(e)[0]![lang] : eventId;
+  return e ? eventText(e, { seed, day })[lang] : eventId;
 }
 function maneuverTitle(c: Content, id: string, lang: Lang): string {
   return c.maneuvers.find((m) => m.id === id)?.title[lang] ?? id;
@@ -148,8 +148,8 @@ const DESCRIBE: Record<string, Describer> = {
     return outcome === 'fail' ? say('systemRepairFailed', lang, { system }, 'bad') : null;
   },
   mood_per_day: (_p, e, _c, lang) => say('moodPerDay', lang, { mood: signed(e.delta?.mood ?? 0) }, 'bad'),
-  event: ([eventId = '', optionId, tag], _e, c, lang) => {
-    if (!optionId) return say('eventHappened', lang, { text: firstSentence(eventTextOf(c, eventId, lang)) });
+  event: ([eventId = '', optionId, tag], e, c, lang, seed) => {
+    if (!optionId) return say('eventHappened', lang, { text: firstSentence(eventTextOf(c, eventId, e.day, lang, seed)) });
     return say('eventOption', lang, { option: optionText(c, eventId, optionId, lang) }, tag === 'fail' ? 'bad' : tag === 'success' ? 'good' : 'neutral');
   },
   choice: ([eventId = '', optionId = ''], _e, c, lang) => say('chose', lang, { option: optionText(c, eventId, optionId, lang) }),
@@ -195,10 +195,10 @@ const DESCRIBE: Record<string, Describer> = {
   },
 };
 
-export function describeEntry(e: LogEntry, content: Content, lang: Lang): LogLine | null {
+export function describeEntry(e: LogEntry, content: Content, lang: Lang, seed: number): LogLine | null {
   const [root = '', ...parts] = e.cause.split(':');
   const describer = DESCRIBE[root];
-  const d = describer ? describer(parts, e, content, lang) : say('unknown', lang, { cause: e.cause });
+  const d = describer ? describer(parts, e, content, lang, seed) : say('unknown', lang, { cause: e.cause });
   if (!d) return null;
   return { day: e.day, clock: formatClock(e.clockMin), text: d.text, tone: d.tone ?? 'neutral', kind: e.kind, cause: e.cause, ...(e.pillar ? { pillar: e.pillar } : {}), ...(e.odds ? { odds: e.odds } : {}) };
 }
@@ -224,8 +224,8 @@ export function isLogbookOnly(e: LogEntry): boolean {
   return root === 'xp' || (root === 'roll' && what !== 'check');
 }
 
-export function dayLines(log: readonly LogEntry[], day: number, content: Content, lang: Lang): LogLine[] {
-  return log.filter((e) => e.day === day && !isNoise(e)).flatMap((e) => describeEntry(e, content, lang) ?? []);
+export function dayLines(log: readonly LogEntry[], day: number, content: Content, lang: Lang, seed: number): LogLine[] {
+  return log.filter((e) => e.day === day && !isNoise(e)).flatMap((e) => describeEntry(e, content, lang, seed) ?? []);
 }
 
 /** A fault's odds are shown once its day is over; on `today` the line stays without them (no spoilers). */
@@ -236,10 +236,10 @@ function withoutTodaysFaultOdds(line: LogLine, today: number | undefined): LogLi
 }
 
 /** `today`: the current game day, whose fault odds stay hidden. */
-export function logbookDays(log: readonly LogEntry[], content: Content, lang: Lang, today?: number): Array<{ day: number; lines: LogLine[] }> {
+export function logbookDays(log: readonly LogEntry[], content: Content, lang: Lang, seed: number, today?: number): Array<{ day: number; lines: LogLine[] }> {
   const days = [...new Set(log.map((e) => e.day))].sort((a, b) => a - b);
   return days
-    .map((day) => ({ day, lines: dayLines(log, day, content, lang).map((l) => withoutTodaysFaultOdds(l, today)) }))
+    .map((day) => ({ day, lines: dayLines(log, day, content, lang, seed).map((l) => withoutTodaysFaultOdds(l, today)) }))
     .filter((d) => d.lines.length > 0);
 }
 

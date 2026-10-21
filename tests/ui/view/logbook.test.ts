@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { startDay, type LogEntry } from '../../../src/engine';
+import { eventText, startDay, type LogEntry } from '../../../src/engine';
 import { runWeek } from '../../../src/sim/run';
 import { expert, newbie } from '../../../src/sim/strategies';
 import { dayLines, describeEntry, isLogbookOnly, isNoise, logbookDays } from '../../../src/ui/view/logbook';
@@ -14,7 +14,7 @@ describe('logbook', () => {
         const { state } = runWeek(content, seed, strategy);
         for (const e of state.log) {
           for (const lang of ['ru', 'en'] as const) {
-            const line = describeEntry(e, content, lang);
+            const line = describeEntry(e, content, lang, 1);
             if (!line) continue;
             expect(line.text, e.cause).not.toMatch(/\{\w+\}|undefined|NaN/);
             expect(line.text.length, e.cause).toBeGreaterThan(3);
@@ -26,7 +26,7 @@ describe('logbook', () => {
   });
 
   it('shows what was said and what the crew heard', () => {
-    const line = describeEntry(entry('dialogue:early_try'), content, 'ru')!;
+    const line = describeEntry(entry('dialogue:early_try'), content, 'ru', 1)!;
     expect(line.text).toContain('Постараемся выйти пораньше');
     expect(line.text).toContain('Выходим в 8');
   });
@@ -34,11 +34,11 @@ describe('logbook', () => {
   it('hides unseen front signals and hidden defects from the in-game logbook, but still describes them', () => {
     const unseen = entry('signal:front', { kind: 'signal', data: { seen: false, barometerTrendHpa: -4, frontAddKn: 10 } });
     expect(isNoise(unseen)).toBe(true);
-    expect(describeEntry(unseen, content, 'ru')).not.toBeNull();
+    expect(describeEntry(unseen, content, 'ru', 1)).not.toBeNull();
     expect(isNoise({ ...unseen, data: { seen: true, barometerTrendHpa: -4, frontAddKn: 10 } })).toBe(false);
     expect(isNoise(entry('defect:hidden:worn_impeller', { kind: 'info' }))).toBe(true);
     expect(isNoise(entry('checkin:skip:toilets'))).toBe(true);
-    expect(describeEntry(entry('checkin:skip:toilets'), content, 'en')!.text).toContain('Heads');
+    expect(describeEntry(entry('checkin:skip:toilets'), content, 'en', 1)!.text).toContain('Heads');
   });
 
   it('describes voice-check rolls with their odds', () => {
@@ -46,10 +46,10 @@ describe('logbook', () => {
     const opt = ev.options.find((o) => o.check)!;
     const odds = { value: 0.42, parts: [{ source: 'base', delta: 0.42 }] };
     const passed = entry(`roll:check:${ev.id}:${opt.id}`, { kind: 'roll', odds, data: { hit: true, success: true, chance: 0.42 } });
-    const line = describeEntry(passed, content, 'en')!;
+    const line = describeEntry(passed, content, 'en', 1)!;
     expect(line).toMatchObject({ tone: 'good', kind: 'roll', odds });
     expect(line.text).toContain('42');
-    expect(describeEntry({ ...passed, data: { hit: false, success: false, chance: 0.42 } }, content, 'en')!.tone).toBe('bad');
+    expect(describeEntry({ ...passed, data: { hit: false, success: false, chance: 0.42 } }, content, 'en', 1)!.tone).toBe('bad');
   });
 
   it('describes the other rolls with outcome and percent, in both languages', () => {
@@ -65,17 +65,17 @@ describe('logbook', () => {
       ['roll:injury:maneuver:m:e', false, 'без травмы', 'injury'],
     ];
     for (const [cause, hit, ru] of cases) {
-      const l = describeEntry(roll(cause, hit), content, 'ru')!;
+      const l = describeEntry(roll(cause, hit), content, 'ru', 1)!;
       expect(l.text, cause).toContain(ru);
       expect(l.text, cause).toContain('35%');
       expect(l.odds, cause).toEqual(odds);
-      expect(describeEntry(roll(cause, hit), content, 'en')!.text, cause).toContain('35%');
+      expect(describeEntry(roll(cause, hit), content, 'en', 1)!.text, cause).toContain('35%');
     }
-    expect(describeEntry(roll('roll:front:2', true), content, 'ru')!.tone).toBe('bad');
-    expect(describeEntry(roll('roll:front:2', false), content, 'ru')!.tone).toBe('good');
-    expect(describeEntry(roll('roll:mystery:1', true), content, 'ru')).toBeNull();
+    expect(describeEntry(roll('roll:front:2', true), content, 'ru', 1)!.tone).toBe('bad');
+    expect(describeEntry(roll('roll:front:2', false), content, 'ru', 1)!.tone).toBe('good');
+    expect(describeEntry(roll('roll:mystery:1', true), content, 'ru', 1)).toBeNull();
     const certain = entry('roll:marina:base_marina', { kind: 'roll', odds: { value: 0, parts: [{ source: 'base', delta: 0 }] }, data: { hit: false } });
-    expect(describeEntry(certain, content, 'ru'), 'a 0% marina roll is not a roll worth logging').toBeNull();
+    expect(describeEntry(certain, content, 'ru', 1), 'a 0% marina roll is not a roll worth logging').toBeNull();
   });
 
   it('shows xp lines with a readable cause', () => {
@@ -85,20 +85,20 @@ describe('logbook', () => {
     const err = m.errors[0]!;
     const xp = (cause: string, n = 3) => entry(`xp:order:${cause}`, { kind: 'info', data: { xp: n } });
     expect(isNoise(xp('x'))).toBe(false);
-    const wrong = describeEntry(xp(`order:wrong:${m.id}:${err.id}`), content, 'ru')!;
+    const wrong = describeEntry(xp(`order:wrong:${m.id}:${err.id}`), content, 'ru', 1)!;
     expect(wrong.text).toContain('+3 Порядок');
     expect(wrong.text).toContain(m.title.ru);
-    expect(describeEntry(xp(`order:ok:${m.id}`, 1), content, 'en')!.text).toContain('+1 Order');
-    expect(describeEntry(xp(`roll:check:${ev.id}:${opt.id}`), content, 'en')!.text).toContain(opt.text.en);
-    expect(describeEntry(xp('whatever'), content, 'en')!.text).toBe('+3 Order');
+    expect(describeEntry(xp(`order:ok:${m.id}`, 1), content, 'en', 1)!.text).toContain('+1 Order');
+    expect(describeEntry(xp(`roll:check:${ev.id}:${opt.id}`), content, 'en', 1)!.text).toContain(opt.text.en);
+    expect(describeEntry(xp('whatever'), content, 'en', 1)!.text).toBe('+3 Order');
   });
 
   it('describes level-ups and voice events in both languages', () => {
-    expect(describeEntry(entry('levelup:order:3', { data: { from: 2, to: 3 } }), content, 'ru')!.text).toBe('⬆ Порядок 2 → 3');
+    expect(describeEntry(entry('levelup:order:3', { data: { from: 2, to: 3 } }), content, 'ru', 1)!.text).toBe('⬆ Порядок 2 → 3');
     for (const lang of ['ru', 'en'] as const) {
-      expect(describeEntry(entry('voice:economist:saved', { data: { eur: 4 } }), content, lang)!.text).toContain('4');
-      expect(describeEntry(entry('voice:diplomat:softened', { data: { mood: 2 } }), content, lang)!.text).toContain('2');
-      expect(describeEntry(entry('voice:sea_sense:front_seen'), content, lang)!.text.length).toBeGreaterThan(5);
+      expect(describeEntry(entry('voice:economist:saved', { data: { eur: 4 } }), content, lang, 1)!.text).toContain('4');
+      expect(describeEntry(entry('voice:diplomat:softened', { data: { mood: 2 } }), content, lang, 1)!.text).toContain('2');
+      expect(describeEntry(entry('voice:sea_sense:front_seen'), content, lang, 1)!.text.length).toBeGreaterThan(5);
     }
   });
 
@@ -110,14 +110,14 @@ describe('logbook', () => {
   });
 
   it('marks good and bad outcomes', () => {
-    expect(describeEntry(entry('promise:early_try:broken', { kind: 'effect' }), content, 'ru')!.tone).toBe('bad');
-    expect(describeEntry(entry('promise:early_try:kept', { kind: 'effect' }), content, 'ru')!.tone).toBe('good');
-    expect(describeEntry(entry('marina:refused', { kind: 'effect' }), content, 'ru')!.tone).toBe('bad');
+    expect(describeEntry(entry('promise:early_try:broken', { kind: 'effect' }), content, 'ru', 1)!.tone).toBe('bad');
+    expect(describeEntry(entry('promise:early_try:kept', { kind: 'effect' }), content, 'ru', 1)!.tone).toBe('good');
+    expect(describeEntry(entry('marina:refused', { kind: 'effect' }), content, 'ru', 1)!.tone).toBe('bad');
   });
 
   it('groups the visible log by day', () => {
     const { state } = runWeek(content, 42, expert);
-    const days = logbookDays(state.log, content, 'ru');
+    const days = logbookDays(state.log, content, 'ru', state.seed);
     expect(days.map((d) => d.day)).toEqual([...new Set(days.map((d) => d.day))].sort((a, b) => a - b));
     expect(days.every((d) => d.lines.length > 0)).toBe(true);
   });
@@ -133,7 +133,7 @@ describe('logbook does not spoil the weather', () => {
       expect(planning.weather?.signalsVisible).toBe(false);
       outcomes.add(planning.weather?.front === true);
       for (const lang of ['ru', 'en'] as const) {
-        const texts = dayLines(planning.log, planning.day, content, lang).map((l) => l.text).join('\n');
+        const texts = dayLines(planning.log, planning.day, content, lang, planning.seed).map((l) => l.text).join('\n');
         expect(texts, `seed ${seed}`).not.toMatch(/Фронт пришёл|Фронт обошёл|front came|front passed/i);
       }
     }
@@ -142,7 +142,7 @@ describe('logbook does not spoil the weather', () => {
 });
 
 describe('logbook boat systems', () => {
-  const text = (cause: string, lang: 'ru' | 'en', extra: Partial<LogEntry> = {}) => describeEntry(entry(cause, extra), content, lang)?.text;
+  const text = (cause: string, lang: 'ru' | 'en', extra: Partial<LogEntry> = {}) => describeEntry(entry(cause, extra), content, lang, 1)?.text;
 
   it('describes a system returned broken with its deposit charge', () => {
     const data = { eur: 600 };
@@ -186,9 +186,9 @@ describe('logbook boat systems', () => {
       entry('fault:rig:genoa_seam_rip', { day: 2, kind: 'effect', pillar: 'boat', odds }),
       entry('fault:rig:genoa_seam_rip', { day: 3, kind: 'effect', pillar: 'boat', odds }),
     ];
-    const lines = logbookDays(log, content, 'ru', 3).flatMap((d) => d.lines);
+    const lines = logbookDays(log, content, 'ru', 1, 3).flatMap((d) => d.lines);
     expect(lines.map((l) => [l.day, l.odds?.value])).toEqual([[2, 0.25], [3, undefined]]);
-    expect(logbookDays(log, content, 'ru').flatMap((d) => d.lines).every((l) => l.odds?.value === 0.25)).toBe(true);
+    expect(logbookDays(log, content, 'ru', 1).flatMap((d) => d.lines).every((l) => l.odds?.value === 0.25)).toBe(true);
   });
 
   it('explains xp from faults and repairs', () => {
@@ -196,5 +196,17 @@ describe('logbook boat systems', () => {
     expect(xp('fault:engine_cooling:impeller_overheat')).toBe('+2 Механик — неисправность: охлаждение двигателя');
     expect(text('xp:mechanic:fault:rig:genoa_seam_rip', 'en', { kind: 'info', data: { xp: 2 } })).toContain('fault: sails and rig');
     expect(xp('roll:check:repair:gas:self')).toContain('ремонт');
+  });
+
+  it('an event line shows the variant the event screen shows (seed + entry day)', () => {
+    const ev = { ...content.events[0]!, id: 'variant_ev', text: [{ ru: 'Первый.', en: 'First.' }, { ru: 'Второй.', en: 'Second.' }, { ru: 'Третий.', en: 'Third.' }] };
+    const c = { ...content, events: [...content.events, ev] };
+    const seen = new Set<string>();
+    for (let day = 1; day <= 6; day++) {
+      const line = describeEntry(entry('event:variant_ev', { kind: 'event', day }), c, 'en', 7)!;
+      expect(line.text).toContain(eventText(ev, { seed: 7, day }).en.replace('.', ''));
+      seen.add(line.text);
+    }
+    expect(seen.size).toBeGreaterThanOrEqual(2);
   });
 });
