@@ -54,11 +54,13 @@ function sailRisks(state: GameState, content: Content, boat: Boat, route: Route,
   return { state: s, extraMin: b.sails.reefUnderwayMin };
 }
 
-interface ModePlan { mode: 'motor' | 'sail'; drift: boolean; tow: boolean; causes: string[] }
+export interface ModePlan { mode: 'motor' | 'sail'; drift: boolean; tow: boolean; causes: string[] }
 
-/** Motor falls back to sail on empty tank or a dead motor, sail to motor on a broken rig; with neither the boat drifts under sail. */
-/** A boat that must motor (or has neither motor nor sail) in a wind too weak to sail is towed. */
-function resolveMode(requested: LegPlan['mode'], fuelL: number, flags: BrokenFlags, routeId: string, windKn: number, b: Balance): ModePlan {
+/**
+ * Motor falls back to sail on empty tank or a dead motor, sail to motor on a broken rig; with neither the boat drifts under sail.
+ * A boat that must motor (or has neither motor nor sail) in a wind too weak to sail is towed. Shared by `runLeg` and the preview.
+ */
+export function resolveMode(requested: LegPlan['mode'], fuelL: number, flags: BrokenFlags, routeId: string, windKn: number, b: Balance): ModePlan {
   const motorUsable = !flags.noMotor && fuelL > 0;
   const causes: string[] = [];
   if (requested === 'motor') {

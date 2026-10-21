@@ -34,6 +34,28 @@ describe('PlanningScreen', () => {
     expect(screen.getByText(/Риск порвать парус/)).toBeInTheDocument();
   });
 
+  it('warns when a broken engine turns a motor leg into a sail, and when a tow will be needed', async () => {
+    const base = atBase();
+    const dead = { ...base, systems: { ...base.systems, engine_cooling: { ...base.systems.engine_cooling!, broken: true } } };
+    const breeze = renderShell({ ...dead, weather: { ...dead.weather!, forecastKn: 12, forecastGustKn: 15 } });
+    await breeze.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+    expect(screen.getByText('Мотор не работает: этот переход под парусом.')).toBeInTheDocument();
+    expect(screen.queryByText(/буксир/i)).toBeNull();
+    breeze.unmount();
+    const calm = renderShell({ ...dead, lang: 'en', weather: { ...dead.weather!, forecastKn: 2, forecastGustKn: 3 } }, { lang: 'en' });
+    await calm.user.click(screen.getByRole('button', { name: 'Cala Azzurra' }));
+    expect(screen.getByText('You will need a tow: €250, 2 h.')).toBeInTheDocument();
+  });
+
+  it('warns when a broken rig turns a sail leg into a motor leg', async () => {
+    const base = atBase();
+    const r = renderShell({ ...base, systems: { ...base.systems, rig: { ...base.systems.rig!, broken: true } } });
+    await r.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+    expect(screen.queryByText(/Паруса не работают/)).toBeNull();
+    await r.user.click(screen.getByLabelText('Под парусом'));
+    expect(screen.getByText('Паруса не работают: этот переход под мотором.')).toBeInTheDocument();
+  });
+
   it('a stay day goes straight to the evening', async () => {
     const r = renderShell(atBase());
     await r.user.click(screen.getByRole('button', { name: 'Провести день здесь' }));

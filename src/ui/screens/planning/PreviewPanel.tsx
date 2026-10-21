@@ -33,6 +33,8 @@ export function PreviewPanel({ preview }: { preview: PlanPreview }) {
                 {t('legPreview', { to: pointName(content, l.to, lang), wind: l.windKn, speed: l.speedKn, hours: round1(l.hours) })}
                 {l.localEffectKnown && <em> {t('localKnown')}</em>}
                 {l.breakChance.value > 0 && <div className={styles.odds}>{t('sailRisk')} <ChanceBadge odds={l.breakChance} voices={game.voices} /></div>}
+                {l.tow && <p className={styles.warn}>{t('legTow', { eur: l.tow.eur, hours: l.tow.hours })}</p>}
+                {!l.tow && l.mode !== l.plannedMode && <p className={styles.warn}>{t(l.mode === 'sail' ? 'legNoMotor' : 'legNoSail')}</p>}
                 {l.overpowered && <p className={styles.warn}>{t('overpowered')}</p>}
                 {l.forcedReef && <p className={styles.warn}>{t('forcedReef')}</p>}
               </li>
