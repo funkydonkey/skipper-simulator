@@ -89,16 +89,27 @@ describe('pendingLevelUps', () => {
 describe('XP sources', () => {
   const c = withEvent({ options: checkOptions });
 
-  it('a failed check grants +3, a success +1, to the checked voice with an R1 cause', () => {
-    const failed = resolveCheck(c, {}, false);
-    expect(xp(failed, 'mechanic')).toBe(3);
+  const d3 = withEvent({ options: [{ ...checkOptions[0]!, check: { voice: 'mechanic', difficulty: 3 } }, checkOptions[1]!] });
+
+  it('a failed d3 check grants 3 + failBonus 2 = 5 to the checked voice with an R1 cause', () => {
+    const failed = resolveCheck(d3, {}, false);
+    expect(xp(failed, 'mechanic')).toBe(5);
     expect(failed.log.map((e) => e.cause)).toContain('xp:mechanic:roll:check:toilet_clog:try');
-    expect(xp(resolveCheck(c, {}, true), 'mechanic')).toBe(1);
   });
 
-  it('option.xp overrides the default check xp', () => {
-    const o = withEvent({ options: [{ ...checkOptions[0]!, xp: 5 }, checkOptions[1]!] });
-    expect(xp(resolveCheck(o, {}, true), 'mechanic')).toBe(5);
+  it('a successful d3 check grants difficulty × successPerDifficulty = 3', () => {
+    expect(xp(resolveCheck(d3, {}, true), 'mechanic')).toBe(3);
+  });
+
+  it('a d2 check grants 2 on success and 4 on failure', () => {
+    expect(xp(resolveCheck(c, {}, true), 'mechanic')).toBe(2);
+    expect(xp(resolveCheck(c, {}, false), 'mechanic')).toBe(4);
+  });
+
+  it('option.xp overrides the difficulty-based check xp on success and failure', () => {
+    const o = withEvent({ options: [{ ...checkOptions[0]!, check: { voice: 'mechanic', difficulty: 3 }, xp: 7 }, checkOptions[1]!] });
+    expect(xp(resolveCheck(o, {}, true), 'mechanic')).toBe(7);
+    expect(xp(resolveCheck(o, {}, false), 'mechanic')).toBe(7);
   });
 
   it('a check on an exempt voice grants nothing', () => {
@@ -149,7 +160,7 @@ describe('level changes land in the evening', () => {
     const start = withVoice('mechanic', 1, 8);
     let s = resolveCheck(c, { ...start, eventQueue: ['toilet_clog', 'toilet_clog'] }, false);
     expect(s.voices.mechanic).toBe(1);
-    expect(xp(s, 'mechanic')).toBe(11);
+    expect(xp(s, 'mechanic')).toBe(12);
     const odds = (st: GameState) => st.log.filter((e) => e.cause.startsWith('roll:check:')).map((e) => e.odds!.value);
     s = resolvePendingEvent(s, c, 'try');
     const [first, second] = odds(s);

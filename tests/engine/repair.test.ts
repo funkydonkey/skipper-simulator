@@ -79,14 +79,14 @@ describe('repairSystem', () => {
     expect(r.systems.engine_cooling).toEqual({ state: 'worn', wear: 5, broken: true });
     expect(r.resources.moneyEur).toBe(s.resources.moneyEur - 40);
     expect(r.clockMin).toBe(s.clockMin + 60);
-    expect(r.voiceXp.mechanic).toBe(content.balance.voices.checkXp.fail);
+    expect(r.voiceXp.mechanic).toBe(4); // d2: 2 × successPerDifficulty 1 + failBonus 2
     expect(r.log.map((e) => e.cause)).toEqual(expect.arrayContaining(['repair:engine_cooling:self:fail']));
   });
 
   it('a successful self repair clears broken only and grants success XP', () => {
     const r = repairSystem(withRoll(true), content, 'engine_cooling', 'self');
     expect(r.systems.engine_cooling).toEqual({ state: 'worn', wear: 5, broken: false });
-    expect(r.voiceXp.mechanic).toBe(content.balance.voices.checkXp.success);
+    expect(r.voiceXp.mechanic).toBe(2); // d2: 2 × successPerDifficulty 1
     expect(r.log.map((e) => e.cause)).toContain('repair:engine_cooling:self:success');
   });
 

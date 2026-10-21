@@ -257,7 +257,7 @@ export interface EventOption {
   success?: Effect;
   fail?: Effect;
   effects?: Effect;
-  /** Overrides the default check XP (balance.voices.checkXp) for the checked voice. */
+  /** Overrides the default difficulty-based check XP (balance.voices.checkXp) for the checked voice. */
   xp?: number;
 }
 export interface GameEvent {
@@ -307,7 +307,7 @@ export interface DebriefRule {
 
 export interface Balance {
   start: { moneyEur: number; mood: number; fatigue: number; gasPct: number; serviceBankPct: number; starterBankPct: number; hour: number; crewSize: number };
-  voices: { points: number; maxLevel: number; prideLevel: number; crewVoiceLevel: number; seaSenseSignalLevel: number; seaSenseChanceLevel: number; seaSenseTimingLevel: number; economistDiscountPerLevel: number; mechanicExactLevel: number; cautionRiskPerLevel: number; cautionTimePerLevel: number; orderRiskPerLevel: number; xpToLevel: number[]; xpExempt: VoiceId[]; checkXp: { success: number; fail: number }; maneuverErrorXp: number; cleanManeuverXp: number };
+  voices: { points: number; maxLevel: number; prideLevel: number; crewVoiceLevel: number; seaSenseSignalLevel: number; seaSenseChanceLevel: number; seaSenseTimingLevel: number; economistDiscountPerLevel: number; mechanicExactLevel: number; cautionRiskPerLevel: number; cautionTimePerLevel: number; orderRiskPerLevel: number; xpToLevel: number[]; xpExempt: VoiceId[]; checkXp: { successPerDifficulty: number; failBonus: number }; maneuverErrorXp: number; cleanManeuverXp: number };
   water: { perPersonPerDayL: Record<ShowerDiscipline, number>; zeroMoodPenalty: number };
   fuel: { motorLph: number; priceEurPerL: number };
   electric: { fridgeAhPerDay: number; pumpsAhPerDay: number; electricToiletAhPerDay: number; plotterAhPerHour: number; autopilotAhPerHour: number; engineChargeAhPerHour: number; solarAhPerWattDay: number; starterStartPct: number; starterMinPct: number; zeroServiceMoodPenalty: number };

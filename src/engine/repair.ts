@@ -59,7 +59,7 @@ export function repairSystem(state: GameState, content: Content, systemId: Syste
     success = r.value.hit;
     const rollCause = `roll:check:repair:${systemId}:${repairId}`;
     s = appendLog({ ...s, rng: r.next }, { kind: 'roll', cause: rollCause, pillar: 'boat', odds, data: { hit: success, success, chance: odds.value } });
-    s = grantCheckXp(s, option.check.voice, success, rollCause, content.balance);
+    s = grantCheckXp(s, option.check, success, rollCause, content.balance);
   }
   if (success) {
     const cur = s.systems[systemId]!;

@@ -112,7 +112,7 @@ export function resolvePendingEvent(state: GameState, content: Content, optionId
   }
   const option = ev.options.find((x) => x.id === optionId);
   if (check && option?.check) {
-    s = grantCheckXp(s, option.check.voice, check.success, `roll:check:${ev.id}:${optionId}`, content.balance, option.xp);
+    s = grantCheckXp(s, option.check, check.success, `roll:check:${ev.id}:${optionId}`, content.balance, option.xp);
   }
   s = applyOutcomes(s, requireBoat(content, s), r.value.outcomes, content.balance);
   const context = ev.trigger.phase === 'morning' ? 'morning' : 'evening';
