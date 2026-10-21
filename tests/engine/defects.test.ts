@@ -138,8 +138,19 @@ describe('two defects on one system', () => {
     expect(part.systems.rig!.state).toBe('worn');
     expect(part.defects).toEqual(['torn_genoa_seam']);
     const both = resolveDefects(s, meltemi, ids);
-    expect(both.systems.rig!.state).toBe('ok');
+    expect(both.systems.rig!.state).toBe('worn');
     expect(both.defects).toEqual([]);
+  });
+
+  it('a fix restores the boat profile condition, so Meltemi keeps her worn rig', async () => {
+    const real = (await loadContentDir('content')).content!;
+    const mb = real.boats.find((b) => b.id === 'meltemi_40')!;
+    expect(mb.systems.rig).toBe('worn');
+    let s = chooseBoat(assignVoices(newGame(real, { seed: 3, lang: 'ru' }), real, alloc), real, 'meltemi_40');
+    s = { ...s, defects: ['torn_genoa_seam'], systems: applyDefects(initialSystems(mb), mb, ['torn_genoa_seam']) };
+    s = performCheckin(s, real, ['sails']);
+    const fixed = resolveDefects({ ...s, checkin: { ...s.checkin!, minutesLeft: 100 } }, real, ['torn_genoa_seam']);
+    expect(fixed.systems.rig).toEqual({ state: 'worn', wear: 0, broken: false });
   });
 });
 

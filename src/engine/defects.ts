@@ -57,7 +57,9 @@ export function resolveDefects(state: GameState, content: Content, fixIds: reado
   const stillWorn = new Set(boat.defectPool.filter((d) => remaining.includes(d.id) && d.system).map((d) => d.system));
   let s: GameState = state;
   for (const d of fixes) {
-    const systems = stillWorn.has(d.system) ? s.systems : { ...s.systems, [d.system]: { state: 'ok' as const, wear: 0, broken: false } };
+    // A fix undoes the defect, not the boat's own condition: the system returns to its profile state (Meltemi's rig stays worn).
+    const restored: SystemState = { state: boat.systems[d.system] ?? 'ok', wear: 0, broken: false };
+    const systems = stillWorn.has(d.system) ? s.systems : { ...s.systems, [d.system]: restored };
     s = { ...s, systems, resources: { ...s.resources, moneyEur: s.resources.moneyEur - d.fixEur } };
     s = appendLog(s, { kind: 'effect', cause: `checkin:fix:${d.id}`, pillar: 'boat', delta: { moneyEur: -d.fixEur } });
   }

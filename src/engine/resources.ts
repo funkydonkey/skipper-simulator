@@ -120,7 +120,7 @@ export interface ConsumptionInput {
   autopilotHours: number;
   shorePower: boolean;
   cookedDinner: boolean;
-  /** Broken electrical system: neither the engine nor the solar panels charge the service bank. */
+  /** Broken electrical system (alternator): the engine charges neither bank; solar panels still charge the service bank. */
   noCharge?: boolean;
 }
 
@@ -131,14 +131,15 @@ export function dailyConsumption(i: ConsumptionInput, b: Balance): Outcome[] {
     + (i.boat.electricToilet ? el.electricToiletAhPerDay : 0)
     + (i.motorHours + i.sailHours) * el.plotterAhPerHour
     + i.autopilotHours * el.autopilotAhPerHour;
-  const chargeAh = i.noCharge ? 0 : i.motorHours * el.engineChargeAhPerHour + i.boat.solarW * el.solarAhPerWattDay;
+  const engineAh = i.noCharge ? 0 : i.motorHours * el.engineChargeAhPerHour;
+  const chargeAh = engineAh + i.boat.solarW * el.solarAhPerWattDay;
   const out: Outcome[] = [
     { cause: 'consumption:water', pillar: 'boat', effect: { water: -i.crewSize * b.water.perPersonPerDayL[i.shower] } },
     i.shorePower
       ? { cause: 'charge:shore', pillar: 'boat', effect: { service_bank: 100 } }
       : { cause: 'consumption:electric', pillar: 'boat', effect: { service_bank: round1(((chargeAh - drawAh) / capacityAh) * 100) } },
   ];
-  if (i.boat.starterSeparate && i.motorHours > 0) out.push({ cause: 'charge:starter', pillar: 'boat', effect: { starter_bank: 100 } });
+  if (i.boat.starterSeparate && i.motorHours > 0 && !i.noCharge) out.push({ cause: 'charge:starter', pillar: 'boat', effect: { starter_bank: 100 } });
   if (i.cookedDinner) out.push({ cause: 'consumption:gas', pillar: 'boat', effect: { gas: -b.gas.pctPerDay } });
   return out;
 }

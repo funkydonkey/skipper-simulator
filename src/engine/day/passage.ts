@@ -4,7 +4,7 @@ import { appendLog } from '../log';
 import { maneuverForKind, validateOrder } from '../maneuver';
 import { applyOutcome } from '../resources';
 import { advanceClock, otherEnd, requireBoat, requirePoint, requireRoute, round1, round2 } from '../state';
-import { addWear } from '../systems';
+import { addWear, brokenFlags } from '../systems';
 import { restHours } from '../time';
 import { MANEUVER_KINDS, type Activity, type Balance, type Boat, type Content, type DayPlan, type EventPhase, type GameState, type ManeuverKind } from '../types';
 import { arrive, runManeuver } from './arrival';
@@ -115,7 +115,9 @@ function sail(state: GameState, content: Content, boat: Boat, plan: DayPlan): { 
   const departureHour = s.clockMin / 60;
   s = runManeuver(s, content, origin.kind === 'bay' ? 'anchor_up' : 'departure', plan.maneuverOrders);
   s = advanceClock(s, b.time.departureMin);
-  const start: DaySummary = { moving: true, departureHour, mooring: 'anchor', motor: b.time.departureMin / 60, sail: 0, legHours: 0, swum: 0, maxWind: 0 };
+  // The departure is motored only when the engine works: a dead engine adds no motor time (charge, wear, motor-gated failures).
+  const departureMotor = brokenFlags(state, content).noMotor ? 0 : b.time.departureMin / 60;
+  const start: DaySummary = { moving: true, departureHour, mooring: 'anchor', motor: departureMotor, sail: 0, legHours: 0, swum: 0, maxWind: 0 };
   const sailed = plan.legs.reduce((acc, leg) => {
     const r = runLeg(acc.state, content, boat, leg, acc.at);
     const sum = acc.summary;

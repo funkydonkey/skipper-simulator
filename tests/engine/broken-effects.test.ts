@@ -76,6 +76,28 @@ describe('legs with broken systems', () => {
     expect(causes(s)).toEqual(expect.arrayContaining(['system:no_motor:r_base_bay_a', 'system:no_sail:r_base_bay_a']));
   });
 
+  it('engine_cooling: departure adds no motor time, wear, starter refill or motor-gated failure roll', () => {
+    const motorGated: SystemDef = {
+      ...sys('electrical', { noCharge: true }),
+      failures: [{ id: 'alt', phase: 'passage', when: 'day.motor_hours > 0', chance: 1 }],
+    };
+    const c: Content = { ...content, systems: [...content.systems.filter((d) => d.id !== 'electrical'), motorGated] };
+    const start = brokenState('engine_cooling');
+    const low = { ...start, resources: { ...start.resources, starterBankPct: 50 } };
+    const s = planDay(deepFreeze(low), c, plan([leg('sail')]));
+    expect(s.dayFacts!.motorHours).toBe(0);
+    expect(s.systems.engine_cooling!.wear).toBe(0);
+    expect(causes(s)).not.toContain('roll:failure:electrical:alt');
+    const night = endDay(s, c, { dinner: 'cook' });
+    expect(causes(night)).not.toContain('charge:starter');
+    expect(night.resources.starterBankPct).toBe(50);
+  });
+
+  it('a working engine still counts the departure as motor time', () => {
+    const s = planDay(makeState(), content, plan([leg('sail')]));
+    expect(s.dayFacts!.motorHours).toBe(content.balance.time.departureMin / 60);
+  });
+
   it('engine_cooling at 3 kn wind: the leg still completes at drifter speed', () => {
     const start = brokenState('engine_cooling');
     const calm = { ...start, weather: { ...start.weather!, forecastKn: 3, forecastGustKn: 4 } };
@@ -96,6 +118,16 @@ describe('electrical: noCharge', () => {
     const broken = night({ ...base, systems: { ...base.systems, electrical: { state: 'ok', wear: 0, broken: true } } });
     const gain = content.balance.electric.engineChargeAhPerHour * 3;
     expect(ok - broken).toBeCloseTo((gain / (110 * 2)) * 100, 0);
+  });
+
+  it('blocks the starter recharge from the engine', () => {
+    const base = makeState({ resources: { ...makeState().resources, starterBankPct: 40 } });
+    const broken = { ...base, systems: { ...base.systems, electrical: { state: 'ok' as const, wear: 0, broken: true } } };
+    const after = endDay(evening(broken, { dayFacts: facts({ motorHours: 3, mooring: 'anchor' }) }), content, { dinner: 'cook' });
+    expect(after.log.map((e) => e.cause)).not.toContain('charge:starter');
+    expect(after.resources.starterBankPct).toBe(40);
+    const working = endDay(evening(base, { dayFacts: facts({ motorHours: 3, mooring: 'anchor' }) }), content, { dinner: 'cook' });
+    expect(working.resources.starterBankPct).toBe(100);
   });
 });
 
