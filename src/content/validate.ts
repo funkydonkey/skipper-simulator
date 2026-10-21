@@ -1,7 +1,7 @@
-import { pointBerthProblem } from '../engine/berths';
+import { BERTH_KIND, pointBerthProblem } from '../engine/berths';
 import { CREW_PLACEHOLDER } from '../engine/crew';
 import { eventTexts } from '../engine/events';
-import { MANEUVER_KINDS, type BerthType, type Content, type Effect, type ManeuverKind } from '../engine/types';
+import { MANEUVER_KINDS, type Content, type Effect } from '../engine/types';
 import type { ContentError } from './parse';
 
 type Add = (path: string, message: string) => void;
@@ -49,9 +49,6 @@ function checkWeatherAndBriefing(c: Content, add: Add): void {
   });
   if (c.briefing.length < c.balance.briefing.slots) add('briefing', `need at least ${c.balance.briefing.slots} topics`);
 }
-
-/** The kind a berth's maneuver belongs to. */
-const BERTH_KIND: Record<BerthType, ManeuverKind> = { stern_to: 'mooring', side_to: 'mooring', anchor: 'anchoring', anchor_ashore: 'anchoring' };
 
 function checkManeuvers(c: Content, add: Add): void {
   for (const kind of MANEUVER_KINDS) {

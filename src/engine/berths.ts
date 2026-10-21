@@ -1,5 +1,13 @@
 import { priceFor } from './perks';
-import type { Balance, BerthType, MapPoint } from './types';
+import type { Balance, BerthType, ManeuverKind, MapPoint } from './types';
+
+/** The kind a berth's maneuver belongs to. */
+export const BERTH_KIND: Readonly<Record<BerthType, ManeuverKind>> = { stern_to: 'mooring', side_to: 'mooring', anchor: 'anchoring', anchor_ashore: 'anchoring' };
+
+/** The berth that picks the maneuver of `kind`: the berth's own kind gets it; other kinds (departure, fallback anchoring) their default. */
+export function berthForKind(kind: ManeuverKind, berth: BerthType | undefined): BerthType | undefined {
+  return berth !== undefined && BERTH_KIND[berth] === kind ? berth : undefined;
+}
 
 const ANCHOR_BERTHS = ['anchor', 'anchor_ashore'];
 const DOCK_BERTHS = ['stern_to', 'side_to'];

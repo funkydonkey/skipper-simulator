@@ -14,3 +14,5 @@
 .hull { fill: var(--paper); stroke: var(--fg); stroke-width: 1.5; }
 .line { stroke: var(--ochre-500); stroke-width: 2; }
 .anchor { fill: none; stroke: var(--fg); stroke-width: 2; }
+.note { margin: var(--space-2) 0 0; color: var(--fg-soft); font-size: var(--text-sm); font-style: italic; }
+.hint { margin: var(--space-1) 0 0; color: var(--accent); font-size: var(--text-sm); }

@@ -3,7 +3,7 @@ import { ChanceBadge } from '../../components/ChanceBadge';
 import { useGame, useT } from '../../session/SessionContext';
 import { formatHour } from '../../view/format';
 import { pointName } from '../../view/map';
-import { SEABED_NAMES } from '../../view/strings';
+import { BERTH_NAMES, SEABED_NAMES } from '../../view/strings';
 import styles from './Planning.module.css';
 import { PLANNING } from './strings';
 
@@ -50,7 +50,7 @@ export function PreviewPanel({ preview, berth, onBerth }: PreviewPanelProps) {
                 return (
                   <label key={type}>
                     <input type="radio" name="berth" checked={type === (berth ?? preview.berths[0])} onChange={() => onBerth(type)} />
-                    {t(`berth_${type}`)}
+                    {BERTH_NAMES[type][lang]}
                     {feeText && <span className={styles.muted}> {feeText}</span>}
                     {type === 'anchor_ashore' && <span className={styles.muted}> {t('berthNoteAnchorAshore')}</span>}
                   </label>

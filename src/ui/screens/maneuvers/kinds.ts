@@ -1,9 +1,23 @@
-import { correctOrder, maneuverFor, otherEnd, requirePoint, requireRoute, type Content, type DayPlan, type GameState, type Maneuver, type ManeuverKind } from '../../../engine';
+import {
+  berthForKind, correctOrder, maneuverFor, otherEnd, requirePoint, requireRoute, situationCondContext, situationHint,
+  type Content, type DayPlan, type GameState, type Maneuver, type ManeuverKind, type ManeuverStep, type Situation,
+} from '../../../engine';
 
-export interface ManeuverSpec { kind: ManeuverKind; maneuver: Maneuver; fallback: boolean }
+export interface ManeuverSpec {
+  kind: ManeuverKind;
+  maneuver: Maneuver;
+  fallback: boolean;
+  /** Ids of the steps the forecast situation calls for, in content order: the pool to order. */
+  steps: string[];
+  /** The conditional step the Order voice points out (Order 3+), or null. */
+  hint: ManeuverStep | null;
+}
 
-/** The maneuvers the engine may run today, in order. Mirrors day/passage.ts and day/arrival.ts. */
-export function maneuversFor(game: GameState, content: Content, plan: DayPlan): ManeuverSpec[] {
+/**
+ * The maneuvers the engine may run today, in order (see day/arrival.ts). The forecast situation's berth picks the
+ * maneuver of its own kind (as validatePlan and runManeuver do), and its keys pick the steps.
+ */
+export function maneuversFor(game: GameState, content: Content, plan: DayPlan, situation: Situation | null): ManeuverSpec[] {
   const origin = requirePoint(content, game.locationId);
   const destId = plan.legs.reduce((at, l) => otherEnd(requireRoute(content, l.routeId), at) ?? at, game.locationId);
   const dest = requirePoint(content, destId);
@@ -13,9 +27,11 @@ export function maneuversFor(game: GameState, content: Content, plan: DayPlan): 
     kinds.push(['mooring', false]);
     if (dest.placesGoneHour !== null) kinds.push(['anchoring', true]);
   }
+  const ctx = situationCondContext(game, content, situation);
   return kinds.flatMap(([kind, fallback]) => {
-    const maneuver = maneuverFor(content, kind);
-    return maneuver ? [{ kind, maneuver, fallback }] : [];
+    const maneuver = maneuverFor(content, kind, berthForKind(kind, situation?.berth));
+    if (!maneuver) return [];
+    return [{ kind, maneuver, fallback, steps: correctOrder(maneuver, ctx), hint: situationHint(maneuver, ctx, game.voices.order) }];
   });
 }
 
@@ -31,8 +47,8 @@ function prng(seed: number): () => number {
   };
 }
 
-export function shuffledStepIds(m: Maneuver, seed: number): string[] {
-  const ids = correctOrder(m);
+/** `ids` shuffled, never left in the given order. */
+export function shuffledStepIds(ids: readonly string[], seed: number): string[] {
   const rnd = prng(seed);
   const out = [...ids];
   for (let i = out.length - 1; i > 0; i--) {

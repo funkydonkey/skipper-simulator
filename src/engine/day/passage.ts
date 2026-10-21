@@ -1,3 +1,4 @@
+import { berthForKind } from '../berths';
 import { assertNoPendingEvent, assertPhase, EngineError } from '../errors';
 import { queueEvent, queueFailureEvent, queuePassageEvent } from '../events';
 import { appendLog } from '../log';
@@ -22,13 +23,10 @@ function invalid(msg: string): never {
   throw new EngineError('INVALID_INPUT', msg);
 }
 
-/** The berth's own kind gets the berth's maneuver; other kinds (departure, fallback anchoring) their default. */
-const BERTH_KIND: Record<BerthType, ManeuverKind> = { stern_to: 'mooring', side_to: 'mooring', anchor: 'anchoring', anchor_ashore: 'anchoring' };
-
 function validateOrders(content: Content, plan: DayPlan, berth: BerthType | undefined): void {
   for (const [kind, order] of Object.entries(plan.maneuverOrders ?? {}) as [ManeuverKind, string[]][]) {
     if (!(MANEUVER_KINDS as readonly string[]).includes(kind)) invalid(`Unknown maneuver kind "${kind}"`);
-    const m = maneuverFor(content, kind, berth !== undefined && BERTH_KIND[berth] === kind ? berth : undefined);
+    const m = maneuverFor(content, kind, berthForKind(kind, berth));
     const problem = m ? validateOrder(m, order) : null;
     if (problem) invalid(problem);
   }

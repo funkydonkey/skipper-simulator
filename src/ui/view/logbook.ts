@@ -174,6 +174,8 @@ const DESCRIBE: Record<string, Describer> = {
       case 'marina': return p === 0 ? null : outcome('rollMarinaHit', 'rollMarinaMiss'); // early arrival: no real roll
       case 'sail_break': return outcome('rollSailHit', 'rollSailMiss');
       case 'injury': return outcome('rollInjuryHit', 'rollInjuryMiss');
+      // A hit is a marinero on the quay: good news, unlike the other rolls.
+      case 'marinero': return say(hit ? 'rollMarineroHit' : 'rollMarineroMiss', lang, { chance }, hit ? 'good' : 'neutral');
       case 'failure': return null; // one roll per eligible failure per phase; a hit shows as its `fault:` line, with these odds
       default: return null;
     }

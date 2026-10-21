@@ -1,4 +1,4 @@
-import type { LocalizedText, Resources, Seabed, ShowerDiscipline } from '../../engine';
+import type { BerthType, LocalizedText, Resources, Seabed, ShowerDiscipline } from '../../engine';
 import { dict } from '../i18n/t';
 
 const t = (ru: string, en: string): LocalizedText => ({ ru, en });
@@ -129,6 +129,8 @@ export const LOG = dict({
   rollSailHit: { ru: 'Парус не выдержал (шанс {chance}%)', en: 'The sail gave way ({chance}% chance)' },
   rollSailMiss: { ru: 'Парус выдержал (шанс порвать {chance}%)', en: 'The sail held ({chance}% chance to tear)' },
   rollInjuryHit: { ru: 'Травма (шанс {chance}%)', en: 'Someone got hurt ({chance}% chance)' },
+  rollMarineroHit: { ru: 'Маринеро встретил на причале (шанс {chance}%)', en: 'A marinero met us on the quay ({chance}% chance)' },
+  rollMarineroMiss: { ru: 'Маринеро не вышел — швартовались сами (шанс {chance}%)', en: 'No marinero came out — we tied up ourselves ({chance}% chance)' },
   rollInjuryMiss: { ru: 'Обошлось без травмы (шанс {chance}%)', en: 'No injury ({chance}% chance)' },
   returnOnTime: { ru: 'Вернулись на базу вовремя', en: 'Back at base on time' },
   returnLate: { ru: 'Не успели на базу к сроку', en: 'Missed the base deadline' },
@@ -165,4 +167,11 @@ export const SEABED_NAMES: Readonly<Record<Seabed, LocalizedText>> = {
   mud: t('ил', 'mud'),
   weed: t('водоросли', 'weed'),
   rock: t('камень', 'rock'),
+};
+
+export const BERTH_NAMES: Readonly<Record<BerthType, LocalizedText>> = {
+  stern_to: t('Кормой (муринг)', 'Stern-to'),
+  side_to: t('Лагом', 'Alongside'),
+  anchor: t('На якоре', 'At anchor'),
+  anchor_ashore: t('Якорь и кормовой на берег', 'Anchor + stern line ashore'),
 };

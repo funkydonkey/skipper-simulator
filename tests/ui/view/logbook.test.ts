@@ -78,6 +78,20 @@ describe('logbook', () => {
     expect(describeEntry(certain, content, 'ru', 1), 'a 0% marina roll is not a roll worth logging').toBeNull();
   });
 
+  it('describes the marinero roll: met or not, with the odds', () => {
+    const odds = { value: 0.3, parts: [{ source: 'base', delta: 0.3 }] };
+    const roll = (hit: boolean) => entry('roll:marinero:nisi_quay', { kind: 'roll', pillar: 'safety', odds, data: { hit } });
+    const met = describeEntry(roll(true), content, 'ru', 1)!;
+    expect(met.text).toBe('Маринеро встретил на причале (шанс 30%)');
+    expect(met.tone).toBe('good');
+    expect(met.odds).toEqual(odds);
+    const none = describeEntry(roll(false), content, 'ru', 1)!;
+    expect(none.text).toBe('Маринеро не вышел — швартовались сами (шанс 30%)');
+    expect(none.tone).toBe('neutral');
+    expect(describeEntry(roll(true), content, 'en', 1)!.text).toBe('A marinero met us on the quay (30% chance)');
+    expect(describeEntry(roll(false), content, 'en', 1)!.text).toBe('No marinero came out — we tied up ourselves (30% chance)');
+  });
+
   it('shows xp lines with a readable cause', () => {
     const ev = content.events.find((x) => x.options.some((o) => o.check))!;
     const opt = ev.options.find((o) => o.check)!;

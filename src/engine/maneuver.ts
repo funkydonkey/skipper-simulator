@@ -101,13 +101,22 @@ export function evaluateManeuver(
 }
 
 /**
+ * The context a maneuver at `situation` will be judged in: the captain as they stand now, plus the situation's keys
+ * and its seabed (on arrival `place.seabed` is the destination's). Without a situation, the context as it is.
+ */
+export function situationCondContext(state: GameState, content: Content, situation: Situation | null | undefined): CondContext {
+  const now = buildConditionContext(state, content);
+  return situation ? { ...now, ...situationContext(situation), 'place.seabed': situation.seabed } : now;
+}
+
+/**
  * Injury odds of the maneuver's most dangerous error, as the captain stands now. Null if nothing can hurt.
  * With a `situation`, the maneuver of its berth and the errors that apply there.
  */
 export function maneuverRisk(state: GameState, content: Content, kind: ManeuverKind, situation?: Situation | null): ChanceValue | null {
   const m = maneuverFor(content, kind, situation?.berth);
   if (!m) return null;
-  const ctx = { ...buildConditionContext(state, content), ...(situation ? situationContext(situation) : {}) };
+  const ctx = situationCondContext(state, content, situation);
   const worst = errorsFor(m, ctx).reduce<ManeuverError | null>((a, e) => (e.injuryChance > (a?.injuryChance ?? 0) ? e : a), null);
   if (!worst) return null;
   return evaluateChance(injurySpec(worst.injuryChance, worst.mitigatedBy, content.balance, m.injuryMods), ctx);
