@@ -125,6 +125,8 @@ export interface Boat {
   priceEur: number;
   depositEur: number;
   shinyFeatures: LocalizedText[];
+  /** One honest line about what will bite this boat's skipper. */
+  weakness: LocalizedText;
   /** Defects that may turn up in a week; `defectsPerWeek` of them are drawn at `chooseBoat`. */
   defectPool: BoatDefect[];
   defectsPerWeek: [number, number];

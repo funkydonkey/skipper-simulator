@@ -25,4 +25,27 @@ describe('DefectsScreen', () => {
     expect(r.session().game!.defects).toEqual([defect.id]);
     expect(r.session().game!.log.map((e) => e.cause)).toContain(`checkin:sail_on:${defect.id}`);
   });
+
+  it('disables a fix that does not fit the remaining time and sends the chosen fixes', async () => {
+    const { game: base } = atDefects();
+    const game = {
+      ...base,
+      boatId: 'meltemi_40',
+      defects: ['torn_genoa_seam', 'worn_furler'],
+      checkin: { found: ['torn_genoa_seam', 'worn_furler'], fixed: [], minutesLeft: 25 },
+    };
+    const r = renderShell(game);
+    expect(screen.getByText('Осталось времени: 25 мин')).toBeInTheDocument();
+    const big = screen.getByRole('button', { name: 'Чинить на базе — 150 €, 30 мин' });
+    expect(big).toBeDisabled();
+    expect(screen.getByText('не хватает времени')).toBeInTheDocument();
+    const small = screen.getByRole('button', { name: 'Чинить на базе — 90 €, 20 мин' });
+    await r.user.click(small);
+    expect(small).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Осталось времени: 5 мин')).toBeInTheDocument();
+    await r.user.click(screen.getByRole('button', { name: 'Подтвердить' }));
+    expect(r.currentScreen()).toBe('briefing');
+    expect(r.session().game!.checkin?.fixed).toEqual(['worn_furler']);
+    expect(r.session().game!.defects).toEqual(['torn_genoa_seam']);
+  });
 });

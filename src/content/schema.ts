@@ -82,6 +82,7 @@ export const BoatSchema: z.ZodType<Boat> = z.object({
   solarW: NonNeg, electricToilet: z.boolean(),
   motorKn: Pos, hullSpeedKn: Pos, priceEur: NonNeg, depositEur: NonNeg,
   shinyFeatures: z.array(Text),
+  weakness: Text,
   defectPool: z.array(DefectSchema),
   defectsPerWeek: z.tuple([z.number().int().min(0), z.number().int().min(0)]),
   systems: z.record(Id, z.enum(SYSTEM_CONDITIONS)),

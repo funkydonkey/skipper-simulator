@@ -7,6 +7,7 @@
     "serviceBankAh": 140, "serviceBanks": 1, "starterSeparate": false,
     "solarW": 0, "electricToilet": true,
     "motorKn": 7, "hullSpeedKn": 8.2, "priceEur": 5200, "depositEur": 3000,
+    "weakness": { "ru": "Один общий аккумулятор: на якоре садится к третьей ночи. Подрулька изношена.", "en": "One shared battery bank: at anchor it is flat by the third night. The bow thruster is worn." },
     "shinyFeatures": [
       { "ru": "Подруливающее устройство", "en": "Bow thruster" },
       { "ru": "Плоттер 12 дюймов с радаром", "en": "12-inch chartplotter with radar" },
@@ -30,6 +31,7 @@
     "serviceBankAh": 110, "serviceBanks": 3, "starterSeparate": true,
     "solarW": 200, "electricToilet": false,
     "motorKn": 6.5, "hullSpeedKn": 7.6, "priceEur": 4300, "depositEur": 2500,
+    "weakness": { "ru": "Паруса и такелаж изношены: от 18 узлов рвутся. Медленная — в марину приходит, когда мест уже нет.", "en": "Worn sails and rig: they tear from 18 knots. Slow, so she reaches the marina after it fills up." },
     "shinyFeatures": [
       { "ru": "Новый бимини", "en": "New bimini" }
     ],
@@ -50,6 +52,7 @@
     "serviceBankAh": 90, "serviceBanks": 2, "starterSeparate": true,
     "solarW": 0, "electricToilet": false,
     "motorKn": 6, "hullSpeedKn": 7.2, "priceEur": 3400, "depositEur": 2000,
+    "weakness": { "ru": "Маленькие баки: без марины вода кончается за три дня, топливо — за четыре дня на моторе.", "en": "Small tanks: without a marina the water runs out in three days, the fuel in four days of motoring." },
     "shinyFeatures": [
       { "ru": "Стереосистема", "en": "Stereo" },
       { "ru": "Тиковая палуба", "en": "Teak deck" }

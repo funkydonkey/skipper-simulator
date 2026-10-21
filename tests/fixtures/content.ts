@@ -25,6 +25,7 @@ export function makeContent(): Content {
       solarW: 0, electricToilet: false, motorKn: 6.5, hullSpeedKn: 7.5,
       priceEur: 4000, depositEur: 2000,
       shinyFeatures: [t('Подруливающее устройство', 'Bow thruster')],
+      weakness: t('Слабое место', 'Weak spot'),
       defectsPerWeek: [2, 3],
       defectPool: [
         { id: 'worn_impeller', checkpoint: 'impeller', description: t('Изношенный импеллер', 'Worn impeller'), system: 'engine_cooling', fixEur: 60, fixMin: 20 },

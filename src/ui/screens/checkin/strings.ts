@@ -13,5 +13,9 @@ export const DEFECTS = dict({
   title: { ru: 'Найденные неисправности', en: 'Defects found' },
   subtitle: { ru: 'Это вы нашли сами. Исправить на базе можно за деньги и время, или выйти как есть.', en: 'You found these yourself. The base can fix them for money and time, or you can sail as she is.' },
   system: { ru: 'Система: {name}', en: 'System: {name}' },
+  fix: { ru: 'Чинить на базе — {eur} €, {min} мин', en: 'Fix at base — €{eur}, {min} min' },
   sailOn: { ru: 'Плыть так', en: 'Sail on' },
+  noTime: { ru: 'не хватает времени', en: 'not enough time' },
+  minutesLeft: { ru: 'Осталось времени: {n} мин', en: 'Time left: {n} min' },
+  confirm: { ru: 'Подтвердить', en: 'Confirm' },
 });
