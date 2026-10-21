@@ -1,5 +1,5 @@
 import type { KeyboardEvent } from 'react';
-import type { Dir8, MapPoint } from '../../../engine';
+import { pointShelter, type Dir8, type MapPoint } from '../../../engine';
 import { useSession, useT } from '../../session/SessionContext';
 import { mapBounds, projection, routeBetween } from '../../view/map';
 import { useReducedMotion } from '../motion';
@@ -15,6 +15,7 @@ const COAST_RADIUS_NM = 1.6;
 const SAIL_SECONDS_PER_LEG = 2.5;
 /** ~48 CSS px across on a 375 px phone, where the chart is drawn at ~0.6 scale. */
 const HIT_RADIUS = 40;
+const SHELTER_BADGE_Y = 26;
 
 export interface ChartMapProps {
   locationId: string;
@@ -24,16 +25,19 @@ export interface ChartMapProps {
   onPointClick?: (pointId: string) => void;
   /** Drives the faint wind field only; the wind rose lives in the forecast panel. */
   wind?: { dir: Dir8 } | null;
+  /** Direction the wind is expected from; bays get a sheltered/exposed badge for it. */
+  forecastDir?: Dir8 | null;
 }
 
 export function trailPath(points: readonly { x: number; y: number }[]): string {
   return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${Math.round(p.x)} ${Math.round(p.y)}`).join(' ');
 }
 
-interface ChartPointProps { point: MapPoint; name: string; at: { x: number; y: number }; chartWidth: number; onPick?: (pointId: string) => void }
+interface ChartPointProps { point: MapPoint; name: string; at: { x: number; y: number }; chartWidth: number; shelter?: { state: 'sheltered' | 'exposed'; dir: Dir8 }; onPick?: (pointId: string) => void }
 
 /** A map point; with `onPick` it is a keyboard-reachable button with a large invisible hit circle. */
-function ChartPoint({ point, name, at, chartWidth, onPick }: ChartPointProps) {
+function ChartPoint({ point, name, at, chartWidth, shelter, onPick }: ChartPointProps) {
+  const t = useT(CHART);
   const label = labelPlacement(name, at.x, chartWidth);
   const press = (e: KeyboardEvent<SVGGElement>) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick?.(point.id); }
@@ -50,11 +54,16 @@ function ChartPoint({ point, name, at, chartWidth, onPick }: ChartPointProps) {
       {onPick && <circle className={styles.halo} r="16" />}
       <PointSymbol kind={point.kind} />
       <text className={styles.label} x={label.x} y="4" textAnchor={label.anchor}>{name}</text>
+      {shelter && (
+        <g className={styles.shelter} data-shelter={shelter.state} role="img" aria-label={t(`${shelter.state}Label`, { dir: shelter.dir })}>
+          <text y={SHELTER_BADGE_Y} textAnchor="middle">{t(shelter.state)}</text>
+        </g>
+      )}
     </g>
   );
 }
 
-export function ChartMap({ locationId, trail = [], animateTrail = false, reachableIds = [], onPointClick, wind }: ChartMapProps) {
+export function ChartMap({ locationId, trail = [], animateTrail = false, reachableIds = [], onPointClick, wind, forecastDir }: ChartMapProps) {
   const { session } = useSession();
   const { content, lang } = session;
   const t = useT(CHART);
@@ -96,7 +105,9 @@ export function ChartMap({ locationId, trail = [], animateTrail = false, reachab
         })}
         </g>
         {content.map.map((p) => (
-          <ChartPoint key={p.id} point={p} name={p.name[lang]} at={proj.toSvg(p)} chartWidth={proj.width} {...(reachableIds.includes(p.id) && onPointClick ? { onPick: onPointClick } : {})} />
+          <ChartPoint key={p.id} point={p} name={p.name[lang]} at={proj.toSvg(p)} chartWidth={proj.width}
+            {...(p.kind === 'bay' && forecastDir ? { shelter: { state: pointShelter(p, forecastDir, content.balance), dir: forecastDir } } : {})}
+            {...(reachableIds.includes(p.id) && onPointClick ? { onPick: onPointClick } : {})} />
         ))}
         {trailPoints.length > 1 && <path className={styles.trail} d={trailPath(trailPoints)} />}
         <Clouds width={proj.width} height={proj.height} animate={!reduced} />

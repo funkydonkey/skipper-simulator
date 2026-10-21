@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { EngineError, previewPlan, type EngineErrorCode, type PlanPreview } from '../../../engine';
+import { EngineError, type DayWeather, type Dir8, previewPlan, visibleWeather, type EngineErrorCode, type PlanPreview } from '../../../engine';
 import { Button } from '../../components/Button';
 import { ChartMap } from '../../components/chart/ChartMap';
 import { ResourcePanel } from '../../components/ResourcePanel';
@@ -14,6 +14,12 @@ import { addLeg, departureOptions, initialDraft, reachableFrom, removeLastLeg, t
 import { PreviewPanel } from './PreviewPanel';
 import styles from './Planning.module.css';
 import { PLANNING } from './strings';
+
+/** The wind the captain expects to shelter from: the front's direction once its signs are visible. */
+const shelterDir = (w: DayWeather): Dir8 => {
+  const seen = visibleWeather(w);
+  return seen.front ? seen.frontDir : seen.forecastDir;
+};
 
 export function PlanningScreen() {
   const { game, content, lang } = useGame();
@@ -50,13 +56,14 @@ export function PlanningScreen() {
           reachableIds={canSail ? reachableFrom(content, game, draft) : []}
           onPointClick={(id) => setDraft((d) => addLeg(content, game, d, id))}
           wind={w ? { dir: w.forecastDir } : null}
+          forecastDir={w ? shelterDir(w) : null}
         />
         <div className={styles.controls}>
           <div className={styles.columns}>
             <LegEditor legs={draft.legs} trail={trail} onChange={(i, patch) => setDraft((d) => updateLeg(d, i, patch))} onRemoveLast={() => setDraft(removeLastLeg)} />
             <DaySettings draft={draft} departures={departures} onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))} />
           </div>
-          {estimate.preview && <PreviewPanel preview={estimate.preview} />}
+          {estimate.preview && <PreviewPanel preview={estimate.preview} berth={draft.berth} onBerth={(berth) => setDraft((d) => ({ ...d, berth }))} />}
           {estimate.error && <p role="status" className={styles.warn}>{t('noEstimate', { message: te(estimate.error) })}</p>}
         </div>
       </div>

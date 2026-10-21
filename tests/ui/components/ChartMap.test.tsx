@@ -63,6 +63,21 @@ describe('ChartMap', () => {
     }
   });
 
+  it('badges bays by shelter from the forecast direction, with an accessible label', () => {
+    renderWithSession(<ChartMap locationId="base_marina" forecastDir="NW" />);
+    expect(screen.getByLabelText('Бухта открыта ветру NW')).toBeInTheDocument();
+    expect(screen.getAllByLabelText('Бухта укрыта от ветра NW').length).toBeGreaterThan(0);
+    const vela = screen.getByText(content.map.find((p) => p.id === 'vela_bay')!.name.ru).parentElement!;
+    expect(vela.querySelector('[data-shelter]')).toHaveAttribute('data-shelter', 'exposed');
+    const cala = screen.getByText(content.map.find((p) => p.id === 'cala_azzurra')!.name.ru).parentElement!;
+    expect(cala.querySelector('[data-shelter]')).toHaveAttribute('data-shelter', 'sheltered');
+  });
+
+  it('draws no shelter badges without a forecast direction', () => {
+    const { container } = renderWithSession(<ChartMap locationId="base_marina" />);
+    expect(container.querySelector('[data-shelter]')).toBeNull();
+  });
+
   it('builds an SVG path through trail points', () => {
     expect(trailPath([{ x: 0, y: 0 }, { x: 10, y: 5 }])).toBe('M 0 0 L 10 5');
   });

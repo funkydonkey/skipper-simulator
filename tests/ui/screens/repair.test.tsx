@@ -85,7 +85,7 @@ describe('Planning preview', () => {
   it('marks a marina destination "no money" when the berth is unaffordable', () => {
     const game = gameAt('planning');
     const preview = { ...previewPlan(game, content, { departureHour: 9, legs: [], swimStops: 0, shower: 'normal', autopilot: false }), marinaAffordable: false };
-    renderWithSession(<PreviewPanel preview={preview} />, game);
+    renderWithSession(<PreviewPanel preview={preview} onBerth={() => {}} />, game);
     expect(screen.getByText(/нет денег/)).toBeInTheDocument();
   });
 });

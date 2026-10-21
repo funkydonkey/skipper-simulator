@@ -13,6 +13,9 @@
 .trail { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 2 6; stroke-linecap: round; }
 .boat { fill: var(--red-500); stroke: var(--paper); stroke-width: 1; }
 .label { font-family: var(--font-hand); font-size: 24px; fill: var(--fg); stroke: var(--chart-paper, var(--panel)); stroke-width: 3px; paint-order: stroke; }
+.shelter text { font-family: var(--font-hand); font-size: 18px; stroke: var(--chart-paper, var(--panel)); stroke-width: 3px; paint-order: stroke; stroke-linejoin: round; }
+.shelter[data-shelter='sheltered'] text { fill: var(--ok); }
+.shelter[data-shelter='exposed'] text { fill: var(--bad); }
 .wave { fill: none; stroke: var(--sea-500); stroke-width: 0.8; opacity: 0.25; }
 .land { fill: var(--ochre-200); stroke: var(--ink-soft); stroke-width: 1.2; }
 .isobath { fill: none; stroke: var(--sea-500); stroke-width: 0.7; stroke-dasharray: 3 4; opacity: 0.45; }

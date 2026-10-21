@@ -30,3 +30,5 @@
 }
 .odds { margin: var(--space-1) 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .insight { color: var(--fg-soft); font-style: italic; }
+.berths { display: grid; gap: var(--space-1); margin: var(--space-2) 0; }
+.berths label { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; min-height: 36px; }

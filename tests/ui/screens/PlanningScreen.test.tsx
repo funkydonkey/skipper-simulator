@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { gameAt } from '../fixtures';
+import { content, gameAt } from '../fixtures';
 import { renderShell } from '../render';
 
 const atBase = () => ({ ...gameAt('planning'), locationId: 'base_marina', clockMin: 8 * 60 });
@@ -111,5 +111,49 @@ describe('PlanningScreen', () => {
     mid.unmount();
     renderShell(withSense(4, true));
     expect(screen.getByText('Чутьё: фронт после 13:00')).toBeInTheDocument();
+  });
+
+  describe('berth choice and template', () => {
+    const toNisi = async (r: ReturnType<typeof renderShell>, name = 'Городская набережная Ниси') => {
+      await r.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+      await r.user.click(screen.getByRole('button', { name: name }));
+    };
+
+    it('offers both berths at nisi_quay and puts the choice into the drafted plan', async () => {
+      const r = renderShell(atBase());
+      await toNisi(r);
+      const group = screen.getByRole('radiogroup', { name: 'Как швартоваться' });
+      expect(group).toBeInTheDocument();
+      expect(screen.getByLabelText(/Кормой \(муринг\)/)).toBeChecked();
+      const side = screen.getByLabelText(/Лагом/);
+      await r.user.click(side);
+      expect(side).toBeChecked();
+      expect(screen.getByText(/×1[.,]5/)).toBeInTheDocument();
+      await r.user.click(screen.getByRole('button', { name: 'К манёврам' }));
+      expect(r.session().ui.draftPlan?.berth).toBe('side_to');
+    });
+
+    it('shows no selector at a single-berth destination and sends no berth', async () => {
+      const r = renderShell(atBase());
+      await r.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+      expect(screen.queryByRole('radiogroup', { name: 'Как швартоваться' })).toBeNull();
+      await r.user.click(screen.getByRole('button', { name: 'К манёврам' }));
+      expect(r.session().ui.draftPlan?.berth).toBeUndefined();
+    });
+
+    it('drops a berth the new destination lacks when the route changes', async () => {
+      const r = renderShell(atBase());
+      await toNisi(r);
+      await r.user.click(screen.getByLabelText(/Лагом/));
+      await r.user.click(screen.getByRole('button', { name: 'Убрать последний переход' }));
+      await r.user.click(screen.getByRole('button', { name: 'К манёврам' }));
+      expect(r.session().ui.draftPlan?.berth).toBeUndefined();
+    });
+
+    it('names the weeks weather template in the forecast panel', () => {
+      renderShell(atBase());
+      const name = content.weather.find((x) => x.id === atBase().weatherTemplateId)!.name.ru;
+      expect(screen.getByText(`Неделя: ${name}`)).toBeInTheDocument();
+    });
   });
 });

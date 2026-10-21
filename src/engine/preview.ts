@@ -61,6 +61,8 @@ export interface PlanPreview {
   situation: Situation | null;
   /** Berth types the destination offers (the current point on a stay day); the first is the default. */
   berths: BerthType[];
+  /** The fee in euro per berth (side-to costs more; after the economist discount) at a priced destination; empty when free or staying. */
+  berthFees: Partial<Record<BerthType, number>>;
 }
 
 interface Ctx { state: GameState; content: Content; weather: DayWeather; seesLocal: boolean; cond: CondContext; flags: BrokenFlags }
@@ -134,12 +136,21 @@ function plannedBerth(dest: MapPoint, plan: DayPlan): BerthType {
   return dest.berths.some((x) => x.type === plan.berth) ? plan.berth! : dest.berths[0]!.type;
 }
 
+function feeFor(state: GameState, dest: MapPoint, berth: BerthType, content: Content): number {
+  const b = content.balance;
+  const factor = berth === 'side_to' ? b.berths.sideToPriceFactor : 1;
+  return priceFor(dest.priceEur * factor, state.voices.economist, b).eur;
+}
+
 /** The fee for `berth` (side-to costs more) is within the money. */
 function affordable(state: GameState, dest: MapPoint, berth: BerthType, content: Content): boolean {
   if (dest.kind === 'bay' || dest.priceEur <= 0) return true;
-  const b = content.balance;
-  const factor = berth === 'side_to' ? b.berths.sideToPriceFactor : 1;
-  return canAfford(state, priceFor(dest.priceEur * factor, state.voices.economist, b).eur);
+  return canAfford(state, feeFor(state, dest, berth, content));
+}
+
+function berthFees(state: GameState, dest: MapPoint, content: Content): Partial<Record<BerthType, number>> {
+  if (dest.kind === 'bay' || dest.priceEur <= 0) return {};
+  return Object.fromEntries(dest.berths.map((x) => [x.type, feeFor(state, dest, x.type, content)]));
 }
 
 /** What the captain can foresee for a plan. Pure: no RNG, no state change. */
@@ -156,7 +167,7 @@ export function previewPlan(state: GameState, content: Content, plan: DayPlan): 
       legs: [], departureMin: null, arrivalMin: null, destinationId: state.locationId, swimStops: swims.count,
       arrivalAfterSunset: false, marinaLate: false, fuelNeededL: 0, restHours: restHours(swims.clockMin, b),
       marinaRefusal: null, marinaAffordable: true, anchorFail: null, destinationSeabed: here.seabed,
-      situation: null, berths: here.berths.map((x) => x.type),
+      situation: null, berths: here.berths.map((x) => x.type), berthFees: {},
     };
   }
   const departureMin = Math.max(state.clockMin, Math.round(plan.departureHour * 60));
@@ -186,6 +197,7 @@ export function previewPlan(state: GameState, content: Content, plan: DayPlan): 
     destinationSeabed: dest.seabed,
     situation: forecastAt(state, content, weather, dest, berth, arrivalMin),
     berths: dest.berths.map((x) => x.type),
+    berthFees: berthFees(state, dest, content),
   };
 }
 

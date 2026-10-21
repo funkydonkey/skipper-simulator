@@ -20,7 +20,7 @@ export { evaluateChance } from './chance';
 export { requirePoint, requireRoute, requireEvent, otherEnd } from './state';
 export { forecastInsight, voicePerks, type VoicePerk, type PerkId } from './perks';
 export { causeMatches } from './log';
-export { previewPlan, forecastSituation, type PlanPreview, type LegPreview } from './preview';
+export { previewPlan, forecastSituation, visibleWeather, type PlanPreview, type LegPreview } from './preview';
 export { pendingLevelUps } from './xp';
 export { repairOptions, repairSystem, type RepairChoice } from './repair';
 export { brokenFlags, type BrokenFlags } from './systems';
