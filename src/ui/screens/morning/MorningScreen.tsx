@@ -19,6 +19,7 @@ export function MorningScreen() {
   const b = content.balance;
   const dialogues = content.dialogues.filter((d) => d.contexts.includes('morning'));
   const chosen = dialogues.find((d) => d.id === line);
+  const keenSense = game.voices.sea_sense >= b.voices.seaSenseSignalLevel;
 
   return (
     <ScreenFrame
@@ -31,10 +32,10 @@ export function MorningScreen() {
       {game.day === b.schedule.days && <p className={styles.warning}>{t('lastDay', { time: formatHour(b.schedule.returnDeadlineHour) })}</p>}
       <Expectations />
       <label className={styles.check}>
-        <input type="checkbox" checked={barometer} onChange={(e) => setBarometer(e.target.checked)} />
+        <input type="checkbox" checked={keenSense || barometer} disabled={keenSense} onChange={(e) => setBarometer(e.target.checked)} />
         {t('barometer')}
       </label>
-      {game.voices.sea_sense >= b.voices.seaSenseSignalLevel && <VoiceLine voice="sea_sense" text={t('seaSense')} />}
+      {keenSense && <VoiceLine voice="sea_sense" text={t('seaSense')} />}
       <fieldset className={styles.say}>
         <legend>{t('say')}</legend>
         <label><input type="radio" name="say" checked={line === null} onChange={() => setLine(null)} /> {t('sayNothing')}</label>

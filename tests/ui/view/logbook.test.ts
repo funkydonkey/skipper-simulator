@@ -41,6 +41,12 @@ describe('logbook', () => {
     expect(describeEntry(entry('checkin:skip:toilets'), content, 'en', 1)!.text).toContain('Heads');
   });
 
+  it('says a short leg in minutes and a long one in hours and minutes', () => {
+    const leg = (hours: number) => entry('leg:r_base_marina_cala_azzurra', { kind: 'info', data: { mode: 'motor', windKn: 10, speedKn: 6, hours } });
+    expect(describeEntry(leg(0.75), content, 'ru', 1)!.text).toMatch(/45 мин$/);
+    expect(describeEntry(leg(2.5), content, 'en', 1)!.text).toMatch(/2 h 30 min$/);
+  });
+
   it('describes voice-check rolls with their odds', () => {
     const ev = content.events.find((x) => x.options.some((o) => o.check))!;
     const opt = ev.options.find((o) => o.check)!;

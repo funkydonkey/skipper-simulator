@@ -25,7 +25,6 @@ export const EVENING = dict({
 export const REPAIR = dict({
   title: { ru: 'Ремонт', en: 'Repairs' },
   cost: { ru: '{eur} €', en: '€{eur}' },
-  time: { ru: '{h} ч', en: '{h} h' },
   requires: { ru: 'только в марине', en: 'marina only' },
   no_money: { ru: 'нет денег', en: 'no money' },
 });

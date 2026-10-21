@@ -167,6 +167,18 @@ describe('PlanningScreen', () => {
       expect(screen.getAllByLabelText(/ветр[а-я]* NW$/).length).toBeGreaterThan(0);
     });
 
+    it('a read barometer on a quiet day says no front is coming; an unread one says nothing about it', () => {
+      const base = atBase();
+      const calm = { ...base.weather!, front: false, barometerTrendHpa: 0 };
+      const read = renderShell({ ...base, weather: { ...calm, signalsVisible: true } });
+      expect(screen.getByText(/Барометр \d+ гПа, за ночь не менялся/)).toBeInTheDocument();
+      expect(screen.getByText('Фронта сегодня не ждём.')).toBeInTheDocument();
+      read.unmount();
+      renderShell({ ...base, weather: { ...calm, signalsVisible: false } });
+      expect(screen.queryByText('Фронта сегодня не ждём.')).not.toBeInTheDocument();
+      expect(screen.getByText('На барометр сегодня не смотрели.')).toBeInTheDocument();
+    });
+
     it('names the weeks weather template in the forecast panel', () => {
       renderShell(atBase());
       const name = content.weather.find((x) => x.id === atBase().weatherTemplateId)!.name.ru;

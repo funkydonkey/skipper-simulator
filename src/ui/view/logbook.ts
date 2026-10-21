@@ -1,7 +1,7 @@
 import { eventText, formatClock, renderText, type CrewMember, TRAINABLE_VOICES, type ChanceValue, type Content, type Lang, type LogEntry, type LogKind, type Pillar, type TrainableVoice } from '../../engine';
 import { CHECKPOINT_NAMES, DAMAGE_NAMES, label, VOICE_NAMES } from '../i18n/glossary';
 import { fmt, type Vars } from '../i18n/t';
-import { formatHour, signed } from './format';
+import { formatDuration, formatHour, signed } from './format';
 import { pointName } from './map';
 import { LOG, MODE_NAMES, SHOWER_NAMES, SIGNAL_NAMES } from './strings';
 
@@ -99,7 +99,7 @@ const DESCRIBE: Record<string, Describer> = {
   leg: ([routeId = ''], e, c, lang) => say('leg', lang, {
     route: routeName(c, routeId, lang),
     mode: MODE_NAMES[e.data?.mode === 'sail' ? 'sail' : 'motor'][lang],
-    wind: num(e, 'windKn'), speed: num(e, 'speedKn'), hours: Math.round(num(e, 'hours') * 10) / 10,
+    wind: num(e, 'windKn'), speed: num(e, 'speedKn'), time: formatDuration(num(e, 'hours'), lang),
   }),
   engine: () => null,
   zero: ([res], _e, _c, lang) => {
@@ -145,7 +145,7 @@ const DESCRIBE: Record<string, Describer> = {
       default: return null;
     }
   },
-  rescue: ([what], e, _c, lang) => (what === 'tow' ? say('towed', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0), hours: num(e, 'time_hours') }, 'bad') : null),
+  rescue: ([what], e, _c, lang) => (what === 'tow' ? say('towed', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0), time: formatDuration(num(e, 'time_hours'), lang) }, 'bad') : null),
   // `repair:<sys>:<id>` is the payment (noise); `…:success|fail` is the outcome the captain sees.
   repair: ([systemId = '', , outcome], _e, c, lang) => {
     const system = systemInline(c, systemId, lang);

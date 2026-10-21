@@ -142,12 +142,7 @@ describe('ТЗ 7.4 acceptance', () => {
     }
 
     for (const boat of boats) {
-      // Skipped for meltemi_40 — Ruling R24 (Stage 3c): true rate ~0.48 vs 0.6 with varied weather; awaiting design
-      // decision. Its only weakness hits are rig failures, which need day.max_wind >= 14 under sail; the 3c knobs
-      // (maneuver error injuries, marinero chances, cooldowns) do not reach them, and R22's +1..+3 kn template trials
-      // gave 0.56-0.59 on seeds 1-100 (0.40-0.51 on seeds 101-400), never 0.6.
-      const weaknessIt = boat === 'meltemi_40' ? it.skip : it;
-      weaknessIt(`ignore-weakness on ${boat} hits the boat's weakness in at least weaknessMinRate of weeks`, () => {
+      it(`ignore-weakness on ${boat} hits the boat's weakness in at least weaknessMinRate of weeks`, () => {
         expect(ignoring[boat]!.weaknessRate).toBeGreaterThanOrEqual(targets.weaknessMinRate);
       });
       it(`careful on ${boat} keeps the mean score and the injury rate within the careful targets`, () => {

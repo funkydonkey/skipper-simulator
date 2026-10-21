@@ -21,8 +21,8 @@ export function ForecastPanel() {
       <p>{t('forecastWind', { kn: w.forecastKn, gust: w.forecastGustKn, dir: w.forecastDir })}</p>
       {w.signalsVisible ? (
         <>
-          <p className="mono">{t('trend', { hpa: w.barometerHpa, trend: signed(w.barometerTrendHpa) })}</p>
-          {w.front && <VoiceLine voice="sea_sense" text={t('frontSigns')} />}
+          <p className="mono">{w.barometerTrendHpa === 0 ? t('steady', { hpa: w.barometerHpa }) : t('trend', { hpa: w.barometerHpa, trend: signed(w.barometerTrendHpa) })}</p>
+          {w.front ? <VoiceLine voice="sea_sense" text={t('frontSigns')} /> : <p className={styles.muted}>{t('noFront')}</p>}
         </>
       ) : (
         <>
