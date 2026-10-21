@@ -1,3 +1,4 @@
+import { canAfford } from '../budget';
 import { EngineError } from '../errors';
 import { buildConditionContext } from '../expr';
 import { appendLog } from '../log';
@@ -72,6 +73,11 @@ export function arrive(state: GameState, content: Content, boat: Boat, orders?: 
   const point = requirePoint(content, state.locationId);
   const arrived = nightArrival(state, boat, b);
   if (point.kind === 'bay') return anchorHere(arrived, content, boat, orders);
+  const fee = point.priceEur > 0 ? priceFor(point.priceEur, arrived.voices.economist, b) : null;
+  if (fee && !canAfford(arrived, fee.eur)) {
+    const broke = applyOutcome(arrived, boat, { cause: 'marina:no_money', pillar: 'boat', effect: { mood: -b.mood.marinaRefused } });
+    return anchorHere(broke, content, boat, orders);
+  }
   const m = marinaArrival(arrived.rng, { arrivalHour: arrived.clockMin / 60, placesGoneHour: point.placesGoneHour }, buildConditionContext(arrived, content), b);
   const rolled = appendLog({ ...arrived, rng: m.next }, { kind: 'roll', cause: `roll:marina:${point.id}`, pillar: 'time', odds: m.value.odds, data: { hit: m.value.refused } });
   let s = advanceClock(rolled, m.value.waitMin);
@@ -81,8 +87,7 @@ export function arrive(state: GameState, content: Content, boat: Boat, orders?: 
   }
   s = advanceClock(s, b.time.marinaMooringMin * cautionTimeFactor(s.voices.caution, b));
   s = runManeuver(s, content, 'mooring', orders);
-  if (point.priceEur > 0) {
-    const fee = priceFor(point.priceEur, s.voices.economist, b);
+  if (fee) {
     s = applyOutcome(s, boat, { cause: 'marina:fee', pillar: 'boat', effect: { money: -fee.eur }, saved: fee.savedEur });
   }
   return { state: s, mooring: 'berth' };

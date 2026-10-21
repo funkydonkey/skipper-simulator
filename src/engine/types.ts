@@ -361,7 +361,8 @@ export interface Balance {
   briefing: { slots: number; maxDialogues: number };
   weather: { frontAddKn: [number, number]; frontShiftSteps: number; barometerDropHpa: number; afternoonFromHour: number };
   schedule: { days: number; returnDeadlineHour: number; lateFeeEur: number };
-  rescue: { jumpStartEur: number; jumpStartDelayMin: number; moodPenalty: number };
+  rescue: { jumpStartEur: number; jumpStartDelayMin: number; moodPenalty: number; towEur: number; towHours: number; towMoodPenalty: number };
+  budget: { weekEur: number; okFactor: number };
   safety: { mitigationFactor: number };
   deposit: { damageCostEur: Record<string, number>; defaultDamageEur: number };
   grading: { crewGoodMood: number; crewOkMood: number; boatOkLossEur: number };
@@ -479,6 +480,8 @@ export interface GameState {
   returnedOnTime: boolean | null;
   /** Ids from the boat's defect pool present this week and not fixed (a fixed one is removed). */
   defects: string[];
+  /** Money right after `chooseBoat` (before check-in fixes); the base of the week spend. */
+  startBalanceEur: number;
   /** Set by `performCheckin` when a defect with a system was found; kept after `resolveDefects` for the record. */
   checkin: { found: string[]; fixed: string[]; minutesLeft: number } | null;
 }

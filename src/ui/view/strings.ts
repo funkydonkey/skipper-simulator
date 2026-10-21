@@ -80,6 +80,8 @@ export const LOG = dict({
   anchorAttempts: { ru: 'Якорь встал, попыток: {n}', en: 'Anchor set after {n} attempt(s)' },
   anchorDragging: { ru: 'Якорь ползёт: ночь без сна', en: 'The anchor dragged: a sleepless night' },
   marinaRefused: { ru: 'Марина отказала: мест нет', en: 'The marina turned us away: no berths' },
+  marinaNoMoney: { ru: 'На марину не хватило денег: встали на якорь', en: 'Not enough money for the marina: we anchored out' },
+  towed: { ru: 'Штиль и нет хода: нас взяли на буксир, {eur} €', en: 'Becalmed with no way on: we were towed, €{eur}' },
   marinaFee: { ru: 'Стоянка в марине: {eur} €', en: 'Marina fee: €{eur}' },
   swim: { ru: 'Остановка на купание', en: 'A swim stop' },
   swimSkipped: { ru: 'Купание отменили: уже темно', en: 'Swim cancelled: it is already dark' },

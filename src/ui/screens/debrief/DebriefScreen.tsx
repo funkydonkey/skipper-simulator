@@ -21,7 +21,7 @@ export function DebriefScreen() {
   const tc = useT(COMMON);
   useEffect(() => clearSave(storage), [storage]);
   const d = buildDebrief(game, content);
-  const scales: Array<[keyof typeof d.scales, Grade, string]> = [
+  const scales: Array<[Exclude<keyof typeof d.scales, 'budget'>, Grade, string]> = [
     ['safety', d.scales.safety, game.injuries > 0 ? t('injuries', { n: game.injuries }) : t('noInjuries')],
     ['crew', d.scales.crew, t('mood', { n: Math.round(game.resources.mood) })],
     ['boat', d.scales.boat, t('deposit', { returned: d.depositReturnedEur, loss: d.depositLossEur })],

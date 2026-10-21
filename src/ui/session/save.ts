@@ -63,7 +63,7 @@ const SlotSchema = z.object({
     log: z.array(LogEntrySchema),
     firedEvents: z.array(z.string()), eventQueue: z.array(z.string()),
     weather: DayWeatherSchema.nullable(), dayFacts: DayFactsSchema.nullable(), returnedOnTime: z.boolean().nullable(),
-    defects: z.array(z.string()),
+    defects: z.array(z.string()), startBalanceEur: num,
     checkin: z.object({ found: z.array(z.string()), fixed: z.array(z.string()), minutesLeft: num }).strict().nullable(),
   }).passthrough().refine((g) => g.phase !== 'defects' || g.checkin !== null, { message: 'phase defects needs a check-in', path: ['checkin'] }),
 });

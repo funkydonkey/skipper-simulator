@@ -1,3 +1,4 @@
+import { canAfford } from '../budget';
 import { assertNoPendingEvent, assertPhase, EngineError } from '../errors';
 import { appendLog } from '../log';
 import { priceFor } from '../perks';
@@ -18,6 +19,7 @@ function dinner(state: GameState, content: Content, choice: EveningChoice['dinne
   const b = content.balance;
   if (choice === 'taverna') {
     const bill = priceFor(state.crew.length * b.mood.tavernaEurPerPerson, state.voices.economist, b);
+    if (!canAfford(state, bill.eur)) throw new EngineError('NO_MONEY', `Dinner costs ${bill.eur} EUR`);
     const effect = { money: -bill.eur, mood: b.mood.tavernaDinner };
     return { outcomes: [{ cause: 'activity:taverna', pillar: 'promises', effect, saved: bill.savedEur }], cooked: false, activity: 'taverna' };
   }

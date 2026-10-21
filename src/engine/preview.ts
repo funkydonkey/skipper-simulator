@@ -1,6 +1,8 @@
+import { canAfford } from './budget';
 import { evaluateChance } from './chance';
 import { EngineError } from './errors';
 import { buildConditionContext, type CondContext } from './expr';
+import { priceFor } from './perks';
 import { anchorFailSpec, marinaRefusalSpec, sailBreakSpec } from './odds';
 import { bearingDeg, dirToDeg, planLeg } from './sailing';
 import { otherEnd, requireBoat, requirePoint, requireRoute, requireTemplate, round1 } from './state';
@@ -41,6 +43,8 @@ export interface PlanPreview {
   restHours: number;
   /** Refusal odds at a destination marina or quay; null for a bay or when staying. */
   marinaRefusal: ChanceValue | null;
+  /** False when the destination marina's fee (after the economist discount) exceeds the money; the boat then anchors outside. */
+  marinaAffordable: boolean;
   /** Per-attempt anchor-drag odds at a destination bay; null otherwise. */
   anchorFail: ChanceValue | null;
   destinationSeabed: Seabed;
@@ -112,7 +116,7 @@ export function previewPlan(state: GameState, content: Content, plan: DayPlan): 
     return {
       legs: [], departureMin: null, arrivalMin: null, destinationId: state.locationId, swimStops: swims.count,
       arrivalAfterSunset: false, marinaLate: false, fuelNeededL: 0, restHours: restHours(swims.clockMin, b),
-      marinaRefusal: null, anchorFail: null, destinationSeabed: requirePoint(content, state.locationId).seabed,
+      marinaRefusal: null, marinaAffordable: true, anchorFail: null, destinationSeabed: requirePoint(content, state.locationId).seabed,
     };
   }
   const departureMin = Math.max(state.clockMin, Math.round(plan.departureHour * 60));
@@ -137,6 +141,7 @@ export function previewPlan(state: GameState, content: Content, plan: DayPlan): 
     fuelNeededL: round1(motorHours * b.fuel.motorLph),
     restHours: restHours(arrivalMin, b),
     ...arrivalOdds(ctx, dest, swims.clockMin, marinaLate),
+    marinaAffordable: dest.kind === 'bay' || dest.priceEur <= 0 || canAfford(state, priceFor(dest.priceEur, state.voices.economist, b).eur),
     destinationSeabed: dest.seabed,
   };
 }

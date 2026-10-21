@@ -32,7 +32,7 @@ export function newGame(content: Content, opts: NewGameOptions): GameState {
     voiceXp: { sea_sense: 0, caution: 0, order: 0, mechanic: 0, diplomat: 0, economist: 0 },
     resources: { waterL: 0, fuelL: 0, serviceBankPct: b.start.serviceBankPct, starterBankPct: b.start.starterBankPct, gasPct: b.start.gasPct, moneyEur: b.start.moneyEur, mood: b.start.mood, fatigue: b.start.fatigue },
     flags: {}, damages: [], systems: {}, crew: makeCrew(content, crewSize), expectations: [], moodPerDay: 0, injuries: 0,
-    log: [], firedEvents: [], eventQueue: [], weather: null, dayFacts: null, returnedOnTime: null, defects: [], checkin: null,
+    log: [], firedEvents: [], eventQueue: [], weather: null, dayFacts: null, returnedOnTime: null, defects: [], checkin: null, startBalanceEur: 0,
   };
 }
 
@@ -64,6 +64,7 @@ export function chooseBoat(state: GameState, content: Content, boatId: string): 
     phase: 'checkin',
     defects: picked.value,
     systems: applyDefects(initialSystems(boat), boat, picked.value),
+    startBalanceEur: state.resources.moneyEur - boat.priceEur,
     resources: { ...state.resources, moneyEur: state.resources.moneyEur - boat.priceEur, waterL: boat.waterTankL, fuelL: boat.fuelTankL },
   };
   return appendLog(s, { kind: 'decision', cause: `boat:choose:${boat.id}`, pillar: 'boat' });

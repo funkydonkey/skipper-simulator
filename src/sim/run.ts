@@ -45,7 +45,7 @@ export function runWeek(content: Content, seed: number, strategy: Strategy): Wee
 }
 
 export function weekScore(d: Debrief): number {
-  const grades: Grade[] = [d.scales.safety, d.scales.crew, d.scales.boat, d.scales.schedule];
+  const grades: Grade[] = [d.scales.safety, d.scales.crew, d.scales.boat, d.scales.schedule, d.scales.budget];
   return grades.reduce((sum, g) => sum + GRADE_POINTS[g], 0);
 }
 

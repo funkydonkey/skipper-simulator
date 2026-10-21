@@ -98,7 +98,7 @@ const DESCRIBE: Record<string, Describer> = {
   charge: () => null,
   refill: ([what], _e, _c, lang) => say(what === 'fuel' ? 'refillFuel' : what === 'gas' ? 'refillGas' : 'refillWater', lang),
   anchor: ([what, n = '1'], _e, _c, lang) => (what === 'dragging' ? say('anchorDragging', lang, {}, 'bad') : say('anchorAttempts', lang, { n })),
-  marina: ([what], e, _c, lang) => (what === 'refused' ? say('marinaRefused', lang, {}, 'bad') : say('marinaFee', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0) })),
+  marina: ([what], e, _c, lang) => (what === 'refused' ? say('marinaRefused', lang, {}, 'bad') : what === 'no_money' ? say('marinaNoMoney', lang, {}, 'bad') : say('marinaFee', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0) })),
   activity: ([what], _e, _c, lang) => {
     if (what === 'swim_skipped') return say('swimSkipped', lang, {}, 'bad');
     return say(what === 'taverna' ? 'taverna' : 'swim', lang, {}, 'good');
@@ -124,6 +124,7 @@ const DESCRIBE: Record<string, Describer> = {
       default: return null;
     }
   },
+  rescue: ([what], e, _c, lang) => (what === 'tow' ? say('towed', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0) }, 'bad') : null),
   repair: ([systemId = ''], _e, c, lang) => say('systemRepaired', lang, { system: systemName(c, systemId, lang) }, 'good'),
   mood_per_day: (_p, e, _c, lang) => say('moodPerDay', lang, { mood: signed(e.delta?.mood ?? 0) }, 'bad'),
   event: ([eventId = '', optionId, tag], _e, c, lang) => {

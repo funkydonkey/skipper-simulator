@@ -1,3 +1,5 @@
+import { canAfford } from '../engine/budget';
+import { priceFor } from '../engine/perks';
 import { tavernaOpen, type EveningChoice } from '../engine/day/evening';
 import type { MorningChoice } from '../engine/day/morning';
 import { optionAvailable } from '../engine/events';
@@ -85,8 +87,10 @@ const available = (s: GameState, c: Content, ev: GameEvent): EventOption[] => {
   return ev.options.filter((o) => optionAvailable(o, ctx));
 };
 
-const hasTaverna = (s: GameState, c: Content): boolean =>
-  (c.map.find((p) => p.id === s.locationId)?.services.taverna ?? false) && tavernaOpen(s.clockMin, c.balance);
+const hasTaverna = (s: GameState, c: Content): boolean => {
+  const bill = priceFor(s.crew.length * c.balance.mood.tavernaEurPerPerson, s.voices.economist, c.balance).eur;
+  return (c.map.find((p) => p.id === s.locationId)?.services.taverna ?? false) && tavernaOpen(s.clockMin, c.balance) && canAfford(s, bill);
+};
 
 function reversedOrders(c: Content): Partial<Record<ManeuverKind, string[]>> {
   const orders: Partial<Record<ManeuverKind, string[]>> = {};

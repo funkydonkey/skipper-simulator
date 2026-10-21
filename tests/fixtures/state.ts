@@ -40,6 +40,7 @@ export function makeState(overrides: Partial<GameState> = {}): GameState {
     dayFacts: null,
     returnedOnTime: null,
     defects: [],
+    startBalanceEur: 1500,
     checkin: null,
   };
   return { ...base, ...overrides };

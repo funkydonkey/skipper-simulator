@@ -1,10 +1,11 @@
+import { budgetGrade, weekSpend } from './budget';
 import { causeMatches } from './log';
 import { requireBoat } from './state';
 import { voiceReport, type VoiceReport } from './voice-report';
 import type { Balance, Boat, Content, DebriefRule, GameState, Grade, LocalizedText, LogEntry, Pillar } from './types';
 
 export interface DebriefLink { ruleId: string; pillar: Pillar; text: LocalizedText; decision: LogEntry; consequence: LogEntry; signal: LogEntry | null }
-export interface WeekScales { safety: Grade; crew: Grade; boat: Grade; schedule: Grade }
+export interface WeekScales { safety: Grade; crew: Grade; boat: Grade; schedule: Grade; budget: Grade }
 export interface Debrief { scales: WeekScales; depositLossEur: number; depositReturnedEur: number; links: DebriefLink[]; eventNotes: LocalizedText[]; voices: VoiceReport[] }
 
 export function depositLoss(damages: readonly string[], b: Balance): number {
@@ -23,6 +24,7 @@ export function gradeWeek(state: GameState, boat: Boat, b: Balance): { scales: W
       crew,
       boat: boatGrade,
       schedule: state.returnedOnTime === true ? 'good' : 'bad',
+      budget: budgetGrade(weekSpend(state, loss), state.resources.moneyEur, b),
     },
     depositLossEur: loss,
     depositReturnedEur: Math.max(0, boat.depositEur - loss),
