@@ -1,3 +1,4 @@
+import { canAfford } from '../budget';
 import { EngineError } from '../errors';
 import { buildConditionContext } from '../expr';
 import { appendLog } from '../log';
@@ -5,6 +6,7 @@ import { correctOrder, evaluateManeuver, maneuverForKind } from '../maneuver';
 import { priceFor } from '../perks';
 import { applyOutcome, applyOutcomes } from '../resources';
 import { advanceClock, requireBoat, requirePoint } from '../state';
+import { addWear, brokenSystems } from '../systems';
 import { anchoring, marinaArrival } from '../time';
 import type { Balance, Boat, Content, DayPlan, GameState, Maneuver, ManeuverKind } from '../types';
 import { cautionTimeFactor } from '../voices';
@@ -35,6 +37,11 @@ export function runManeuver(state: GameState, content: Content, kind: ManeuverKi
   s = r.value.rolls.reduce((acc, roll) => appendLog(acc, { kind: 'roll', cause: roll.cause, pillar: 'safety', odds: roll.odds, data: { hit: roll.hit } }), s);
   s = applyOutcomes(s, boat, r.value.outcomes, b);
   s = grantManeuverXp(s, m, r.value.errors, b);
+  if (kind === 'anchoring' || kind === 'anchor_up') {
+    for (const def of brokenSystems(s, content)) {
+      if (def.brokenEffect.anchorEffect) s = applyOutcome(s, boat, { cause: `system:anchor:${def.id}`, pillar: 'boat', effect: def.brokenEffect.anchorEffect }, b);
+    }
+  }
   if (wrong) {
     s = applyOutcome(s, boat, { cause: `fatigue:maneuver:${m.id}`, pillar: 'safety', effect: { fatigue: r.value.errors.length * b.fatigue.maneuverError } });
   }
@@ -51,7 +58,7 @@ function anchorHere(state: GameState, content: Content, boat: Boat, orders?: Ord
   );
   s = appendLog(s, { kind: 'info', cause: `anchor:attempts:${r.value.attempts}`, pillar: 'time' });
   s = advanceClock(s, r.value.minutes * cautionTimeFactor(s.voices.caution, b));
-  s = runManeuver(s, content, 'anchoring', orders);
+  s = addWear(runManeuver(s, content, 'anchoring', orders), content, 'anchoring', 1);
   if (!r.value.held) s = applyOutcome(s, boat, { cause: 'anchor:dragging', pillar: 'time', effect: { fatigue: b.fatigue.rollyNightPenalty } });
   return { state: s, mooring: 'anchor' };
 }
@@ -66,6 +73,11 @@ export function arrive(state: GameState, content: Content, boat: Boat, orders?: 
   const point = requirePoint(content, state.locationId);
   const arrived = nightArrival(state, boat, b);
   if (point.kind === 'bay') return anchorHere(arrived, content, boat, orders);
+  const fee = point.priceEur > 0 ? priceFor(point.priceEur, arrived.voices.economist, b) : null;
+  if (fee && !canAfford(arrived, fee.eur)) {
+    const broke = applyOutcome(arrived, boat, { cause: 'marina:no_money', pillar: 'boat', effect: { mood: -b.mood.marinaRefused } });
+    return anchorHere(broke, content, boat, orders);
+  }
   const m = marinaArrival(arrived.rng, { arrivalHour: arrived.clockMin / 60, placesGoneHour: point.placesGoneHour }, buildConditionContext(arrived, content), b);
   const rolled = appendLog({ ...arrived, rng: m.next }, { kind: 'roll', cause: `roll:marina:${point.id}`, pillar: 'time', odds: m.value.odds, data: { hit: m.value.refused } });
   let s = advanceClock(rolled, m.value.waitMin);
@@ -75,8 +87,7 @@ export function arrive(state: GameState, content: Content, boat: Boat, orders?: 
   }
   s = advanceClock(s, b.time.marinaMooringMin * cautionTimeFactor(s.voices.caution, b));
   s = runManeuver(s, content, 'mooring', orders);
-  if (point.priceEur > 0) {
-    const fee = priceFor(point.priceEur, s.voices.economist, b);
+  if (fee) {
     s = applyOutcome(s, boat, { cause: 'marina:fee', pillar: 'boat', effect: { money: -fee.eur }, saved: fee.savedEur });
   }
   return { state: s, mooring: 'berth' };

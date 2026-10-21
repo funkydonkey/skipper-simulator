@@ -34,6 +34,17 @@ function readIdentifiers(c: Content): Set<string> {
     ev.voices.forEach((l) => { if (l.when) expr(l.when); });
     ev.options.forEach((o) => (o.requires ?? []).forEach(expr));
   }
+  for (const def of c.systems) {
+    for (const f of def.failures) {
+      if (f.when) expr(f.when);
+      if (typeof f.chance !== 'number') {
+        for (const m of f.chance.mods ?? []) {
+          if (m.if) expr(m.if);
+          if (m.per) reads.add(m.per);
+        }
+      }
+    }
+  }
   for (const m of c.maneuvers) for (const e of m.errors) if (e.mitigatedBy) reads.add(e.mitigatedBy);
   return reads;
 }
@@ -41,7 +52,7 @@ function readIdentifiers(c: Content): Set<string> {
 function findDeadRefs(c: Content): string[] {
   const reads = readIdentifiers(c);
   const written = new Set(effectsOf(c).flatMap((e) => (e.flag ? [`flag.${e.flag}`] : [])));
-  const defects = c.boats.flatMap((b) => b.hiddenDefects);
+  const defects = c.boats.flatMap((b) => b.defectPool);
   const dead: string[] = [];
   for (const w of written) if (!reads.has(w)) dead.push(`flag:${w.slice('flag.'.length)}`);
   for (const r of reads) if (r.startsWith('flag.') && !written.has(r)) dead.push(`flag-read:${r.slice('flag.'.length)}`);
@@ -50,8 +61,7 @@ function findDeadRefs(c: Content): string[] {
   }
   for (const t of c.briefing) if (!reads.has(`briefing.${t.id}`)) dead.push(`topic:${t.id}`);
   for (const id of new Set(defects.map((d) => d.id))) {
-    const charged = defects.some((d) => d.id === id && d.chargedOnReturn);
-    if (!charged && !reads.has(`defect.${id}`) && !reads.has(`defect.${id}.found`)) dead.push(`defect:${id}`);
+    if (!defects.some((d) => d.id === id && (d.system || d.chargedOnReturn))) dead.push(`defect:${id}`);
   }
   for (const key of BOAT_KEYS) if (!reads.has(key)) dead.push(`boat-field:${key}`);
   return dead;

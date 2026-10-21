@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolveDefects } from '../../src/engine/defects';
 import { assignVoices, boatOffers, chooseBoat, newGame, performBriefing, performCheckin } from '../../src/engine/setup';
 import { makeContent } from '../fixtures/content';
 import { deepFreeze } from '../fixtures/freeze';
@@ -6,8 +7,9 @@ import { deepFreeze } from '../fixtures/freeze';
 const content = makeContent();
 const alloc = { sea_sense: 2, caution: 2, order: 2, mechanic: 2, diplomat: 2, economist: 2 };
 const start = () => deepFreeze(newGame(content, { seed: 7, lang: 'ru' }));
-const toCheckin = () => chooseBoat(assignVoices(start(), content, alloc), content, 'test_boat');
-const toBriefing = () => performCheckin(toCheckin(), content, ['impeller', 'toilets']);
+const toCheckin = () => ({ ...chooseBoat(assignVoices(start(), content, alloc), content, 'test_boat'), defects: ['worn_impeller', 'old_scratch'] });
+const toDefects = () => performCheckin(toCheckin(), content, ['impeller', 'toilets']);
+const toBriefing = () => resolveDefects(toDefects(), content, []);
 const topics = ['captain_only', 'cleats', 'loaded_lines', 'toilet'];
 
 describe('setup phases', () => {
@@ -41,8 +43,8 @@ describe('setup phases', () => {
   });
 
   it('performCheckin: time budget, flags, hidden defects, log', () => {
-    const s = toBriefing();
-    expect(s.phase).toBe('briefing');
+    const s = toDefects();
+    expect(s.phase).toBe('defects');
     expect(s.flags).toMatchObject({ 'checkin.impeller': true, 'checkin.toilets': true, 'defect.worn_impeller.found': true, 'defect.old_scratch': true });
     expect(s.flags['defect.worn_impeller']).toBeUndefined();
     const causes = s.log.map((e) => e.cause);
@@ -51,7 +53,7 @@ describe('setup phases', () => {
     expect(causes).toContain('checkin:found:worn_impeller');
     expect(causes).toContain('defect:hidden:old_scratch');
     expect(s.clockMin).toBe(toCheckin().clockMin + 35);
-    expect(() => performCheckin(toCheckin(), content, ['anchor', 'impeller', 'gas', 'toilets', 'sails', 'electrics', 'damage_photos'])).toThrow(/120 min.*90/);
+    expect(() => performCheckin(toCheckin(), content, ['anchor', 'impeller', 'gas', 'toilets', 'sails', 'electrics', 'damage_photos'])).toThrow(/120 min.*72/);
     expect(() => performCheckin(toCheckin(), content, ['gas', 'gas'])).toThrow(/duplicate/);
     expect(() => performCheckin(toCheckin(), content, ['radio' as never])).toThrow(/unknown checkpoint/);
   });

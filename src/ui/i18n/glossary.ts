@@ -1,4 +1,4 @@
-import type { CheckpointId, Lang, LocalizedText, Pillar, PointKind, VoiceId } from '../../engine';
+import type { CheckpointId, Content, Lang, LocalizedText, Pillar, PointKind, VoiceId } from '../../engine';
 
 const t = (ru: string, en: string): LocalizedText => ({ ru, en });
 
@@ -87,4 +87,9 @@ export const SCENE_TITLES: Readonly<Record<string, LocalizedText>> = {
 /** Glossary lookup with a visible fallback for ids the glossary does not know yet. */
 export function label(table: Readonly<Record<string, LocalizedText>>, id: string, lang: Lang): string {
   return table[id]?.[lang] ?? id.replace(/_/g, ' ');
+}
+
+/** System names live in content.systems; this is the only lookup so nothing is duplicated. Unknown ids fall back to the id. */
+export function systemName(content: Content, id: string, lang: Lang): string {
+  return content.systems.find((s) => s.id === id)?.name[lang] ?? id;
 }

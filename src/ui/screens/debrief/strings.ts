@@ -8,6 +8,8 @@ export const DEBRIEF = dict({
   crew: { ru: 'Экипаж', en: 'Crew' },
   boat: { ru: 'Лодка', en: 'Boat' },
   schedule: { ru: 'Расписание', en: 'Schedule' },
+  budget: { ru: 'Бюджет', en: 'Budget' },
+  spend: { ru: 'Потрачено {spend} € из {budget} €', en: 'Spent €{spend} of €{budget}' },
   gradeGood: { ru: 'Оценка: хорошо', en: 'Grade: good' },
   gradeOk: { ru: 'Оценка: так себе', en: 'Grade: so-so' },
   gradeBad: { ru: 'Оценка: плохо', en: 'Grade: bad' },
@@ -36,9 +38,13 @@ export const DEBRIEF = dict({
   newWeek: { ru: 'Новая неделя', en: 'New week' },
 });
 
-/** Labels for the xp cause roots the engine reports (`roll:check`, `order:wrong`, `order:ok`). */
+/**
+ * Labels for the xp cause roots the engine reports (`roll:check`, `fault`, `order:wrong`, `order:ok`).
+ * Repair checks (`roll:check:repair:<sys>:<id>`) need no entry: their two-segment root is `roll:check`, so they count as checks.
+ */
 export const XP_ROOTS: Readonly<Record<string, LocalizedText>> = {
   'roll:check': { ru: 'проверки', en: 'checks' },
+  fault: { ru: 'неисправности', en: 'faults' },
   'order:wrong': { ru: 'ошибки в манёврах', en: 'maneuver mistakes' },
   'order:ok': { ru: 'чистые манёвры', en: 'clean maneuvers' },
 };

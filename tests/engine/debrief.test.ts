@@ -19,13 +19,25 @@ describe('debrief', () => {
     expect(depositLoss(['sail_torn', 'mystery'], b)).toBe(900 + 300);
   });
 
-  it('gradeWeek: four scales', () => {
+  it('gradeWeek counts systems returned broken in the deposit loss, the boat scale and the spend', () => {
+    const base = withLog([], { returnedOnTime: true, resources: { ...makeState().resources, mood: 75 } });
+    const broken = appendLog(base, { kind: 'effect', cause: 'deposit:broken:rig', pillar: 'boat', data: { eur: 600 } });
+    const g = gradeWeek(broken, boat, b);
+    expect(g).toMatchObject({ depositLossEur: 600, depositReturnedEur: boat.depositEur - 600 });
+    expect(g.scales.boat).toBe('bad');
+    const small = gradeWeek(appendLog(base, { kind: 'effect', cause: 'deposit:broken:gas', pillar: 'boat', data: { eur: 100 } }), boat, b);
+    expect(small.scales.boat).toBe('ok');
+    const both = gradeWeek({ ...broken, damages: ['mystery'] }, boat, b);
+    expect(both.depositLossEur).toBe(600 + 300);
+  });
+
+  it('gradeWeek: five scales', () => {
     const clean = makeState({ returnedOnTime: true, resources: { ...makeState().resources, mood: 75 } });
-    expect(gradeWeek(clean, boat, b)).toEqual({ scales: { safety: 'good', crew: 'good', boat: 'good', schedule: 'good' }, depositLossEur: 0, depositReturnedEur: 2000 });
+    expect(gradeWeek(clean, boat, b)).toEqual({ scales: { safety: 'good', crew: 'good', boat: 'good', schedule: 'good', budget: 'good' }, depositLossEur: 0, depositReturnedEur: 2000 });
     const rough = withLog([['effect', 'maneuver:dep_test:gear_before_release']], { damages: ['toilet_broken'], resources: { ...makeState().resources, mood: 50 } });
-    expect(gradeWeek(rough, boat, b).scales).toEqual({ safety: 'ok', crew: 'ok', boat: 'ok', schedule: 'bad' });
+    expect(gradeWeek(rough, boat, b).scales).toEqual({ safety: 'ok', crew: 'ok', boat: 'ok', schedule: 'bad', budget: 'good' });
     const bad = makeState({ injuries: 1, damages: ['sail_torn', 'hull_scratch'], resources: { ...makeState().resources, mood: 20 } });
-    expect(gradeWeek(bad, boat, b)).toMatchObject({ scales: { safety: 'bad', crew: 'bad', boat: 'bad' }, depositLossEur: 1500, depositReturnedEur: 500 });
+    expect(gradeWeek(bad, boat, b)).toMatchObject({ scales: { safety: 'bad', crew: 'bad', boat: 'bad', budget: 'good' }, depositLossEur: 1500, depositReturnedEur: 500 });
   });
 
   const rules: DebriefRule[] = [

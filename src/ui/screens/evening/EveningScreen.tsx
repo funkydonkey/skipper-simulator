@@ -1,15 +1,30 @@
 import { useState } from 'react';
-import { formatClock, pendingLevelUps, requirePoint, tavernaOpen } from '../../../engine';
+import { brokenFlags, formatClock, pendingLevelUps, requirePoint, tavernaBill, tavernaOpen } from '../../../engine';
 import { Button } from '../../components/Button';
 import { ResourcePanel } from '../../components/ResourcePanel';
 import { ScreenFrame } from '../../components/ScreenFrame';
+import { SystemsPanel } from '../../components/SystemsPanel';
 import { useAct, useGame, useT } from '../../session/SessionContext';
 import { VOICE_NAMES } from '../../i18n/glossary';
 import { formatHour } from '../../view/format';
 import { dayGrowth, levelUpText } from '../../view/logbook';
 import styles from '../day.module.css';
 import { Expectations } from '../morning/Expectations';
+import { RepairBlock } from './RepairBlock';
 import { EVENING } from './strings';
+
+type Dinner = 'cook' | 'taverna';
+
+/**
+ * The dinner "Lights out" will send, derived each render so it is never stale: a taverna that closed or became
+ * unaffordable (e.g. after a repair) falls back to cooking; with the gas broken the default is the taverna when
+ * it is available, else a cold dinner on board.
+ */
+function effectiveDinner(picked: Dinner | null, noCook: boolean, tavernaAvailable: boolean): Dinner {
+  if (picked === 'taverna') return tavernaAvailable ? 'taverna' : 'cook';
+  if (picked === 'cook' && !noCook) return 'cook';
+  return noCook && tavernaAvailable ? 'taverna' : 'cook';
+}
 
 export function EveningScreen() {
   const { game, content, lang } = useGame();
@@ -19,8 +34,13 @@ export function EveningScreen() {
   const point = requirePoint(content, game.locationId);
   const facts = game.dayFacts;
   const open = tavernaOpen(game.clockMin, b);
-  const tavernaReason = !point.services.taverna ? t('noTaverna') : !open ? t('tavernaClosed', { time: formatHour(b.time.tavernaCloseHour) }) : null;
-  const [dinner, setDinner] = useState<'cook' | 'taverna'>('cook');
+  const bill = tavernaBill(game, b);
+  const tavernaReason = !point.services.taverna ? t('noTaverna')
+    : !open ? t('tavernaClosed', { time: formatHour(b.time.tavernaCloseHour) })
+      : game.resources.moneyEur < bill.eur ? t('noMoney') : null;
+  const noCook = brokenFlags(game, content).noCook;
+  const [picked, setDinner] = useState<Dinner | null>(null);
+  const dinner = effectiveDinner(picked, noCook, tavernaReason === null);
   const [line, setLine] = useState<string | null>(null);
   const dialogues = content.dialogues.filter((d) => d.contexts.includes('evening'));
   const chosen = dialogues.find((d) => d.id === line);
@@ -34,7 +54,7 @@ export function EveningScreen() {
       screen="evening"
       title={t('title', { n: game.day })}
       subtitle={t('subtitle', { place: point.name[lang], clock: formatClock(game.clockMin) })}
-      side={<ResourcePanel />}
+      side={<><ResourcePanel /><SystemsPanel systems={game.systems} content={content} lang={lang} /></>}
       actions={<Button onClick={() => act({ type: 'end_day', choice: { dinner, dialogueId: line } })}>{t('sleep')}</Button>}
     >
       <p className={styles.summary}>{summary}, {mooring}.</p>
@@ -53,13 +73,15 @@ export function EveningScreen() {
           </ul>
         </section>
       )}
+      <RepairBlock />
       <fieldset className={styles.say}>
         <legend>{t('dinner')}</legend>
-        <label><input type="radio" name="dinner" checked={dinner === 'cook'} onChange={() => setDinner('cook')} /> {t('cook')}</label>
-        {game.resources.gasPct < b.gas.pctPerDay && <p className={styles.warning}>{t('noGas')}</p>}
+        <label><input type="radio" name="dinner" checked={dinner === 'cook'} disabled={noCook} onChange={() => setDinner('cook')} /> {t('cook')}</label>
+        {noCook && <p className={styles.warning}>{t('noCook')}</p>}
+        {!noCook && game.resources.gasPct < b.gas.pctPerDay && <p className={styles.warning}>{t('noGas')}</p>}
         <label>
           <input type="radio" name="dinner" checked={dinner === 'taverna'} disabled={tavernaReason !== null} onChange={() => setDinner('taverna')} />{' '}
-          {t('taverna', { eur: game.crew.length * b.mood.tavernaEurPerPerson })}
+          {t('taverna', { eur: bill.eur })}
         </label>
         {tavernaReason && <p className={styles.muted}>{tavernaReason}</p>}
       </fieldset>

@@ -7,7 +7,7 @@ import { buildConditionContext } from '../../src/engine/expr';
 import { PILLARS, type GameEvent, type GameState } from '../../src/engine/types';
 import { drainEvents, pillarsAffected, playDay, runWeek, setupWeek, weekScore } from '../../src/sim/run';
 import { runBatch } from '../../src/sim/batch';
-import { expert, newbie } from '../../src/sim/strategies';
+import { expert, makeStrategy, newbie } from '../../src/sim/strategies';
 
 const loaded = await loadContentDir('content');
 if (!loaded.content) throw new Error(JSON.stringify(loaded.errors));
@@ -57,7 +57,6 @@ describe('ТЗ 7.4 acceptance', () => {
   it('every event fires in some simulated week, except an explained allow-list', () => {
     const NEVER_FIRES_IN_SIM = [
       'fuel_dock_queue', // needs fuel_pct < 40 at a marina: both strategies refill at every berth and never burn 60% of a tank in one day
-      'gas_smell', // needs defect.gas_leak, which only calypso_38 has; no strategy picks that boat
     ];
     const fired = new Set([...newbieRuns, ...expertRuns].flatMap((r) => r.state.firedEvents));
     const never = content.events.map((e) => e.id).filter((id) => !fired.has(id)).sort();
@@ -129,23 +128,34 @@ describe('ТЗ 7.4 acceptance', () => {
     const BATCH_SEEDS = Array.from({ length: 100 }, (_, i) => i + 1);
     const targets = content.balance.simTargets;
     const stats = { newbie: runBatch(content, newbie, BATCH_SEEDS), expert: runBatch(content, expert, BATCH_SEEDS) };
+    const boats = content.boats.map((boat) => boat.id);
+    const careful = Object.fromEntries(boats.map((id) => [id, runBatch(content, makeStrategy('careful', id), BATCH_SEEDS)]));
+    const ignoring = Object.fromEntries(boats.map((id) => [id, runBatch(content, makeStrategy('ignore-weakness', id), BATCH_SEEDS)]));
+    const inBand = (value: number, [lo, hi]: readonly [number, number]) => {
+      expect(value).toBeGreaterThanOrEqual(lo);
+      expect(value).toBeLessThanOrEqual(hi);
+    };
 
     for (const name of ['newbie', 'expert'] as const) {
-      it(`${name} level gain stays within its target band`, () => {
-        const [lo, hi] = targets.levelGain[name];
-        expect(stats[name].levelGainMean).toBeGreaterThanOrEqual(lo);
-        expect(stats[name].levelGainMean).toBeLessThanOrEqual(hi);
-      });
-      it(`${name} week injury rate stays within its target band`, () => {
-        const [lo, hi] = targets.weekInjuryRate[name];
-        expect(stats[name].weekInjuryRate).toBeGreaterThanOrEqual(lo);
-        expect(stats[name].weekInjuryRate).toBeLessThanOrEqual(hi);
-      });
+      it(`${name} level gain stays within its target band`, () => inBand(stats[name].levelGainMean, targets.levelGain[name]));
+      it(`${name} week injury rate stays within its target band`, () => inBand(stats[name].weekInjuryRate, targets.weekInjuryRate[name]));
     }
 
-    it('events that fire in neither strategy are all in zeroFireAllow', () => {
-      const never = stats.newbie.zeroFire.filter((id) => stats.expert.zeroFire.includes(id));
-      expect(never.filter((id) => !targets.zeroFireAllow.includes(id))).toEqual([]);
+    for (const boat of boats) {
+      it(`ignore-weakness on ${boat} hits the boat's weakness in at least weaknessMinRate of weeks`, () => {
+        expect(ignoring[boat]!.weaknessRate).toBeGreaterThanOrEqual(targets.weaknessMinRate);
+      });
+      it(`careful on ${boat} keeps the mean score and the injury rate within the careful targets`, () => {
+        expect(careful[boat]!.meanScore).toBeGreaterThanOrEqual(targets.careful.minMeanScore);
+        inBand(careful[boat]!.weekInjuryRate, targets.careful.weekInjuryRate);
+      });
+      it(`careful on ${boat} level gain stays within its target band`, () => inBand(careful[boat]!.levelGainMean, targets.levelGain.careful));
+    }
+
+    it('events that fire in no simulated strategy are exactly zeroFireAllow', () => {
+      const all = [stats.newbie, stats.expert, ...Object.values(careful), ...Object.values(ignoring)];
+      const never = content.events.map((e) => e.id).filter((id) => all.every((st) => st.zeroFire.includes(id))).sort();
+      expect(never).toEqual([...targets.zeroFireAllow].sort());
     });
   });
 });

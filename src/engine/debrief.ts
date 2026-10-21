@@ -1,18 +1,23 @@
+import { budgetGrade, weekSpend } from './budget';
 import { causeMatches } from './log';
 import { requireBoat } from './state';
 import { voiceReport, type VoiceReport } from './voice-report';
 import type { Balance, Boat, Content, DebriefRule, GameState, Grade, LocalizedText, LogEntry, Pillar } from './types';
 
 export interface DebriefLink { ruleId: string; pillar: Pillar; text: LocalizedText; decision: LogEntry; consequence: LogEntry; signal: LogEntry | null }
-export interface WeekScales { safety: Grade; crew: Grade; boat: Grade; schedule: Grade }
+export interface WeekScales { safety: Grade; crew: Grade; boat: Grade; schedule: Grade; budget: Grade }
 export interface Debrief { scales: WeekScales; depositLossEur: number; depositReturnedEur: number; links: DebriefLink[]; eventNotes: LocalizedText[]; voices: VoiceReport[] }
 
 export function depositLoss(damages: readonly string[], b: Balance): number {
   return damages.reduce((sum, d) => sum + (b.deposit.damageCostEur[d] ?? b.deposit.defaultDamageEur), 0);
 }
 
+/** Charges logged at the return for systems handed back broken. */
+const brokenReturnLoss = (log: readonly LogEntry[]): number =>
+  log.reduce((sum, e) => (causeMatches(e.cause, 'deposit:broken') ? sum + (typeof e.data?.eur === 'number' ? e.data.eur : 0) : sum), 0);
+
 export function gradeWeek(state: GameState, boat: Boat, b: Balance): { scales: WeekScales; depositLossEur: number; depositReturnedEur: number } {
-  const loss = depositLoss(state.damages, b);
+  const loss = depositLoss(state.damages, b) + brokenReturnLoss(state.log);
   const nearMiss = state.log.some((e) => e.kind === 'effect' && causeMatches(e.cause, 'maneuver'));
   const mood = state.resources.mood;
   const crew: Grade = mood >= b.grading.crewGoodMood ? 'good' : mood >= b.grading.crewOkMood ? 'ok' : 'bad';
@@ -23,6 +28,7 @@ export function gradeWeek(state: GameState, boat: Boat, b: Balance): { scales: W
       crew,
       boat: boatGrade,
       schedule: state.returnedOnTime === true ? 'good' : 'bad',
+      budget: budgetGrade(weekSpend(state, loss), state.resources.moneyEur, b),
     },
     depositLossEur: loss,
     depositReturnedEur: Math.max(0, boat.depositEur - loss),

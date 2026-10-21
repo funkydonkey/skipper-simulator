@@ -1,23 +1,33 @@
-import { tavernaOpen, type EveningChoice } from '../engine/day/evening';
+import { canAfford } from '../engine/budget';
+import { tavernaBill, tavernaOpen, type EveningChoice } from '../engine/day/evening';
 import type { MorningChoice } from '../engine/day/morning';
 import { optionAvailable } from '../engine/events';
 import { buildConditionContext } from '../engine/expr';
 import { correctOrder } from '../engine/maneuver';
 import { MANEUVER_KINDS, type CheckpointId, type Content, type DayPlan, type Effect, type EventOption, type GameEvent, type GameState, type LegPlan, type ManeuverKind, type TrainableVoice } from '../engine/types';
 import { checkChance } from '../engine/voices';
+import type { RepairChoice } from '../engine/repair';
+import { weakSystems } from './weakness';
 
 export interface Strategy {
-  name: 'newbie' | 'expert';
+  name: 'newbie' | 'expert' | 'careful' | 'ignore-weakness';
   voices: Partial<Record<TrainableVoice, number>>;
   boatId: string;
-  checkpoints: CheckpointId[];
+  checkpoints(c: Content): CheckpointId[];
   briefingTopics: string[];
   briefingDialogues: string[];
   morning(s: GameState, c: Content): MorningChoice;
   plan(s: GameState, c: Content): DayPlan;
   chooseOption(s: GameState, c: Content, ev: GameEvent): string;
   evening(s: GameState, c: Content): EveningChoice;
+  /** Which of the found defects to fix at base (phase 'defects'). */
+  fixDefects(found: string[], s: GameState, c: Content): string[];
+  /** The repair to attempt next among the broken systems' choices, or null to stop. */
+  repair(choices: RepairChoice[], s: GameState): { systemId: string; repairId: string } | null;
 }
+
+const fixNothing = (): string[] => [];
+const repairNothing = (): null => null;
 
 // Sim heuristics (not game balance): below this expected wind both proxies motor.
 const SAIL_MIN_WIND_KN = 8;
@@ -85,8 +95,10 @@ const available = (s: GameState, c: Content, ev: GameEvent): EventOption[] => {
   return ev.options.filter((o) => optionAvailable(o, ctx));
 };
 
-const hasTaverna = (s: GameState, c: Content): boolean =>
-  (c.map.find((p) => p.id === s.locationId)?.services.taverna ?? false) && tavernaOpen(s.clockMin, c.balance);
+const hasTaverna = (s: GameState, c: Content): boolean => {
+  const bill = tavernaBill(s, c.balance).eur;
+  return (c.map.find((p) => p.id === s.locationId)?.services.taverna ?? false) && tavernaOpen(s.clockMin, c.balance) && canAfford(s, bill);
+};
 
 function reversedOrders(c: Content): Partial<Record<ManeuverKind, string[]>> {
   const orders: Partial<Record<ManeuverKind, string[]>> = {};
@@ -97,35 +109,38 @@ function reversedOrders(c: Content): Partial<Record<ManeuverKind, string[]>> {
   return orders;
 }
 
+function expertPlan(legs: string[], s: GameState, c: Content): DayPlan {
+  const legPlans: LegPlan[] = legs.map((routeId) => {
+    const wind = expectedWind(s, c, routeId, true);
+    return { routeId, mode: wind >= SAIL_MIN_WIND_KN ? 'sail' : 'motor', reefs: reefsFor(wind, c), genoa: 'full', course: 'direct' };
+  });
+  const nm = legs.reduce((sum, id) => sum + c.routes.find((r) => r.id === id)!.distanceNm, 0);
+  return { departureHour: 8.5, legs: legPlans, swimStops: nm < 12 ? 1 : 0, shower: 'strict', autopilot: false };
+}
+
 export const expert: Strategy = {
   name: 'expert',
   voices: { sea_sense: 2, caution: 2, order: 3, mechanic: 2, diplomat: 2, economist: 1 },
   boatId: 'meltemi_40',
-  checkpoints: ['impeller', 'toilets', 'gas', 'damage_photos', 'electrics'],
+  checkpoints: () => ['impeller', 'toilets', 'gas', 'damage_photos'],
   briefingTopics: ['captain_only', 'cleats', 'loaded_lines', 'toilet'],
   briefingDialogues: ['ten_bonus'],
   morning: () => ({ openBarometer: true, dialogueId: null }),
-  plan(s, c) {
-    const legs = todaysLegs(EXPERT_ITINERARY, s, c);
-    const legPlans: LegPlan[] = legs.map((routeId) => {
-      const wind = expectedWind(s, c, routeId, true);
-      return { routeId, mode: wind >= SAIL_MIN_WIND_KN ? 'sail' : 'motor', reefs: reefsFor(wind, c), genoa: 'full', course: 'direct' };
-    });
-    const nm = legs.reduce((sum, id) => sum + c.routes.find((r) => r.id === id)!.distanceNm, 0);
-    return { departureHour: 8.5, legs: legPlans, swimStops: nm < 12 ? 1 : 0, shower: 'strict', autopilot: false };
-  },
+  plan: (s, c) => expertPlan(todaysLegs(EXPERT_ITINERARY, s, c), s, c),
   chooseOption(s, c, ev) {
     const opts = available(s, c, ev);
     return opts.reduce((best, o) => (scoreOption(o, s, c) > scoreOption(best, s, c) ? o : best), opts[0]!).id;
   },
   evening: (s, c) => ({ dinner: hasTaverna(s, c) && s.resources.moneyEur > EXPERT_TAVERNA_MIN_MONEY ? 'taverna' : 'cook', dialogueId: 'decide_morning' }),
+  fixDefects: fixNothing,
+  repair: repairNothing,
 };
 
 export const newbie: Strategy = {
   name: 'newbie',
   voices: { sea_sense: 0, caution: 0, order: 0, mechanic: 4, diplomat: 4, economist: 4 },
   boatId: 'aurora_45',
-  checkpoints: ['sails', 'anchor'],
+  checkpoints: () => ['sails', 'anchor'],
   briefingTopics: ['sails', 'mob', 'fenders', 'anchor'],
   briefingDialogues: ['early_try', 'beach_week'],
   morning: () => ({ openBarometer: false, dialogueId: 'early_try' }),
@@ -137,4 +152,111 @@ export const newbie: Strategy = {
   },
   chooseOption: (s, c, ev) => available(s, c, ev)[0]!.id,
   evening: (s, c) => ({ dinner: hasTaverna(s, c) ? 'taverna' : 'cook', dialogueId: 'promise_taverna' }),
+  fixDefects: fixNothing,
+  repair: repairNothing,
 };
+
+// --- Weakness-aware proxies: expert play on any boat, differing in how they treat the boat's weak systems.
+
+type Style = 'careful' | 'ignore-weakness';
+const NIGHT_BERTH_KINDS = new Set(['marina', 'quay', 'base']);
+
+/**
+ * One leg per day, built from the region graph, ending at base on the last day.
+ * careful: anchorage on odd nights, berth on even nights, never two anchorages in a row.
+ * ignore-weakness: an anchorage (bay) every night it can. Deterministic: ties break on visit count, then route id.
+ */
+export function buildItinerary(c: Content, style: Style): Record<number, string[]> {
+  const base = c.map.find((p) => p.kind === 'base')!;
+  const days = c.balance.schedule.days;
+  const kindOf = (id: string) => c.map.find((p) => p.id === id)!.kind;
+  const visits = new Map<string, number>();
+  const rank = (day: number, to: string): number => {
+    const berth = NIGHT_BERTH_KINDS.has(kindOf(to));
+    if (style === 'ignore-weakness') return kindOf(to) === 'bay' ? 0 : 1;
+    return (day % 2 === 0) === berth ? 0 : 1;
+  };
+  const walk = (day: number, at: string, prevBerth: boolean): string[] | null => {
+    if (day > days) return at === base.id ? [] : null;
+    const options = c.routes
+      .flatMap((r) => (r.from === at ? [{ id: r.id, to: r.to }] : r.to === at ? [{ id: r.id, to: r.from }] : []))
+      .filter((o) => (day === days ? o.to === base.id : true))
+      .filter((o) => style !== 'careful' || day === days || prevBerth || NIGHT_BERTH_KINDS.has(kindOf(o.to)))
+      .sort((a, b) => rank(day, a.to) - rank(day, b.to) || (visits.get(a.to) ?? 0) - (visits.get(b.to) ?? 0) || a.id.localeCompare(b.id));
+    for (const o of options) {
+      visits.set(o.to, (visits.get(o.to) ?? 0) + 1);
+      const rest = walk(day + 1, o.to, NIGHT_BERTH_KINDS.has(kindOf(o.to)));
+      if (rest) return [o.id, ...rest];
+      visits.set(o.to, (visits.get(o.to) ?? 0) - 1);
+    }
+    return null;
+  };
+  const legs = walk(1, base.id, true) ?? [];
+  return Object.fromEntries(legs.map((id, i) => [i + 1, [id]]));
+}
+
+/** Greedy by cost within the check-in budget; `first` checkpoints are tried before the rest. */
+function greedyCheckpoints(c: Content, first: readonly CheckpointId[], skip: readonly CheckpointId[]): CheckpointId[] {
+  const costs = c.balance.checkin.costMin;
+  const byCost = (ids: CheckpointId[]) => [...ids].sort((a, b) => costs[a] - costs[b]);
+  const all = Object.keys(costs) as CheckpointId[];
+  const ordered = [...byCost(all.filter((id) => first.includes(id))), ...byCost(all.filter((id) => !first.includes(id) && !skip.includes(id)))];
+  const picked: CheckpointId[] = [];
+  let used = 0;
+  for (const id of ordered) {
+    if (skip.includes(id) || used + costs[id] > c.balance.checkin.budgetMin) continue;
+    picked.push(id);
+    used += costs[id];
+  }
+  return picked;
+}
+
+function weakCheckpoints(c: Content, boatId: string): CheckpointId[] {
+  const weak = weakSystems(boatId, c.balance.simTargets);
+  return c.systems.flatMap((d) => (weak.includes(d.id) && d.checkpoint ? [d.checkpoint] : []));
+}
+
+/** Every found defect that still fits the remaining minutes and money, in found order. */
+function fixWhatFits(found: string[], s: GameState, c: Content): string[] {
+  const boat = c.boats.find((b) => b.id === s.boatId);
+  let minutes = s.checkin?.minutesLeft ?? 0;
+  let eur = s.resources.moneyEur;
+  const fixes: string[] = [];
+  for (const id of found) {
+    const d = boat?.defectPool.find((x) => x.id === id);
+    if (!d?.system || (d.fixMin ?? 0) > minutes || (d.fixEur ?? 0) > eur) continue;
+    minutes -= d.fixMin ?? 0;
+    eur -= d.fixEur ?? 0;
+    fixes.push(id);
+  }
+  return fixes;
+}
+
+/** The available option most likely to work (no check = certain), cheapest on ties. */
+function bestRepair(choices: RepairChoice[]): { systemId: string; repairId: string } | null {
+  const best = choices
+    .filter((ch) => ch.available)
+    .sort((a, b) => (b.odds?.value ?? 1) - (a.odds?.value ?? 1) || (a.option.costEur ?? 0) - (b.option.costEur ?? 0))[0];
+  return best ? { systemId: best.systemId, repairId: best.option.id } : null;
+}
+
+function weaknessStrategy(style: Style, boatId: string): Strategy {
+  return {
+    ...expert,
+    name: style,
+    boatId,
+    checkpoints: (c) => {
+      const weak = weakCheckpoints(c, boatId);
+      return style === 'careful' ? greedyCheckpoints(c, weak, []) : greedyCheckpoints(c, [], weak);
+    },
+    plan: (s, c) => expertPlan(todaysLegs(buildItinerary(c, style), s, c), s, c),
+    fixDefects: style === 'careful' ? fixWhatFits : fixNothing,
+    repair: style === 'careful' ? bestRepair : repairNothing,
+  };
+}
+
+export function makeStrategy(name: Strategy['name'], boatId?: string): Strategy {
+  if (name === 'newbie') return newbie;
+  if (name === 'expert') return expert;
+  return weaknessStrategy(name, boatId ?? expert.boatId);
+}

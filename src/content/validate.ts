@@ -1,4 +1,4 @@
-import { MANEUVER_KINDS, type Content } from '../engine/types';
+import { MANEUVER_KINDS, type Content, type Effect } from '../engine/types';
 import type { ContentError } from './parse';
 
 type Add = (path: string, message: string) => void;
@@ -77,6 +77,51 @@ function checkEvents(c: Content, add: Add): void {
   });
 }
 
+/** `break` / `repair` / `wear` must name a system in content.systems; a typo would otherwise silently do nothing. */
+function checkSystemRefs(c: Content, add: Add): void {
+  const known = new Set(c.systems.map((s) => s.id));
+  const check = (path: string, e: Effect | undefined): void => {
+    if (!e) return;
+    for (const id of [e.break, e.repair, ...Object.keys(e.wear ?? {})]) {
+      if (id !== undefined && !known.has(id)) add(path, `unknown system "${id}"`);
+    }
+  };
+  c.events.forEach((ev, i) => ev.options.forEach((o, j) => {
+    check(`events[${i}].options[${j}].effects`, o.effects);
+    check(`events[${i}].options[${j}].success`, o.success);
+    check(`events[${i}].options[${j}].fail`, o.fail);
+  }));
+  c.maneuvers.forEach((m, i) => m.errors.forEach((e, j) => check(`maneuvers[${i}].errors[${j}].effect`, e.effect)));
+  c.systems.forEach((s, i) => {
+    s.failures.forEach((f, j) => check(`systems[${i}].failures[${j}].effect`, f.effect));
+    check(`systems[${i}].brokenEffect.dailyEffect`, s.brokenEffect.dailyEffect);
+    check(`systems[${i}].brokenEffect.anchorEffect`, s.brokenEffect.anchorEffect);
+  });
+}
+
+/** A failure's `event` must exist and fire in the failure's phase, or the failure would queue nothing (or the wrong scene). */
+function checkFailureEvents(c: Content, add: Add): void {
+  const events = new Map(c.events.map((e) => [e.id, e]));
+  c.systems.forEach((s, i) => s.failures.forEach((f, j) => {
+    if (f.event === undefined) return;
+    const path = `systems[${i}].failures[${j}].event`;
+    const ev = events.get(f.event);
+    if (!ev) add(path, `unknown event "${f.event}"`);
+    else if (ev.trigger.phase !== f.phase) add(path, `event "${f.event}" fires in phase "${ev.trigger.phase}", the failure in "${f.phase}"`);
+  }));
+}
+
+/** A typo in a weakness entry must fail validation, not silently match nothing; new boats and systems need no code change. */
+function checkWeaknessTargets(c: Content, add: Add): void {
+  const boats = new Set(c.boats.map((b) => b.id));
+  const systems = new Set(c.systems.map((s) => s.id));
+  for (const [boatId, w] of Object.entries(c.balance.simTargets.weakness)) {
+    const path = `balance.simTargets.weakness.${boatId}`;
+    if (!boats.has(boatId)) add(path, `unknown boat "${boatId}"`);
+    w.systems.forEach((id, i) => { if (!systems.has(id)) add(`${path}.systems[${i}]`, `unknown system "${id}"`); });
+  }
+}
+
 export function crossValidate(c: Content): ContentError[] {
   const errors: ContentError[] = [];
   const add: Add = (path, message) => errors.push({ file: 'cross', path, message });
@@ -86,5 +131,8 @@ export function crossValidate(c: Content): ContentError[] {
   checkWeatherAndBriefing(c, add);
   checkManeuvers(c, add);
   checkEvents(c, add);
+  checkSystemRefs(c, add);
+  checkFailureEvents(c, add);
+  checkWeaknessTargets(c, add);
   return errors;
 }

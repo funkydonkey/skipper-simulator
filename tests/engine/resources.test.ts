@@ -31,13 +31,13 @@ describe('resources', () => {
     expect(next.log.at(-1)!.delta).toEqual({ fuelL: -2 });
   });
 
-  it('damage, repair, flag, injury, mood_per_day, signal', () => {
+  it('damage, flag, injury, mood_per_day, signal', () => {
     let s = makeState();
     s = applyOutcome(s, boat, { cause: 'sail:break', effect: { damage: 'sail_torn' } });
     s = applyOutcome(s, boat, { cause: 'sail:break', effect: { damage: 'sail_torn' } });
     expect(s.damages).toEqual(['sail_torn']);
     s = applyOutcome(s, boat, { cause: 'repair', effect: { repair: 'sail_torn' } });
-    expect(s.damages).toEqual([]);
+    expect(s.damages, 'repair now concerns boat systems and leaves deposit damages alone').toEqual(['sail_torn']);
     s = applyOutcome(s, boat, { cause: 'x', effect: { flag: 'warned', injury: true, mood_per_day: -8 } });
     expect(s.flags['flag.warned']).toBe(true);
     expect(s.injuries).toBe(1);
@@ -74,6 +74,16 @@ describe('resources', () => {
     expect(by['consumption:electric']).toEqual({ service_bank: -3.6 });
     expect(by['charge:starter']).toEqual({ starter_bank: 100 });
     expect(by['consumption:gas']).toEqual({ gas: -9 });
+  });
+
+  it('dailyConsumption: noCharge blocks engine charge and the starter recharge, solar keeps charging', () => {
+    const solar = { ...boat, solarW: 200 };
+    const run = (noCharge: boolean) => Object.fromEntries(dailyConsumption({ crewSize: 4, shower: 'normal', boat: solar, motorHours: 2, sailHours: 0, autopilotHours: 0, shorePower: false, cookedDinner: false, noCharge }, b).map((o) => [o.cause, o.effect]));
+    const broken = run(true);
+    expect(broken['charge:starter']).toBeUndefined();
+    // draw = 45 fridge + 10 pumps + 2h×1.5 plotter = 58 Ah; solar 200 W × 0.3 = 60 Ah; engine 0 → +2 Ah of 220 Ah
+    expect(broken['consumption:electric']!.service_bank).toBeCloseTo((2 / 220) * 100, 1);
+    expect(run(false)['charge:starter']).toEqual({ starter_bank: 100 });
   });
 
   it('dailyConsumption: loose showers and autopilot drain more; shore power refills', () => {

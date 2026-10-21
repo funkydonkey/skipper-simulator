@@ -70,7 +70,7 @@ describe('expr', () => {
 
   it('at_marina is false when anchored outside after a refusal; moored_berth tells berth from anchor', () => {
     const content = makeContent();
-    const facts = { day: 1, departureHour: 9, arrivalHour: 16, arrivalPointKind: 'bay' as const, mooring: 'anchor' as const, activities: [], motorHours: 1, sailHours: 0, autopilotHours: 0, shower: 'normal' as const };
+    const facts = { day: 1, departureHour: 9, arrivalHour: 16, arrivalPointKind: 'bay' as const, mooring: 'anchor' as const, activities: [], motorHours: 1, sailHours: 0, autopilotHours: 0, maxWindKn: 0, shower: 'normal' as const };
     const refused = buildConditionContext(makeState({ locationId: 'marina_b', dayFacts: facts }), content);
     expect(refused).toMatchObject({ at_marina: false, moored_berth: false, location_kind: 'marina' });
     const berthed = buildConditionContext(makeState({ locationId: 'marina_b', dayFacts: { ...facts, mooring: 'berth' } }), content);

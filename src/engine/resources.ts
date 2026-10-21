@@ -2,6 +2,7 @@ import { EngineError } from './errors';
 import { appendLog, causeMatches } from './log';
 import { advanceClock, clamp, round1 } from './state';
 import { priceFor } from './perks';
+import { applySystemEffect } from './systems';
 import { grantXp } from './xp';
 import type { Balance, Boat, Effect, GameState, MapPoint, Outcome, Resources, ShowerDiscipline } from './types';
 
@@ -55,6 +56,8 @@ function effectData(e: Effect): Record<string, string | number | boolean> | unde
   const data: Record<string, string | number | boolean> = {};
   if (e.damage) data.damage = e.damage;
   if (e.repair) data.repair = e.repair;
+  if (e.break) data.break = e.break;
+  if (e.wear) data.wear = Object.entries(e.wear).map(([id, w]) => `${id}:${w}`).join(',');
   if (e.flag) data.flag = e.flag;
   if (e.injury) data.injury = true;
   if (e.time_hours) data.time_hours = e.time_hours;
@@ -70,7 +73,8 @@ export function applyOutcome(state: GameState, boat: Boat | null, o: Outcome, b?
   let s: GameState = {
     ...state,
     resources,
-    damages: e.repair ? damages.filter((d) => d !== e.repair) : damages,
+    damages,
+    systems: applySystemEffect(state.systems, e),
     flags: e.flag ? { ...state.flags, [`flag.${e.flag}`]: true } : state.flags,
     injuries: state.injuries + (e.injury ? 1 : 0),
     moodPerDay: state.moodPerDay + (e.mood_per_day ?? 0),
@@ -84,7 +88,11 @@ export function applyOutcome(state: GameState, boat: Boat | null, o: Outcome, b?
     ...(o.pillar ? { pillar: o.pillar } : {}),
     ...(Object.keys(delta).length ? { delta } : {}),
     ...(data ? { data } : {}),
+    ...(o.odds ? { odds: o.odds } : {}),
   });
+  if (e.break && state.systems[e.break]?.broken === false) {
+    s = appendLog(s, { kind: 'effect', cause: `break:${e.break}`, pillar: 'boat' });
+  }
   if (e.injury && !causeMatches(o.cause, 'injury')) {
     s = appendLog(s, { kind: 'effect', cause: `injury:${o.cause}`, ...(o.pillar ? { pillar: o.pillar } : {}) });
   }
@@ -112,6 +120,8 @@ export interface ConsumptionInput {
   autopilotHours: number;
   shorePower: boolean;
   cookedDinner: boolean;
+  /** Broken electrical system (alternator): the engine charges neither bank; solar panels still charge the service bank. */
+  noCharge?: boolean;
 }
 
 export function dailyConsumption(i: ConsumptionInput, b: Balance): Outcome[] {
@@ -121,14 +131,15 @@ export function dailyConsumption(i: ConsumptionInput, b: Balance): Outcome[] {
     + (i.boat.electricToilet ? el.electricToiletAhPerDay : 0)
     + (i.motorHours + i.sailHours) * el.plotterAhPerHour
     + i.autopilotHours * el.autopilotAhPerHour;
-  const chargeAh = i.motorHours * el.engineChargeAhPerHour + i.boat.solarW * el.solarAhPerWattDay;
+  const engineAh = i.noCharge ? 0 : i.motorHours * el.engineChargeAhPerHour;
+  const chargeAh = engineAh + i.boat.solarW * el.solarAhPerWattDay;
   const out: Outcome[] = [
     { cause: 'consumption:water', pillar: 'boat', effect: { water: -i.crewSize * b.water.perPersonPerDayL[i.shower] } },
     i.shorePower
       ? { cause: 'charge:shore', pillar: 'boat', effect: { service_bank: 100 } }
       : { cause: 'consumption:electric', pillar: 'boat', effect: { service_bank: round1(((chargeAh - drawAh) / capacityAh) * 100) } },
   ];
-  if (i.boat.starterSeparate && i.motorHours > 0) out.push({ cause: 'charge:starter', pillar: 'boat', effect: { starter_bank: 100 } });
+  if (i.boat.starterSeparate && i.motorHours > 0 && !i.noCharge) out.push({ cause: 'charge:starter', pillar: 'boat', effect: { starter_bank: 100 } });
   if (i.cookedDinner) out.push({ cause: 'consumption:gas', pillar: 'boat', effect: { gas: -b.gas.pctPerDay } });
   return out;
 }

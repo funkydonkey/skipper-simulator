@@ -26,9 +26,10 @@ export function checkSpec(check: VoiceCheck, b: Balance): ChanceSpec {
   };
 }
 
-export function injurySpec(baseChance: number, mitigatedBy: string | undefined, b: Balance): ChanceSpec {
+/** `extra` mods (e.g. a maneuver's `injuryMods`) join the same list: adds still apply before muls. */
+export function injurySpec(baseChance: number, mitigatedBy: string | undefined, b: Balance, extra: readonly ChanceMod[] = []): ChanceSpec {
   const mitigation: ChanceMod[] = mitigatedBy ? [{ if: mitigatedBy, mul: b.safety.mitigationFactor - 1, label: 'mitigation' }] : [];
-  return { base: baseChance, mods: [...riskMods(b), ...mitigation] };
+  return { base: baseChance, mods: [...riskMods(b), ...mitigation, ...extra] };
 }
 
 export function sailBreakSpec(breakChance: number, b: Balance): ChanceSpec {

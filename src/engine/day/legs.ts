@@ -6,10 +6,11 @@ import { injurySpec, sailBreakSpec } from '../odds';
 import { applyOutcome } from '../resources';
 import { bearingDeg, dirToDeg, planLeg, type LegResult } from '../sailing';
 import { advanceClock, otherEnd, requirePoint, requireRoute, requireTemplate, round1 } from '../state';
-import type { Boat, Content, GameState, LegPlan, Route } from '../types';
+import type { Balance, Boat, Content, GameState, LegPlan, Route } from '../types';
+import { brokenFlags, type BrokenFlags } from '../systems';
 import { realWind } from '../weather';
 
-export interface LegRun { state: GameState; to: string; motorHours: number; sailHours: number }
+export interface LegRun { state: GameState; to: string; motorHours: number; sailHours: number; windKn: number }
 
 export function avgSeasickness(state: GameState, content: Content): number {
   if (state.crew.length === 0) return 0;
@@ -19,6 +20,7 @@ export function avgSeasickness(state: GameState, content: Content): number {
 
 export function startEngine(state: GameState, content: Content, boat: Boat): GameState {
   const b = content.balance;
+  if (brokenFlags(state, content).noMotor) return state;
   let s = state;
   if (s.resources.starterBankPct < b.electric.starterMinPct) {
     s = applyOutcome(s, boat, {
@@ -52,6 +54,28 @@ function sailRisks(state: GameState, content: Content, boat: Boat, route: Route,
   return { state: s, extraMin: b.sails.reefUnderwayMin };
 }
 
+export interface ModePlan { mode: 'motor' | 'sail'; drift: boolean; tow: boolean; causes: string[] }
+
+/**
+ * Motor falls back to sail on empty tank or a dead motor, sail to motor on a broken rig; with neither the boat drifts under sail.
+ * A boat that must motor (or has neither motor nor sail) in a wind too weak to sail is towed. Shared by `runLeg` and the preview.
+ */
+export function resolveMode(requested: LegPlan['mode'], fuelL: number, flags: BrokenFlags, routeId: string, windKn: number, b: Balance): ModePlan {
+  const motorUsable = !flags.noMotor && fuelL > 0;
+  const causes: string[] = [];
+  if (requested === 'motor') {
+    if (fuelL <= 0) causes.push('zero:fuel');
+    if (flags.noMotor) causes.push(`system:no_motor:${routeId}`);
+    if (motorUsable) return { mode: 'motor', drift: false, tow: false, causes };
+    if (flags.noSail) causes.push(`system:no_sail:${routeId}`);
+    return { mode: 'sail', drift: flags.noSail, tow: flags.noSail || windKn < b.sails.minSailWindKn, causes };
+  }
+  if (flags.noSail) causes.push(`system:no_sail:${routeId}`);
+  if (!flags.noSail) return { mode: 'sail', drift: false, tow: false, causes };
+  if (flags.noMotor) causes.push(`system:no_motor:${routeId}`);
+  return { mode: motorUsable ? 'motor' : 'sail', drift: !motorUsable, tow: !motorUsable, causes };
+}
+
 export function runLeg(state: GameState, content: Content, boat: Boat, leg: LegPlan, from: string): LegRun {
   const b = content.balance;
   const route = requireRoute(content, leg.routeId);
@@ -60,21 +84,28 @@ export function runLeg(state: GameState, content: Content, boat: Boat, leg: LegP
   if (!state.weather) throw new EngineError('WRONG_PHASE', 'No weather for today: call startDay first');
   const wind = realWind(state.weather, route.kLocal, state.clockMin / 60, requireTemplate(content, state.weatherTemplateId), b);
   let s = state;
-  const mode = leg.mode === 'motor' && s.resources.fuelL <= 0 ? 'sail' : leg.mode;
-  if (mode !== leg.mode) s = applyOutcome(s, boat, { cause: 'zero:fuel', pillar: 'boat', effect: {} });
+  const { mode, drift, tow, causes } = resolveMode(leg.mode, s.resources.fuelL, brokenFlags(s, content), route.id, wind.windKn, b);
+  for (const cause of causes) {
+    s = cause === 'zero:fuel' ? applyOutcome(s, boat, { cause, pillar: 'boat', effect: {} }) : appendLog(s, { kind: 'info', cause, pillar: 'boat' });
+  }
   const res = planLeg({
-    mode, windKn: wind.windKn, windFromDeg: dirToDeg(wind.dir),
+    mode, windKn: drift ? 0 : wind.windKn, windFromDeg: dirToDeg(wind.dir),
     courseDeg: bearingDeg(requirePoint(content, from), requirePoint(content, to)),
     reefs: leg.reefs, genoa: leg.genoa, course: leg.course, distanceNm: route.distanceNm,
     hullSpeedKn: boat.hullSpeedKn, motorKn: boat.motorKn,
   }, b);
-  s = appendLog(s, { kind: 'info', cause: `leg:${route.id}`, pillar: 'time', data: { mode, windKn: wind.windKn, speedKn: res.speedKn, hours: res.hours, pos: res.pos } });
+  s = appendLog(s, { kind: 'info', cause: `leg:${route.id}`, pillar: 'time', data: { mode, windKn: wind.windKn, speedKn: res.speedKn, hours: tow ? b.rescue.towHours : res.hours, pos: res.pos } });
   if (wind.frontActive && !s.log.some((e) => e.day === state.day && e.cause === 'weather:front')) {
     s = appendLog(s, { kind: 'info', cause: 'weather:front', pillar: 'weather', data: { windKn: wind.windKn } });
   }
+  if (tow) {
+    const effect = { money: -b.rescue.towEur, time_hours: b.rescue.towHours, mood: -b.rescue.towMoodPenalty };
+    s = applyOutcome(s, boat, { cause: `rescue:tow:${route.id}`, pillar: 'boat', effect });
+    return { state: s, to, motorHours: 0, sailHours: 0, windKn: wind.windKn };
+  }
   let extraMin = 0;
   if (mode === 'motor') {
-    s = applyOutcome(s, boat, { cause: 'consumption:fuel', pillar: 'boat', effect: { fuel: -round1(res.hours * b.fuel.motorLph) } });
+    s = applyOutcome(s, boat, { cause: 'consumption:fuel', pillar: 'boat', effect: { fuel: -round1(res.hours * (boat.motorLph ?? b.fuel.motorLph)) } });
     if (s.resources.fuelL <= 0) s = applyOutcome(s, boat, { cause: 'zero:fuel', pillar: 'boat', effect: {} });
   } else {
     const risks = sailRisks(s, content, boat, route, res);
@@ -86,5 +117,6 @@ export function runLeg(state: GameState, content: Content, boat: Boat, leg: LegP
     to,
     motorHours: mode === 'motor' ? res.hours : 0,
     sailHours: mode === 'sail' ? res.hours : 0,
+    windKn: wind.windKn,
   };
 }

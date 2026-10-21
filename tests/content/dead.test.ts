@@ -56,14 +56,17 @@ describe('findDeadContent', () => {
     expect(r).not.toContain('topic:toilet');
   });
 
-  it('reports an unread defect but not one charged on return', () => {
-    const r = refs(cleanContent());
-    expect(r).toContain('defect:worn_impeller');
-    expect(r).not.toContain('defect:old_scratch');
+  it('reports a defect with neither a system nor a charge, but not one that has either', () => {
+    const c = cleanContent();
+    const [impeller, , scratch] = c.boats[0]!.defectPool;
+    expect(refs(c)).not.toContain('defect:worn_impeller');
+    expect(refs(c)).not.toContain('defect:old_scratch');
+    c.boats[0]!.defectPool = [{ id: impeller!.id, checkpoint: impeller!.checkpoint, description: impeller!.description }, scratch!];
+    expect(refs(c)).toContain('defect:worn_impeller');
   });
 
   it('reports unread boat fields', () => {
-    expect(refs(cleanContent())).toEqual(expect.arrayContaining(['boat-field:boat.solar', 'boat-field:boat.generator']));
+    expect(refs(cleanContent())).toEqual(expect.arrayContaining(['boat-field:boat.shared_bank', 'boat-field:boat.electric_toilet']));
   });
 
   it('suppresses allowlisted refs', () => {
@@ -96,11 +99,11 @@ describe('findDeadContent', () => {
 });
 
 describe('parseContent dead-content check', () => {
-  it('fails real content when the allowlist is empty, and skips the check when omitted', async () => {
+  it('real content is fully live with an empty allowlist (and the check is skipped when omitted)', async () => {
     const { content } = await loadContentDir('content');
     const raw = toRaw(content!);
     expect(parseContent(raw).errors).toEqual([]);
-    expect(parseContent(raw, []).errors.map((e) => e.path)).toContain('topic:sails');
+    expect(parseContent(raw, []).errors).toEqual([]);
   });
 
   it('rejects a malformed allowlist', async () => {

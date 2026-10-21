@@ -1,6 +1,6 @@
 import {
   assignVoices, chooseBoat, endDay, EngineError, finishWeek, newGame, performBriefing, performCheckin, planDay,
-  resolvePendingEvent, startDay, validatePlan, type Content, type DayPlan, type GameState, type Lang,
+  repairSystem, resolveDefects, resolvePendingEvent, startDay, validatePlan, type Content, type DayPlan, type GameState, type Lang,
 } from '../../engine';
 import { screenKey } from './screen';
 import type { Action, ManeuverOrders, Session, UiState } from './types';
@@ -45,6 +45,7 @@ function reduce(s: Session, a: Action): Session {
     case 'assign_voices': return step(assignVoices(requireGame(s), c, a.alloc));
     case 'choose_boat': return step(chooseBoat(requireGame(s), c, a.boatId));
     case 'checkin': return step(performCheckin(requireGame(s), c, a.checkpoints));
+    case 'resolve_defects': return step(resolveDefects(requireGame(s), c, a.fixIds));
     case 'briefing': return step(performBriefing(requireGame(s), c, a.topicIds, a.dialogueIds));
     case 'start_day': return step(startDay(requireGame(s), c, a.choice));
     case 'draft_plan': {
@@ -61,6 +62,7 @@ function reduce(s: Session, a: Action): Session {
     case 'resolve_event': return resolveEvent(s, a.optionId);
     case 'outcome_seen': return { ...s, ui: { ...s.ui, outcome: null } };
     case 'end_day': return step(endDay(requireGame(s), c, a.choice));
+    case 'repair': return step(repairSystem(requireGame(s), c, a.systemId, a.repairId));
     case 'finish_week': return step(finishWeek(requireGame(s), c));
     case 'dismiss_error': return { ...s, error: null };
   }

@@ -16,6 +16,7 @@ export function PreviewPanel({ preview }: { preview: PlanPreview }) {
   const lastDay = game.day === b.schedule.days;
   const warnings: string[] = [];
   if (preview.arrivalAfterSunset) warnings.push(t('afterSunset'));
+  if (!preview.marinaAffordable) warnings.push(t('marinaNoMoney'));
   if (preview.marinaLate) warnings.push(t('marinaLate'));
   if (lastDay && content.map.find((p) => p.id === preview.destinationId)?.kind !== 'base') warnings.push(t('mustReturn'));
   if (lastDay && preview.arrivalMin !== null && preview.arrivalMin > b.schedule.returnDeadlineHour * 60) warnings.push(t('tooLateForBase', { time: formatHour(b.schedule.returnDeadlineHour) }));
@@ -32,6 +33,8 @@ export function PreviewPanel({ preview }: { preview: PlanPreview }) {
                 {t('legPreview', { to: pointName(content, l.to, lang), wind: l.windKn, speed: l.speedKn, hours: round1(l.hours) })}
                 {l.localEffectKnown && <em> {t('localKnown')}</em>}
                 {l.breakChance.value > 0 && <div className={styles.odds}>{t('sailRisk')} <ChanceBadge odds={l.breakChance} voices={game.voices} /></div>}
+                {l.tow && <p className={styles.warn}>{t('legTow', { eur: l.tow.eur, hours: l.tow.hours })}</p>}
+                {!l.tow && l.mode !== l.plannedMode && <p className={styles.warn}>{t(l.mode === 'sail' ? 'legNoMotor' : 'legNoSail')}</p>}
                 {l.overpowered && <p className={styles.warn}>{t('overpowered')}</p>}
                 {l.forcedReef && <p className={styles.warn}>{t('forcedReef')}</p>}
               </li>

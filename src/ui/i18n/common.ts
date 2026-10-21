@@ -28,4 +28,7 @@ export const ENGINE_ERRORS: Dict<EngineErrorCode> = {
   NOT_FOUND: { ru: 'в данных игры чего-то не хватает', en: 'something is missing from the game data' },
   BUDGET: { ru: 'не хватает денег или времени', en: 'not enough money or time' },
   CONTENT: { ru: 'ошибка в данных игры', en: 'the game data has an error' },
+  NOT_BROKEN: { ru: 'эта система исправна', en: 'that system is not broken' },
+  REPAIR_UNAVAILABLE: { ru: 'здесь так починить нельзя', en: 'this repair is not possible here' },
+  NO_MONEY: { ru: 'не хватает денег', en: 'not enough money' },
 };

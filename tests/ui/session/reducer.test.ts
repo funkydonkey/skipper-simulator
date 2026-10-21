@@ -15,7 +15,7 @@ describe('sessionReducer', () => {
       { type: 'new_game', seed: 7 },
       { type: 'assign_voices', alloc: expert.voices },
       { type: 'choose_boat', boatId: expert.boatId },
-      { type: 'checkin', checkpoints: expert.checkpoints },
+      { type: 'checkin', checkpoints: expert.checkpoints(content) },
       { type: 'briefing', topicIds: expert.briefingTopics, dialogueIds: [] },
     );
     expect(s.error).toBeNull();

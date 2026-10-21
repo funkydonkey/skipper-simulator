@@ -22,7 +22,7 @@ export type CheckpointId = (typeof CHECKPOINTS)[number];
 export const MANEUVER_KINDS = ['departure', 'mooring', 'anchoring', 'anchor_up'] as const;
 export type ManeuverKind = (typeof MANEUVER_KINDS)[number];
 
-export type Phase = 'captain' | 'boat_select' | 'checkin' | 'briefing' | 'morning' | 'planning' | 'evening' | 'return' | 'debrief';
+export type Phase = 'captain' | 'boat_select' | 'checkin' | 'defects' | 'briefing' | 'morning' | 'planning' | 'evening' | 'return' | 'debrief';
 export type EventPhase = 'morning' | 'passage' | 'arrival' | 'evening';
 export type PointKind = 'base' | 'marina' | 'bay' | 'quay';
 export type Seabed = 'sand' | 'mud' | 'weed' | 'rock';
@@ -59,7 +59,12 @@ export interface Effect {
   time_hours?: number;
   mood_per_day?: number;
   damage?: string;
+  /** Clears `broken` on a boat system (no-op when the boat lacks it). Does not touch `damages`. */
   repair?: string;
+  /** Marks a boat system broken (no-op when the boat lacks it); logs `break:<system>` when it was working. */
+  break?: SystemId;
+  /** Adds wear to boat systems (ignores systems the boat lacks). */
+  wear?: Record<SystemId, number>;
   flag?: string;
   injury?: boolean;
   /** Logs `signal:<id>` — a sign the player could have read. */
@@ -70,8 +75,8 @@ export interface Effect {
   xp?: Partial<Record<TrainableVoice, number>>;
 }
 
-/** `saved`: euros the economist took off a money spend; logged as a separate info entry. */
-export interface Outcome { cause: string; pillar?: Pillar; effect: Effect; saved?: number }
+/** `saved`: euros the economist took off a money spend; logged as a separate info entry. `odds`: the roll that caused it, kept on the entry. */
+export interface Outcome { cause: string; pillar?: Pillar; effect: Effect; saved?: number; odds?: ChanceValue }
 
 export type LogKind = 'decision' | 'effect' | 'event' | 'signal' | 'info' | 'roll';
 export interface LogEntry {
@@ -88,12 +93,17 @@ export interface LogEntry {
 
 // ---------- content ----------
 
-export interface HiddenDefect {
+export interface BoatDefect {
   id: string;
   checkpoint: CheckpointId;
   description: LocalizedText;
+  /** Sets this system to 'worn' while the defect is unfixed. */
+  system?: SystemId;
   /** Damage id charged at check-out if the defect stayed hidden (e.g. unrecorded scratch). */
   chargedOnReturn?: string;
+  /** Fix at the charter base; both are required when `system` is set. */
+  fixEur?: number;
+  fixMin?: number;
 }
 
 export interface Boat {
@@ -104,20 +114,60 @@ export interface Boat {
   berths: number;
   waterTankL: number;
   fuelTankL: number;
+  /** Fuel burn of this boat's engine, L/h; falls back to balance.fuel.motorLph. */
+  motorLph?: number;
   serviceBankAh: number;
   serviceBanks: number;
   /** false = one shared bank: service drain also drains the starter. */
   starterSeparate: boolean;
   solarW: number;
-  generator: boolean;
   electricToilet: boolean;
-  bowThruster: boolean;
   motorKn: number;
   hullSpeedKn: number;
   priceEur: number;
   depositEur: number;
   shinyFeatures: LocalizedText[];
-  hiddenDefects: HiddenDefect[];
+  /** One honest line about what will bite this boat's skipper. */
+  weakness: LocalizedText;
+  /** Defects that may turn up in a week; `defectsPerWeek` of them are drawn at `chooseBoat`. */
+  defectPool: BoatDefect[];
+  defectsPerWeek: [number, number];
+  /** Initial condition of every system on this boat; a system absent here is not fitted. */
+  systems: Record<SystemId, SystemCondition>;
+}
+
+export type SystemId = string;
+export type SystemCondition = 'new' | 'ok' | 'worn';
+export interface SystemState { state: SystemCondition; wear: number; broken: boolean }
+export interface BrokenEffect {
+  noMotor?: boolean; noSail?: boolean; noCharge?: boolean; noCook?: boolean;
+  /** Applied each night while broken. */
+  dailyEffect?: Effect;
+  /** Applied on each anchoring / anchor_up maneuver while broken. */
+  anchorEffect?: Effect;
+}
+export interface SystemFailure {
+  id: string; phase: EventPhase; when?: string; chance: ChanceInput;
+  /** Applied on failure (logged as `fault:<system>:<id>`), before any queued event. */
+  effect?: Effect;
+  /** Existing event queued for the player's choice. */
+  event?: string;
+  xp?: Partial<Record<VoiceId, number>>;
+}
+export interface RepairOption {
+  id: string; label: LocalizedText;
+  check?: VoiceCheck; costEur?: number; timeHours?: number;
+  /** Condition, e.g. 'at_marina || moored_berth'. */
+  requires?: string;
+  /** Service repairs restore state 'ok'; self repairs only clear `broken`. */
+  restores?: 'ok';
+}
+export interface SystemDef {
+  id: SystemId; name: LocalizedText; checkpoint?: CheckpointId;
+  wearPer?: Partial<Record<'motor_hour' | 'sail_hour' | 'night' | 'anchoring', number>>;
+  failures: SystemFailure[]; brokenEffect: BrokenEffect; repairs: RepairOption[];
+  /** Charged to the deposit when the system is still broken at the return. */
+  returnCostEur?: number;
 }
 
 export interface PointServices {
@@ -213,7 +263,7 @@ export interface EventOption {
   success?: Effect;
   fail?: Effect;
   effects?: Effect;
-  /** Overrides the default check XP (balance.voices.checkXp) for the checked voice. */
+  /** Overrides the default difficulty-based check XP (balance.voices.checkXp) for the checked voice. */
   xp?: number;
 }
 export interface GameEvent {
@@ -247,6 +297,8 @@ export interface Maneuver {
   /** Listed in the CORRECT order. UI shuffles. */
   steps: ManeuverStep[];
   errors: ManeuverError[];
+  /** Extra mods on every error's injury chance (e.g. broken systems, a bow thruster). */
+  injuryMods?: ChanceMod[];
 }
 
 export interface DebriefRule {
@@ -261,7 +313,7 @@ export interface DebriefRule {
 
 export interface Balance {
   start: { moneyEur: number; mood: number; fatigue: number; gasPct: number; serviceBankPct: number; starterBankPct: number; hour: number; crewSize: number };
-  voices: { points: number; maxLevel: number; prideLevel: number; crewVoiceLevel: number; seaSenseSignalLevel: number; seaSenseChanceLevel: number; seaSenseTimingLevel: number; economistDiscountPerLevel: number; mechanicExactLevel: number; cautionRiskPerLevel: number; cautionTimePerLevel: number; orderRiskPerLevel: number; xpToLevel: number[]; xpExempt: VoiceId[]; checkXp: { success: number; fail: number }; maneuverErrorXp: number; cleanManeuverXp: number };
+  voices: { points: number; maxLevel: number; prideLevel: number; crewVoiceLevel: number; seaSenseSignalLevel: number; seaSenseChanceLevel: number; seaSenseTimingLevel: number; economistDiscountPerLevel: number; mechanicExactLevel: number; cautionRiskPerLevel: number; cautionTimePerLevel: number; orderRiskPerLevel: number; xpToLevel: number[]; xpExempt: VoiceId[]; checkXp: { successPerDifficulty: number; failBonus: number }; maneuverErrorXp: number; cleanManeuverXp: number };
   water: { perPersonPerDayL: Record<ShowerDiscipline, number>; zeroMoodPenalty: number };
   fuel: { motorLph: number; priceEurPerL: number };
   electric: { fridgeAhPerDay: number; pumpsAhPerDay: number; electricToiletAhPerDay: number; plotterAhPerHour: number; autopilotAhPerHour: number; engineChargeAhPerHour: number; solarAhPerWattDay: number; starterStartPct: number; starterMinPct: number; zeroServiceMoodPenalty: number };
@@ -315,12 +367,21 @@ export interface Balance {
   briefing: { slots: number; maxDialogues: number };
   weather: { frontAddKn: [number, number]; frontShiftSteps: number; barometerDropHpa: number; afternoonFromHour: number };
   schedule: { days: number; returnDeadlineHour: number; lateFeeEur: number };
-  rescue: { jumpStartEur: number; jumpStartDelayMin: number; moodPenalty: number };
+  rescue: { jumpStartEur: number; jumpStartDelayMin: number; moodPenalty: number; towEur: number; towHours: number; towMoodPenalty: number };
+  budget: { weekEur: number; okFactor: number };
   safety: { mitigationFactor: number };
   deposit: { damageCostEur: Record<string, number>; defaultDamageEur: number };
   grading: { crewGoodMood: number; crewOkMood: number; boatOkLossEur: number };
   drama: { pillarWeightByDay: Record<string, Partial<Record<Pillar, number>>> };
-  simTargets: { levelGain: Record<'newbie' | 'expert', [number, number]>; weekInjuryRate: Record<'newbie' | 'expert', [number, number]>; zeroFireAllow: string[] };
+  simTargets: {
+    levelGain: Record<'newbie' | 'expert' | 'careful', [number, number]>;
+    weekInjuryRate: Record<'newbie' | 'expert', [number, number]>;
+    zeroFireAllow: string[];
+    /** Per boat: its weak systems and the log-cause prefixes that count as a weakness hit. */
+    weakness: Record<string, { systems: SystemId[]; causes: string[] }>;
+    weaknessMinRate: number;
+    careful: { minMeanScore: number; weekInjuryRate: [number, number] };
+  };
 }
 
 /** Region pack header plus its world; Content exposes the header as `region` and the world as `map`/`routes`. */
@@ -329,6 +390,7 @@ export interface Region { id: string; name: LocalizedText; map: MapPoint[]; rout
 export interface Content {
   region: { id: string; name: LocalizedText };
   boats: Boat[];
+  systems: SystemDef[];
   map: MapPoint[];
   routes: Route[];
   weather: WeatherTemplate[];
@@ -397,11 +459,13 @@ export interface DayFacts {
   motorHours: number;
   sailHours: number;
   autopilotHours: number;
+  /** Strongest true wind (kn) over today's legs; 0 when not sailing. */
+  maxWindKn: number;
   shower: ShowerDiscipline;
 }
 
 export interface GameState {
-  version: 2;
+  version: 3;
   seed: number;
   rng: number;
   lang: Lang;
@@ -416,6 +480,8 @@ export interface GameState {
   resources: Resources;
   flags: Record<string, boolean>;
   damages: string[];
+  /** Only the systems fitted on the boat; `{}` before `chooseBoat`. */
+  systems: Record<SystemId, SystemState>;
   crew: CrewMember[];
   expectations: Expectation[];
   moodPerDay: number;
@@ -426,9 +492,15 @@ export interface GameState {
   weather: DayWeather | null;
   dayFacts: DayFacts | null;
   returnedOnTime: boolean | null;
+  /** Ids from the boat's defect pool present this week and not fixed (a fixed one is removed). */
+  defects: string[];
+  /** Money right after `chooseBoat` (before check-in fixes); the base of the week spend. */
+  startBalanceEur: number;
+  /** Set by `performCheckin` when a defect with a system was found; kept after `resolveDefects` for the record. */
+  checkin: { found: string[]; fixed: string[]; minutesLeft: number } | null;
 }
 
-export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn'] as const;
+export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn', 'thruster', 'broken', 'wear'] as const;
 export type ChanceLabel = (typeof CHANCE_LABELS)[number];
 /**
  * add: value += add * scale. mul: always a delta factor, value *= (1 + mul * scale); write deltas such as (weight - 1).

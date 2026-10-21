@@ -1,4 +1,7 @@
 import balanceJson from './balance.json';
+
+// balance.json mirrors content/core/balance.json except simTargets.weakness, which must name this fixture's own
+// boat and systems (crossValidate checks them against content.boats / content.systems).
 import type { Balance, Content, Dir8, LocalizedText, MapPoint } from '../../src/engine/types';
 
 const t = (ru: string, en: string): LocalizedText => ({ ru, en });
@@ -22,14 +25,24 @@ export function makeContent(): Content {
     boats: [{
       id: 'test_boat', name: t('Тест 40', 'Test 40'), lengthFt: 40, cabins: 3, berths: 6,
       waterTankL: 300, fuelTankL: 150, serviceBankAh: 110, serviceBanks: 2, starterSeparate: true,
-      solarW: 0, generator: false, electricToilet: false, bowThruster: true, motorKn: 6.5, hullSpeedKn: 7.5,
+      solarW: 0, electricToilet: false, motorKn: 6.5, hullSpeedKn: 7.5,
       priceEur: 4000, depositEur: 2000,
       shinyFeatures: [t('Подруливающее устройство', 'Bow thruster')],
-      hiddenDefects: [
-        { id: 'worn_impeller', checkpoint: 'impeller', description: t('Изношенный импеллер', 'Worn impeller') },
+      weakness: t('Слабое место', 'Weak spot'),
+      defectsPerWeek: [2, 3],
+      defectPool: [
+        { id: 'worn_impeller', checkpoint: 'impeller', description: t('Изношенный импеллер', 'Worn impeller'), system: 'engine_cooling', fixEur: 60, fixMin: 20 },
+        { id: 'toilet_valve', checkpoint: 'toilets', description: t('Клапан гальюна подтекает', 'The head valve leaks'), system: 'heads', fixEur: 40, fixMin: 15 },
         { id: 'old_scratch', checkpoint: 'damage_photos', description: t('Старая царапина', 'Old scratch'), chargedOnReturn: 'hull_scratch' },
       ],
+      systems: { engine_cooling: 'ok', heads: 'ok', rig: 'ok', bow_thruster: 'worn' },
     }],
+    systems: [
+      { id: 'engine_cooling', name: t('Охлаждение', 'Cooling'), checkpoint: 'impeller', wearPer: { motor_hour: 1 }, failures: [], brokenEffect: { noMotor: true }, repairs: [{ id: 'service', label: t('Сервис', 'Service'), costEur: 100, timeHours: 2, requires: 'at_marina || moored_berth', restores: 'ok' }] },
+      { id: 'heads', name: t('Гальюны', 'Heads'), checkpoint: 'toilets', wearPer: { night: 1 }, failures: [], brokenEffect: { dailyEffect: { mood: -8 } }, repairs: [{ id: 'service', label: t('Сервис', 'Service'), costEur: 90, timeHours: 2, requires: 'at_marina || moored_berth', restores: 'ok' }] },
+      { id: 'rig', name: t('Такелаж', 'Rig'), checkpoint: 'sails', wearPer: { sail_hour: 1 }, failures: [], brokenEffect: { noSail: true }, repairs: [{ id: 'service', label: t('Сервис', 'Service'), costEur: 350, timeHours: 4, requires: 'at_marina || moored_berth', restores: 'ok' }] },
+      { id: 'bow_thruster', name: t('Подруливающее', 'Bow thruster'), failures: [], brokenEffect: {}, repairs: [{ id: 'service', label: t('Сервис', 'Service'), costEur: 300, timeHours: 3, requires: 'at_marina || moored_berth', restores: 'ok' }] },
+    ],
     map,
     routes: [
       { id: 'r_base_bay_a', from: 'base', to: 'bay_a', distanceNm: 10, kLocal: 1.0, features: ['open'] },

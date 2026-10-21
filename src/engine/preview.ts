@@ -1,9 +1,13 @@
+import { canAfford } from './budget';
 import { evaluateChance } from './chance';
+import { resolveMode } from './day/legs';
 import { EngineError } from './errors';
 import { buildConditionContext, type CondContext } from './expr';
+import { priceFor } from './perks';
 import { anchorFailSpec, marinaRefusalSpec, sailBreakSpec } from './odds';
 import { bearingDeg, dirToDeg, planLeg } from './sailing';
 import { otherEnd, requireBoat, requirePoint, requireRoute, requireTemplate, round1 } from './state';
+import { brokenFlags, type BrokenFlags } from './systems';
 import { restHours } from './time';
 import type { ChanceValue, Content, DayPlan, DayWeather, Dir8, GameState, LegPlan, MapPoint, PointOfSail, RouteFeature, Seabed } from './types';
 import { cautionTimeFactor } from './voices';
@@ -19,6 +23,12 @@ export interface LegPreview {
   windKn: number;
   windDir: Dir8;
   localEffectKnown: boolean;
+  /** The mode the captain chose for this leg. */
+  plannedMode: LegPlan['mode'];
+  /** The mode the boat will actually use: broken systems may force the other one. */
+  mode: LegPlan['mode'];
+  /** Set when the leg ends under tow (no usable engine and too little wind, or neither engine nor sails). */
+  tow: { eur: number; hours: number } | null;
   pos: PointOfSail;
   speedKn: number;
   hours: number;
@@ -41,12 +51,14 @@ export interface PlanPreview {
   restHours: number;
   /** Refusal odds at a destination marina or quay; null for a bay or when staying. */
   marinaRefusal: ChanceValue | null;
+  /** False when the destination marina's fee (after the economist discount) exceeds the money; the boat then anchors outside. */
+  marinaAffordable: boolean;
   /** Per-attempt anchor-drag odds at a destination bay; null otherwise. */
   anchorFail: ChanceValue | null;
   destinationSeabed: Seabed;
 }
 
-interface Ctx { state: GameState; content: Content; weather: DayWeather; seesLocal: boolean; cond: CondContext }
+interface Ctx { state: GameState; content: Content; weather: DayWeather; seesLocal: boolean; cond: CondContext; flags: BrokenFlags }
 
 function legPreview(ctx: Ctx, leg: LegPlan, from: string, clockMin: number): LegPreview {
   const { content, state } = ctx;
@@ -56,18 +68,25 @@ function legPreview(ctx: Ctx, leg: LegPlan, from: string, clockMin: number): Leg
   if (!to) throw new EngineError('INVALID_INPUT', `Route ${route.id} does not start at ${from}`);
   const wind = realWind(ctx.weather, ctx.seesLocal ? route.kLocal : 1, clockMin / 60, requireTemplate(content, state.weatherTemplateId), b);
   const boat = requireBoat(content, state);
+  // Fuel is not modelled here: a short tank has its own warning (fuelNeededL), so only broken systems change the mode.
+  const { mode, drift, tow } = resolveMode(leg.mode, Infinity, ctx.flags, route.id, wind.windKn, b);
   const res = planLeg({
-    mode: leg.mode, windKn: wind.windKn, windFromDeg: dirToDeg(wind.dir),
+    mode, windKn: drift ? 0 : wind.windKn, windFromDeg: dirToDeg(wind.dir),
     courseDeg: bearingDeg(requirePoint(content, from), requirePoint(content, to)),
     reefs: leg.reefs, genoa: leg.genoa, course: leg.course, distanceNm: route.distanceNm,
     hullSpeedKn: boat.hullSpeedKn, motorKn: boat.motorKn,
   }, b);
+  const sailing = mode === 'sail' && !tow;
+  const towHours = b.rescue.towHours;
   return {
     routeId: route.id, from, to, distanceNm: res.distanceNm, features: route.features,
     windKn: wind.windKn, windDir: wind.dir, localEffectKnown: ctx.seesLocal,
-    pos: res.pos, speedKn: res.speedKn, hours: res.hours,
-    overpowered: leg.mode === 'sail' && res.overpowered, forcedReef: leg.mode === 'sail' && res.forcedReef,
-    breakChance: evaluateChance(sailBreakSpec(leg.mode === 'sail' ? res.breakChance : 0, b), ctx.cond),
+    plannedMode: leg.mode, mode, tow: tow ? { eur: b.rescue.towEur, hours: towHours } : null,
+    pos: res.pos,
+    speedKn: tow ? round1(res.distanceNm / towHours) : res.speedKn,
+    hours: tow ? towHours : res.hours,
+    overpowered: sailing && res.overpowered, forcedReef: sailing && res.forcedReef,
+    breakChance: evaluateChance(sailBreakSpec(sailing ? res.breakChance : 0, b), ctx.cond),
   };
 }
 
@@ -106,13 +125,13 @@ export function previewPlan(state: GameState, content: Content, plan: DayPlan): 
   const b = content.balance;
   const weather = { ...state.weather, front: state.weather.front && state.weather.signalsVisible };
   const seesLocal = state.voices.sea_sense >= b.voices.seaSenseSignalLevel;
-  const ctx: Ctx = { state, content, weather, seesLocal, cond: buildConditionContext(state, content) };
+  const ctx: Ctx = { state, content, weather, seesLocal, cond: buildConditionContext(state, content), flags: brokenFlags(state, content) };
   if (plan.legs.length === 0) {
     const swims = swimsBeforeSunset(state.clockMin, plan.swimStops, content);
     return {
       legs: [], departureMin: null, arrivalMin: null, destinationId: state.locationId, swimStops: swims.count,
       arrivalAfterSunset: false, marinaLate: false, fuelNeededL: 0, restHours: restHours(swims.clockMin, b),
-      marinaRefusal: null, anchorFail: null, destinationSeabed: requirePoint(content, state.locationId).seabed,
+      marinaRefusal: null, marinaAffordable: true, anchorFail: null, destinationSeabed: requirePoint(content, state.locationId).seabed,
     };
   }
   const departureMin = Math.max(state.clockMin, Math.round(plan.departureHour * 60));
@@ -129,14 +148,15 @@ export function previewPlan(state: GameState, content: Content, plan: DayPlan): 
   const dest = requirePoint(content, at);
   const marinaLate = dest.kind !== 'bay' && dest.placesGoneHour !== null && swims.clockMin / 60 > dest.placesGoneHour;
   const arrivalMin = Math.round(swims.clockMin + mooringMinutes(dest, marinaLate, state, content));
-  const motorHours = legs.reduce((sum, l, i) => sum + (plan.legs[i]!.mode === 'motor' ? l.hours : 0), 0);
+  const motorHours = legs.reduce((sum, l) => sum + (l.mode === 'motor' && !l.tow ? l.hours : 0), 0);
   return {
     legs, departureMin, arrivalMin, destinationId: at, swimStops: swims.count,
     arrivalAfterSunset: swims.clockMin >= b.time.sunsetHour * 60,
     marinaLate,
-    fuelNeededL: round1(motorHours * b.fuel.motorLph),
+    fuelNeededL: round1(motorHours * (requireBoat(content, state).motorLph ?? b.fuel.motorLph)),
     restHours: restHours(arrivalMin, b),
     ...arrivalOdds(ctx, dest, swims.clockMin, marinaLate),
+    marinaAffordable: dest.kind === 'bay' || dest.priceEur <= 0 || canAfford(state, priceFor(dest.priceEur, state.voices.economist, b).eur),
     destinationSeabed: dest.seabed,
   };
 }

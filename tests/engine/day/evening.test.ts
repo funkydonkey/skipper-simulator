@@ -10,7 +10,7 @@ import { makeState } from '../../fixtures/state';
 const content = makeContent();
 const facts = (over: Partial<DayFacts> = {}): DayFacts => ({
   day: 1, departureHour: 9, arrivalHour: 14, arrivalPointKind: 'marina', mooring: 'berth', activities: [],
-  motorHours: 2, sailHours: 0, autopilotHours: 0, shower: 'normal', ...over,
+  motorHours: 2, sailHours: 0, autopilotHours: 0, maxWindKn: 0, shower: 'normal', ...over,
 });
 const evening = (over: Partial<GameState> = {}) => deepFreeze(makeState({ phase: 'evening', locationId: 'marina_b', dayFacts: facts(), ...over }));
 const causes = (s: GameState) => s.log.map((e) => e.cause);
@@ -134,7 +134,7 @@ describe('endDay', () => {
 
 describe('finishWeek', () => {
   it('late return pays a fee; unrecorded old damage is charged', () => {
-    const s = finishWeek(deepFreeze(makeState({ phase: 'return', day: 7, returnedOnTime: false, flags: { 'defect.old_scratch': true } })), content);
+    const s = finishWeek(deepFreeze(makeState({ phase: 'return', day: 7, returnedOnTime: false, flags: { 'defect.old_scratch': true }, defects: ['old_scratch'] })), content);
     expect(s.phase).toBe('debrief');
     expect(s.resources.moneyEur).toBe(1100);
     expect(s.damages).toContain('hull_scratch');

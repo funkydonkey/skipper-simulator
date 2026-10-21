@@ -9,8 +9,20 @@ describe('BoatScreen', () => {
     const cards = container.querySelectorAll('[data-boat]');
     expect(cards).toHaveLength(content.boats.length);
     const aurora = container.querySelector('[data-boat="aurora_45"]') as HTMLElement;
-    expect(within(aurora).getByText('Подруливающее устройство')).toBeInTheDocument();
+    // once as a shiny feature, once in the systems profile
+    expect(within(aurora).getAllByText('Подруливающее устройство')).toHaveLength(2);
     expect(within(aurora).getByText(/Стартовый и сервисный — один банк/)).toBeInTheDocument();
+  });
+
+  it('shows the weakness line and marks worn systems', () => {
+    const { container } = renderShell(gameAt('boat_select'));
+    const aurora = container.querySelector('[data-boat="aurora_45"]') as HTMLElement;
+    expect(within(aurora).getByText(/Один общий аккумулятор/)).toBeInTheDocument();
+    const meltemi = container.querySelector('[data-boat="meltemi_40"]') as HTMLElement;
+    expect(within(meltemi).getByText(/Паруса и такелаж изношены/)).toBeInTheDocument();
+    const rig = content.systems.find((s) => s.id === 'rig')!.name.ru;
+    const row = within(meltemi).getAllByRole('listitem').find((li) => li.textContent?.includes(rig) && li.closest('[aria-label]'))!;
+    expect(row).toHaveTextContent('изношено');
   });
 
   it('takes an affordable boat and goes to check-in', async () => {

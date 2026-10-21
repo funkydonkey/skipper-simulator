@@ -1,5 +1,5 @@
 /** JSON files of the shared core pack: content/core/<name>.json */
-export const CORE_FILES = ['boats', 'crew', 'briefing', 'dialogues', 'debrief', 'maneuvers', 'balance'] as const;
+export const CORE_FILES = ['boats', 'crew', 'briefing', 'dialogues', 'debrief', 'maneuvers', 'balance', 'systems'] as const;
 /** JSON files of a region pack: content/regions/<id>/<name>.json (weather templates live in weather/*.json). */
 export const REGION_FILES = ['region', 'events'] as const;
 /** Weather templates are one file per template in content/regions/<id>/weather/. */

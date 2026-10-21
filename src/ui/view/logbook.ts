@@ -17,7 +17,15 @@ const num = (e: LogEntry, k: string): number => Number(e.data?.[k] ?? 0);
 const firstSentence = (s: string): string => s.split(/(?<=[.!?…])\s/)[0] ?? s;
 
 function defectText(c: Content, id: string, lang: Lang): string {
-  return c.boats.flatMap((b) => b.hiddenDefects).find((d) => d.id === id)?.description[lang] ?? label(DAMAGE_NAMES, id, lang);
+  return c.boats.flatMap((b) => b.defectPool).find((d) => d.id === id)?.description[lang] ?? label(DAMAGE_NAMES, id, lang);
+}
+function systemName(c: Content, id: string, lang: Lang): string {
+  return c.systems.find((d) => d.id === id)?.name[lang] ?? id;
+}
+/** The system name in running text: «Сломалось: охлаждение двигателя». */
+function systemInline(c: Content, id: string, lang: Lang): string {
+  const name = systemName(c, id, lang);
+  return name.charAt(0).toLowerCase() + name.slice(1);
 }
 function topicTitle(c: Content, id: string, lang: Lang): string {
   return c.briefing.find((t) => t.id === id)?.title[lang] ?? id;
@@ -33,9 +41,11 @@ function routeName(c: Content, id: string, lang: Lang): string {
   return r ? `${pointName(c, r.from, lang)} — ${pointName(c, r.to, lang)}` : id;
 }
 
-/** Human reason for an xp grant, from the inner cause (`roll:check:<event>:<option>`, `order:wrong:<m>:<err>`, `order:ok:<m>`); null when unknown. */
+/** Human reason for an xp grant, from the inner cause (`fault:<sys>:<f>`, `roll:check:<event>:<option>`, `order:wrong:<m>:<err>`, `order:ok:<m>`); null when unknown. */
 export function xpCauseText(inner: string[], c: Content, lang: Lang): string | null {
   const [root, a = '', b = ''] = inner;
+  if (root === 'fault') return fmt(LOG.xpFault[lang], { system: systemInline(c, a, lang) });
+  if (root === 'roll' && a === 'check' && inner[2] === 'repair') return fmt(LOG.xpRepair[lang], { system: systemInline(c, inner[3] ?? '', lang) });
   if (root === 'roll' && a === 'check') return fmt(LOG.xpCheck[lang], { option: optionText(c, inner[2] ?? '', inner[3] ?? '', lang) });
   if (root === 'order' && a === 'wrong') return fmt(LOG.xpManeuverWrong[lang], { title: maneuverTitle(c, b, lang) });
   if (root === 'order' && a === 'ok') return fmt(LOG.xpManeuverOk[lang], { title: maneuverTitle(c, b, lang) });
@@ -46,6 +56,8 @@ const DESCRIBE: Record<string, Describer> = {
   boat: ([, id = ''], _e, c, lang) => say('boatChosen', lang, { name: c.boats.find((b) => b.id === id)?.name[lang] ?? id }),
   checkin: ([verb, id = ''], _e, c, lang) => {
     if (verb === 'found') return say('defectFound', lang, { what: defectText(c, id, lang) }, 'good');
+    if (verb === 'fix') return say('checkinFixed', lang, { what: defectText(c, id, lang) }, 'good');
+    if (verb === 'sail_on') return say('checkinSailOn', lang, { what: defectText(c, id, lang) });
     return say(verb === 'check' ? 'checked' : 'skipped', lang, { what: label(CHECKPOINT_NAMES, id, lang) });
   },
   defect: ([, id = ''], _e, c, lang) => say('defectHidden', lang, { what: defectText(c, id, lang) }, 'bad'),
@@ -95,7 +107,7 @@ const DESCRIBE: Record<string, Describer> = {
   charge: () => null,
   refill: ([what], _e, _c, lang) => say(what === 'fuel' ? 'refillFuel' : what === 'gas' ? 'refillGas' : 'refillWater', lang),
   anchor: ([what, n = '1'], _e, _c, lang) => (what === 'dragging' ? say('anchorDragging', lang, {}, 'bad') : say('anchorAttempts', lang, { n })),
-  marina: ([what], e, _c, lang) => (what === 'refused' ? say('marinaRefused', lang, {}, 'bad') : say('marinaFee', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0) })),
+  marina: ([what], e, _c, lang) => (what === 'refused' ? say('marinaRefused', lang, {}, 'bad') : what === 'no_money' ? say('marinaNoMoney', lang, {}, 'bad') : say('marinaFee', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0) })),
   activity: ([what], _e, _c, lang) => {
     if (what === 'swim_skipped') return say('swimSkipped', lang, {}, 'bad');
     return say(what === 'taverna' ? 'taverna' : 'swim', lang, {}, 'good');
@@ -108,6 +120,27 @@ const DESCRIBE: Record<string, Describer> = {
   sail: ([what], _e, _c, lang) => {
     const key = ({ overpowered: 'sailOverpowered', break: 'sailBreak', reef_underway: 'sailReefUnderway' } as const)[what as 'break'];
     return key ? say(key, lang, {}, 'bad') : null;
+  },
+  // `fault:<sys>:<f>` is a failure that fired (it may or may not break the system); `break:<sys>` is the system going broken.
+  fault: ([systemId = ''], _e, c, lang) => say('systemFault', lang, { system: systemInline(c, systemId, lang) }, 'bad'),
+  break: ([systemId = ''], _e, c, lang) => say('systemBroke', lang, { system: systemInline(c, systemId, lang) }, 'bad'),
+  system: ([what, id = ''], _e, c, lang) => {
+    const system = systemName(c, id, lang);
+    switch (what) {
+      case 'daily': return say('systemDaily', lang, { system: systemInline(c, id, lang) }, 'bad');
+      case 'anchor': return say('systemAnchor', lang, { system }, 'bad');
+      case 'no_cook': return say('systemNoCook', lang, {}, 'bad');
+      case 'no_motor': return say('systemNoMotor', lang, {}, 'bad');
+      case 'no_sail': return say('systemNoSail', lang, {}, 'bad');
+      default: return null;
+    }
+  },
+  rescue: ([what], e, _c, lang) => (what === 'tow' ? say('towed', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0), hours: num(e, 'time_hours') }, 'bad') : null),
+  // `repair:<sys>:<id>` is the payment (noise); `…:success|fail` is the outcome the captain sees.
+  repair: ([systemId = '', , outcome], _e, c, lang) => {
+    const system = systemInline(c, systemId, lang);
+    if (outcome === 'success') return say('systemRepaired', lang, { system }, 'good');
+    return outcome === 'fail' ? say('systemRepairFailed', lang, { system }, 'bad') : null;
   },
   mood_per_day: (_p, e, _c, lang) => say('moodPerDay', lang, { mood: signed(e.delta?.mood ?? 0) }, 'bad'),
   event: ([eventId = '', optionId, tag], _e, c, lang) => {
@@ -131,6 +164,7 @@ const DESCRIBE: Record<string, Describer> = {
       case 'marina': return p === 0 ? null : outcome('rollMarinaHit', 'rollMarinaMiss'); // early arrival: no real roll
       case 'sail_break': return outcome('rollSailHit', 'rollSailMiss');
       case 'injury': return outcome('rollInjuryHit', 'rollInjuryMiss');
+      case 'failure': return null; // one roll per eligible failure per phase; a hit shows as its `fault:` line, with these odds
       default: return null;
     }
   },
@@ -150,7 +184,10 @@ const DESCRIBE: Record<string, Describer> = {
     if (what === 'late_fee') return say('lateFee', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0) }, 'bad');
     return what === 'on_time' ? say('returnOnTime', lang, {}, 'good') : say('returnLate', lang, {}, 'bad');
   },
-  deposit: ([, id = ''], _e, c, lang) => say('depositCharged', lang, { what: defectText(c, id, lang) }, 'bad'),
+  deposit: ([kind, id = ''], e, c, lang) => {
+    if (kind === 'broken') return say('returnedBroken', lang, { system: systemInline(c, id, lang), eur: num(e, 'eur') }, 'bad');
+    return say('depositCharged', lang, { what: defectText(c, id, lang) }, 'bad');
+  },
 };
 
 export function describeEntry(e: LogEntry, content: Content, lang: Lang): LogLine | null {
@@ -161,7 +198,7 @@ export function describeEntry(e: LogEntry, content: Content, lang: Lang): LogLin
   return { day: e.day, clock: formatClock(e.clockMin), text: d.text, tone: d.tone ?? 'neutral', kind: e.kind, cause: e.cause, ...(e.pillar ? { pillar: e.pillar } : {}), ...(e.odds ? { odds: e.odds } : {}) };
 }
 
-const NOISE_ROOTS = new Set(['voices', 'engine', 'fatigue', 'consumption', 'charge', 'defect', 'choice']);
+const NOISE_ROOTS = new Set(['voices', 'engine', 'fatigue', 'consumption', 'charge', 'defect', 'choice', 'wear']);
 
 /** Entries the captain did not witness or that only duplicate another line. Debrief still uses them. */
 export function isNoise(e: LogEntry): boolean {
@@ -169,6 +206,7 @@ export function isNoise(e: LogEntry): boolean {
   if (NOISE_ROOTS.has(root)) return true;
   if ((root === 'checkin' || root === 'briefing') && verb === 'skip') return true;
   if (root === 'plan' && verb === 'mode') return true;
+  if (root === 'repair' && e.cause.split(':').length === 3) return true; // the payment; its outcome line follows
   if (root === 'night' && verb === 'sleep') return true;
   // Logged at 08:00 but decided for the whole day: showing it would spoil the front before any signal.
   if (root === 'roll' && verb === 'front') return true;
@@ -185,9 +223,19 @@ export function dayLines(log: readonly LogEntry[], day: number, content: Content
   return log.filter((e) => e.day === day && !isNoise(e)).flatMap((e) => describeEntry(e, content, lang) ?? []);
 }
 
-export function logbookDays(log: readonly LogEntry[], content: Content, lang: Lang): Array<{ day: number; lines: LogLine[] }> {
+/** A fault's odds are shown once its day is over; on `today` the line stays without them (no spoilers). */
+function withoutTodaysFaultOdds(line: LogLine, today: number | undefined): LogLine {
+  if (line.day !== today || !line.odds || !line.cause.startsWith('fault:')) return line;
+  const { odds: _odds, ...rest } = line;
+  return rest;
+}
+
+/** `today`: the current game day, whose fault odds stay hidden. */
+export function logbookDays(log: readonly LogEntry[], content: Content, lang: Lang, today?: number): Array<{ day: number; lines: LogLine[] }> {
   const days = [...new Set(log.map((e) => e.day))].sort((a, b) => a - b);
-  return days.map((day) => ({ day, lines: dayLines(log, day, content, lang) })).filter((d) => d.lines.length > 0);
+  return days
+    .map((day) => ({ day, lines: dayLines(log, day, content, lang).map((l) => withoutTodaysFaultOdds(l, today)) }))
+    .filter((d) => d.lines.length > 0);
 }
 
 export interface DayGrowth { voice: TrainableVoice; xp: number; causes: string[] }

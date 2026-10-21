@@ -3,8 +3,8 @@ import type { Content, Lang } from '../engine/types';
 import type { WeekResult } from './run';
 
 const L = {
-  ru: { day: 'День', scales: { safety: 'Безопасность', crew: 'Экипаж', boat: 'Лодка', schedule: 'Расписание' }, deposit: 'Депозит возвращён', links: 'Связи' },
-  en: { day: 'Day', scales: { safety: 'Safety', crew: 'Crew', boat: 'Boat', schedule: 'Schedule' }, deposit: 'Deposit returned', links: 'Links' },
+  ru: { day: 'День', scales: { safety: 'Безопасность', crew: 'Экипаж', boat: 'Лодка', schedule: 'Расписание', budget: 'Бюджет' }, deposit: 'Депозит возвращён', links: 'Связи' },
+  en: { day: 'Day', scales: { safety: 'Safety', crew: 'Crew', boat: 'Boat', schedule: 'Schedule', budget: 'Budget' }, deposit: 'Deposit returned', links: 'Links' },
 } as const;
 
 export function formatWeek(result: WeekResult, content: Content, lang: Lang): string {

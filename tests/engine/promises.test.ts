@@ -10,7 +10,7 @@ const b = content.balance;
 const dlg = (id: string) => content.dialogues.find((d) => d.id === id)!;
 const facts = (over: Partial<DayFacts> = {}): DayFacts => ({
   day: 1, departureHour: 8, arrivalHour: 14, arrivalPointKind: 'bay', mooring: 'anchor', activities: [],
-  motorHours: 2, sailHours: 0, autopilotHours: 0, shower: 'normal', ...over,
+  motorHours: 2, sailHours: 0, autopilotHours: 0, maxWindKn: 0, shower: 'normal', ...over,
 });
 
 describe('promises', () => {

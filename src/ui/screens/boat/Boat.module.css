@@ -8,3 +8,4 @@
 .small summary { cursor: pointer; }
 .small ul { margin: var(--space-1) 0 0; padding-left: var(--space-4); }
 .over { margin: 0; color: var(--bad); font-size: var(--text-sm); }
+.weakness { margin: 0; font-size: var(--text-sm); color: var(--fg-soft); }

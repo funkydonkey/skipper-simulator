@@ -15,18 +15,43 @@ describe('save slot', () => {
     expect(r).toEqual({ kind: 'ok', savedAt: NOW.toISOString(), game });
   });
 
-  it('reports none, corrupt JSON, wrong version and dangling references', () => {
+  it('reports none, corrupt JSON, dangling references', () => {
     const storage = memoryStorage();
     expect(readSave(storage, content).kind).toBe('none');
     storage.setItem(SAVE_KEY, '{not json');
     expect(readSave(storage, content).kind).toBe('corrupt');
     const game = gameAt('morning');
-    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...game, version: 1 } }));
-    expect(readSave(storage, content).kind).toBe('corrupt');
     storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...game, boatId: 'ghost_boat' } }));
     expect(readSave(storage, content).kind).toBe('corrupt');
     clearSave(storage);
     expect(readSave(storage, content).kind).toBe('none');
+  });
+
+  it('treats a stored version-2 slot as legacy and clears it', () => {
+    const storage = memoryStorage();
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: { ...gameAt('morning'), version: 2 } }));
+    expect(readSave(storage, content)).toEqual({ kind: 'legacy' });
+    expect(storage.getItem(SAVE_KEY)).toBeNull();
+    expect(readSave(storage, content).kind).toBe('none');
+  });
+
+  it('rejects a slot in the defects phase without a check-in, and accepts one with it', () => {
+    const storage = memoryStorage();
+    const game = gameAt('briefing');
+    const bad = { ...game, phase: 'defects' as const, checkin: null };
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: bad }));
+    expect(readSave(storage, content).kind).toBe('corrupt');
+    const good = { ...bad, checkin: { found: [], fixed: [], minutesLeft: 10 } };
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: good }));
+    expect(readSave(storage, content).kind).toBe('ok');
+  });
+
+  it('rejects a slot whose system lacks wear', () => {
+    const storage = memoryStorage();
+    const game = gameAt('morning');
+    const bad = { ...game, systems: { ...game.systems, rig: { state: 'ok', broken: false } } };
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: 'x', game: bad }));
+    expect(readSave(storage, content).kind).toBe('corrupt');
   });
 
   it('reports a legacy v1 slot once and removes it', () => {
@@ -52,7 +77,7 @@ describe('save slot', () => {
       ...base,
       expectations: [{ id: 'x1', dialogueId: 'd', spec: { kind: 'depart_by' as const, hour: 9 }, strength: 2, createdDay: 1, dueDay: 2, status: 'open' as const }],
       weather: { day: 1, forecastKn: 10, forecastGustKn: 14, forecastDir: 'NW' as const, barometerHpa: 1012, front: false, frontAddKn: 0, frontDir: 'N' as const, barometerTrendHpa: -1, signalsVisible: true },
-      dayFacts: { day: 1, departureHour: 9, arrivalHour: null, arrivalPointKind: null, mooring: null, activities: ['swim' as const], motorHours: 1, sailHours: 2, autopilotHours: 0, shower: 'normal' as const },
+      dayFacts: { day: 1, departureHour: 9, arrivalHour: null, arrivalPointKind: null, mooring: null, activities: ['swim' as const], motorHours: 1, sailHours: 2, autopilotHours: 0, maxWindKn: 0, shower: 'normal' as const },
       log: [{ day: 1, clockMin: 540, kind: 'roll' as const, cause: 'c', odds: { value: 0.3, parts: [
         { source: 'base', delta: 0.3 }, { source: 'wind', delta: 0.1, kind: 'add' as const }, { source: 'voice.caution', delta: -0.1, kind: 'mul' as const, factor: 0.75 },
       ] } }],

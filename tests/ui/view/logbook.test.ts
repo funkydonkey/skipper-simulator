@@ -126,7 +126,7 @@ describe('logbook', () => {
 describe('logbook does not spoil the weather', () => {
   it('shows no front outcome in the planning phase when signals are hidden and the barometer is closed', () => {
     const outcomes = new Set<boolean>();
-    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
+    for (const seed of Array.from({ length: 24 }, (_, i) => i + 1)) {
       const morning = gameAt('morning', seed);
       const blind = { ...morning, voices: { ...morning.voices, sea_sense: 0 } };
       const planning = startDay(blind, content, { openBarometer: false });
@@ -138,5 +138,63 @@ describe('logbook does not spoil the weather', () => {
       }
     }
     expect(outcomes.size, 'cover both a front day and a calm day').toBe(2);
+  });
+});
+
+describe('logbook boat systems', () => {
+  const text = (cause: string, lang: 'ru' | 'en', extra: Partial<LogEntry> = {}) => describeEntry(entry(cause, extra), content, lang)?.text;
+
+  it('describes a system returned broken with its deposit charge', () => {
+    const data = { eur: 600 };
+    expect(text('deposit:broken:rig', 'ru', { data })).toBe('Вернули сломанным: паруса и такелаж — 600 € из депозита');
+    expect(text('deposit:broken:rig', 'en', { data })).toBe('Returned broken: sails and rig — €600 from the deposit');
+  });
+
+  it('describes a fault, a real break, a tow and a marina without money', () => {
+    expect(text('fault:rig:genoa_seam_rip', 'ru')).toBe('Неисправность: паруса и такелаж');
+    expect(text('fault:rig:genoa_seam_rip', 'en')).toBe('Fault: sails and rig');
+    expect(text('break:engine_cooling', 'ru')).toBe('Сломалось: охлаждение двигателя');
+    expect(text('break:engine_cooling', 'en')).toBe('Broke down: engine cooling');
+    expect(text('rescue:tow:r1', 'ru', { delta: { moneyEur: -250 }, data: { time_hours: 2 } })).toBe('Буксир: 250 €, +2 ч');
+    expect(text('rescue:tow:r1', 'en', { delta: { moneyEur: -250 }, data: { time_hours: 2 } })).toBe('Tow: €250, +2 h');
+    expect(text('marina:no_money', 'ru')).toBe('Марина: не хватило денег');
+  });
+
+  it('says "repaired" only for a successful repair, and keeps the payment out of the log', () => {
+    expect(text('repair:gas:self:success', 'ru')).toBe('Починили: газ');
+    expect(text('repair:gas:self:fail', 'ru')).toBe('Починить не вышло: газ');
+    expect(text('repair:gas:self:success', 'en')).toBe('Repaired: gas');
+    expect(text('repair:gas:self:fail', 'en')).toBe("Couldn't repair: gas");
+    expect(isNoise(entry('repair:gas:self', { kind: 'effect' }))).toBe(true);
+    expect(isNoise(entry('repair:gas:self:fail', { kind: 'effect' }))).toBe(false);
+  });
+
+  it('writes the windlass line naturally', () => {
+    expect(text('system:anchor:windlass', 'ru')).toBe('Якорное устройство сломано: якорь вручную');
+    expect(text('system:anchor:windlass', 'en')).toBe('Anchor gear broken: anchoring by hand');
+  });
+
+  it('describes check-in fixes and sail-on choices with the defect, and hides wear', () => {
+    expect(text('checkin:fix:worn_impeller', 'ru', { delta: { moneyEur: -60 } })).toMatch(/^Починили на базе: .*Импеллер/);
+    expect(text('checkin:sail_on:worn_impeller', 'en')).toMatch(/^Sailing on with: /);
+    expect(isNoise(entry('wear:sail_hour', { kind: 'effect' }))).toBe(true);
+  });
+
+  it('shows a fault\'s odds on past days only, never today', () => {
+    const odds = { value: 0.25, parts: [{ source: 'base', delta: 0.25 }] };
+    const log: LogEntry[] = [
+      entry('fault:rig:genoa_seam_rip', { day: 2, kind: 'effect', pillar: 'boat', odds }),
+      entry('fault:rig:genoa_seam_rip', { day: 3, kind: 'effect', pillar: 'boat', odds }),
+    ];
+    const lines = logbookDays(log, content, 'ru', 3).flatMap((d) => d.lines);
+    expect(lines.map((l) => [l.day, l.odds?.value])).toEqual([[2, 0.25], [3, undefined]]);
+    expect(logbookDays(log, content, 'ru').flatMap((d) => d.lines).every((l) => l.odds?.value === 0.25)).toBe(true);
+  });
+
+  it('explains xp from faults and repairs', () => {
+    const xp = (cause: string) => text(`xp:mechanic:${cause}`, 'ru', { kind: 'info', data: { xp: 2 } });
+    expect(xp('fault:engine_cooling:impeller_overheat')).toBe('+2 Механик — неисправность: охлаждение двигателя');
+    expect(text('xp:mechanic:fault:rig:genoa_seam_rip', 'en', { kind: 'info', data: { xp: 2 } })).toContain('fault: sails and rig');
+    expect(xp('roll:check:repair:gas:self')).toContain('ремонт');
   });
 });

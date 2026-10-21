@@ -152,7 +152,14 @@ test('the week ends in a debrief with the voices block, without horizontal scrol
   }
   await page.getByRole('button', { name: 'Дальше' }).click();
   await page.getByRole('button', { name: 'Взять «Мельтеми 40»' }).click();
+  // With this seed the sails hold the defects, so checking them opens the defects screen.
+  await page.locator('[data-screen="checkin"] ul').getByRole('button', { name: /^Паруса/ }).click();
   await page.getByRole('button', { name: 'Закончить приёмку' }).click();
+  expect(await screenName(page), 'a defect found at check-in opens the defects screen').toBe('defects');
+  await noHorizontalScroll(page, 'defects');
+  await actionsInViewport(page, 'defects');
+  await logbookClearOfActions(page, 'defects');
+  await page.getByRole('button', { name: 'Плыть так' }).click();
   const topics = page.locator('[data-screen="briefing"] ul li button');
   for (let i = 0; i < 4; i++) await topics.nth(i).click();
   await page.getByRole('button', { name: 'Начать неделю' }).click();
@@ -176,7 +183,10 @@ test('the week ends in a debrief with the voices block, without horizontal scrol
         await page.getByRole('button', { name: 'Готово' }).click();
         break;
       case 'event': await page.locator('[data-screen="event"] ol button:not([disabled])').first().click(); break;
-      case 'evening': await page.getByRole('button', { name: 'Отбой' }).click(); break;
+      case 'evening':
+        await noHorizontalScroll(page, 'evening');
+        await page.getByRole('button', { name: 'Отбой' }).click();
+        break;
       case 'return': await page.getByRole('button', { name: 'Сдать лодку' }).click(); break;
       default: await page.getByRole('button', { name: 'Дальше' }).click();
     }

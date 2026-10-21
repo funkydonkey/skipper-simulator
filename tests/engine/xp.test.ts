@@ -46,8 +46,8 @@ describe('grantXp / applyLevelUps', () => {
     expect(s.log).toEqual([]);
   });
 
-  it('level 1 with 12 xp becomes level 2 with 2 xp and logs it', () => {
-    const s = applyLevelUps(makeState(withVoice('order', 1, 12)), b);
+  it('level 1 with 10 xp becomes level 2 with 2 xp and logs it', () => {
+    const s = applyLevelUps(makeState(withVoice('order', 1, 10)), b);
     expect(s.voices.order).toBe(2);
     expect(xp(s, 'order')).toBe(2);
     expect(s.log).toEqual([expect.objectContaining({ kind: 'info', cause: 'levelup:order:2', data: { from: 1, to: 2 } })]);
@@ -56,11 +56,11 @@ describe('grantXp / applyLevelUps', () => {
   it('raises at most one level per call', () => {
     const s = applyLevelUps(makeState(withVoice('order', 1, 40)), b);
     expect(s.voices.order).toBe(2);
-    expect(xp(s, 'order')).toBe(30);
+    expect(xp(s, 'order')).toBe(32);
   });
 
   it('leaves voices below the threshold alone and zeroes xp at max level', () => {
-    expect(applyLevelUps(makeState(withVoice('order', 1, 9)), b).voices.order).toBe(1);
+    expect(applyLevelUps(makeState(withVoice('order', 1, 7)), b).voices.order).toBe(1);
     const capped = applyLevelUps(makeState(withVoice('order', 4, 7)), b);
     expect(xp(capped, 'order')).toBe(0);
     expect(capped.log).toEqual([]);
@@ -89,16 +89,27 @@ describe('pendingLevelUps', () => {
 describe('XP sources', () => {
   const c = withEvent({ options: checkOptions });
 
-  it('a failed check grants +3, a success +1, to the checked voice with an R1 cause', () => {
-    const failed = resolveCheck(c, {}, false);
-    expect(xp(failed, 'mechanic')).toBe(3);
+  const d3 = withEvent({ options: [{ ...checkOptions[0]!, check: { voice: 'mechanic', difficulty: 3 } }, checkOptions[1]!] });
+
+  it('a failed d3 check grants 3 + failBonus 2 = 5 to the checked voice with an R1 cause', () => {
+    const failed = resolveCheck(d3, {}, false);
+    expect(xp(failed, 'mechanic')).toBe(5);
     expect(failed.log.map((e) => e.cause)).toContain('xp:mechanic:roll:check:toilet_clog:try');
-    expect(xp(resolveCheck(c, {}, true), 'mechanic')).toBe(1);
   });
 
-  it('option.xp overrides the default check xp', () => {
-    const o = withEvent({ options: [{ ...checkOptions[0]!, xp: 5 }, checkOptions[1]!] });
-    expect(xp(resolveCheck(o, {}, true), 'mechanic')).toBe(5);
+  it('a successful d3 check grants difficulty × successPerDifficulty = 3', () => {
+    expect(xp(resolveCheck(d3, {}, true), 'mechanic')).toBe(3);
+  });
+
+  it('a d2 check grants 2 on success and 4 on failure', () => {
+    expect(xp(resolveCheck(c, {}, true), 'mechanic')).toBe(2);
+    expect(xp(resolveCheck(c, {}, false), 'mechanic')).toBe(4);
+  });
+
+  it('option.xp overrides the difficulty-based check xp on success and failure', () => {
+    const o = withEvent({ options: [{ ...checkOptions[0]!, check: { voice: 'mechanic', difficulty: 3 }, xp: 7 }, checkOptions[1]!] });
+    expect(xp(resolveCheck(o, {}, true), 'mechanic')).toBe(7);
+    expect(xp(resolveCheck(o, {}, false), 'mechanic')).toBe(7);
   });
 
   it('a check on an exempt voice grants nothing', () => {
@@ -132,24 +143,24 @@ describe('XP sources', () => {
     expect(xp(s, 'order')).toBe(2);
   });
 
-  it('clean maneuvers grant order +1 once per day', () => {
+  it('clean maneuvers grant order cleanManeuverXp (2) once per day', () => {
     let s = runManeuver(makeState(), base, 'departure', { departure: correct });
     s = runManeuver(s, base, 'mooring');
-    expect(xp(s, 'order')).toBe(1);
+    expect(xp(s, 'order')).toBe(2);
     expect(s.log.filter((e) => e.cause.startsWith('xp:order:order:ok:')).map((e) => e.cause)).toEqual(['xp:order:order:ok:dep_test']);
-    expect(xp(runManeuver({ ...s, day: 2 }, base, 'mooring'), 'order')).toBe(2);
+    expect(xp(runManeuver({ ...s, day: 2 }, base, 'mooring'), 'order')).toBe(4);
   });
 });
 
 describe('level changes land in the evening', () => {
-  const facts: DayFacts = { day: 1, departureHour: 9, arrivalHour: 14, arrivalPointKind: 'marina', mooring: 'berth', activities: [], motorHours: 2, sailHours: 0, autopilotHours: 0, shower: 'normal' };
+  const facts: DayFacts = { day: 1, departureHour: 9, arrivalHour: 14, arrivalPointKind: 'marina', mooring: 'berth', activities: [], motorHours: 2, sailHours: 0, autopilotHours: 0, maxWindKn: 0, shower: 'normal' };
 
   it('a failed check does not change the level for the next check the same day; endDay does', () => {
     const c = withEvent({ options: checkOptions });
     const start = withVoice('mechanic', 1, 8);
     let s = resolveCheck(c, { ...start, eventQueue: ['toilet_clog', 'toilet_clog'] }, false);
     expect(s.voices.mechanic).toBe(1);
-    expect(xp(s, 'mechanic')).toBe(11);
+    expect(xp(s, 'mechanic')).toBe(12);
     const odds = (st: GameState) => st.log.filter((e) => e.cause.startsWith('roll:check:')).map((e) => e.odds!.value);
     s = resolvePendingEvent(s, c, 'try');
     const [first, second] = odds(s);
@@ -162,9 +173,9 @@ describe('level changes land in the evening', () => {
 });
 
 describe('newGame', () => {
-  it('is version 2 with zeroed voiceXp', () => {
+  it('is version 3 with zeroed voiceXp', () => {
     const g = newGame(base, { seed: 1, lang: 'en' });
-    expect(g.version).toBe(2);
+    expect(g.version).toBe(3);
     expect(g.voiceXp).toEqual({ sea_sense: 0, caution: 0, order: 0, mechanic: 0, diplomat: 0, economist: 0 });
   });
 });

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import {
   CHANCE_LABELS, CHECKPOINTS, DIRS, MANEUVER_KINDS, PILLARS, TRAINABLE_VOICES, VOICES,
   type Balance, type Boat, type ChanceInput, type ChanceMod, type BriefingTopic, type CrewArchetype, type DebriefRule, type Dialogue, type Effect,
-  type EventOption, type GameEvent, type Maneuver, type MapPoint, type Region, type Route, type WeatherTemplate,
+  type EventOption, type GameEvent, type Maneuver, type MapPoint, type Region, type SystemDef, type Route, type WeatherTemplate,
 } from '../engine/types';
 
 const POINT_KINDS = ['base', 'marina', 'bay', 'quay'] as const;
@@ -14,6 +14,8 @@ const EVENT_PHASES = ['morning', 'passage', 'arrival', 'evening'] as const;
 const DIALOGUE_CONTEXTS = ['briefing', 'morning', 'evening'] as const;
 const SHOWERS = ['strict', 'normal', 'loose'] as const;
 const POS = ['upwind', 'reach', 'run'] as const;
+const SYSTEM_CONDITIONS = ['new', 'ok', 'worn'] as const;
+const WEAR_SOURCES = ['motor_hour', 'sail_hour', 'night', 'anchoring'] as const;
 
 const Id = z.string().regex(/^[a-z0-9_]+$/, 'id must be snake_case');
 const Text = z.object({ ru: z.string().min(1), en: z.string().min(1) }).strict();
@@ -60,6 +62,8 @@ export const EffectSchema: z.ZodType<Effect> = z.object({
   mood_per_day: z.number().optional(),
   damage: Id.optional(),
   repair: Id.optional(),
+  break: Id.optional(),
+  wear: z.record(Id, z.number()).optional(),
   flag: Id.optional(),
   injury: z.boolean().optional(),
   signal: Id.optional(),
@@ -67,14 +71,26 @@ export const EffectSchema: z.ZodType<Effect> = z.object({
   xp: z.record(z.enum(TRAINABLE_VOICES), NonNeg).optional(),
 }).strict();
 
+const DefectSchema = z.object({
+  id: Id, checkpoint: z.enum(CHECKPOINTS), description: Text, system: Id.optional(), chargedOnReturn: Id.optional(),
+  fixEur: NonNeg.optional(), fixMin: NonNeg.optional(),
+}).strict().refine((d) => !d.system || (d.fixEur !== undefined && d.fixMin !== undefined), { message: 'a defect with a system needs fixEur and fixMin' });
+
 export const BoatSchema: z.ZodType<Boat> = z.object({
   id: Id, name: Text, lengthFt: Pos, cabins: Int.positive(), berths: Int.positive(),
-  waterTankL: Pos, fuelTankL: Pos, serviceBankAh: Pos, serviceBanks: Int.positive(), starterSeparate: z.boolean(),
-  solarW: NonNeg, generator: z.boolean(), electricToilet: z.boolean(), bowThruster: z.boolean(),
+  waterTankL: Pos, fuelTankL: Pos, motorLph: Pos.optional(), serviceBankAh: Pos, serviceBanks: Int.positive(), starterSeparate: z.boolean(),
+  solarW: NonNeg, electricToilet: z.boolean(),
   motorKn: Pos, hullSpeedKn: Pos, priceEur: NonNeg, depositEur: NonNeg,
   shinyFeatures: z.array(Text),
-  hiddenDefects: z.array(z.object({ id: Id, checkpoint: z.enum(CHECKPOINTS), description: Text, chargedOnReturn: Id.optional() }).strict()),
-}).strict();
+  weakness: Text,
+  defectPool: z.array(DefectSchema),
+  defectsPerWeek: z.tuple([z.number().int().min(0), z.number().int().min(0)]),
+  systems: z.record(Id, z.enum(SYSTEM_CONDITIONS)),
+}).strict()
+  .refine((b) => b.defectsPerWeek[0] <= b.defectsPerWeek[1], { path: ['defectsPerWeek'], message: 'defectsPerWeek must be [min, max]' })
+  .refine((b) => b.defectPool.length >= b.defectsPerWeek[1], { path: ['defectPool'], message: 'defectPool has fewer entries than defectsPerWeek[1]' })
+  .refine((b) => new Set(b.defectPool.map((d) => d.id)).size === b.defectPool.length, { path: ['defectPool'], message: 'duplicate defect ids' })
+  .refine((b) => b.defectPool.every((d) => !d.system || d.system in b.systems), { path: ['defectPool'], message: 'defect system is not fitted on the boat' });
 
 export const MapPointSchema: z.ZodType<MapPoint> = z.object({
   id: Id, name: Text, kind: z.enum(POINT_KINDS), x: z.number(), y: z.number(),
@@ -139,6 +155,7 @@ export const ManeuverSchema: z.ZodType<Maneuver> = z.object({
     id: Id, wrongIf: z.object({ first: Id, then: Id }).strict(), effect: EffectSchema,
     injuryChance: Prob, mitigatedBy: z.string().min(1).optional(), xp: NonNeg.optional(), text: Text,
   }).strict()),
+  injuryMods: z.array(ChanceModSchema).optional(),
 }).strict();
 
 export const DebriefRuleSchema: z.ZodType<DebriefRule> = z.object({
@@ -152,7 +169,7 @@ const Triple = z.tuple([z.number(), z.number(), z.number()]);
 const Band = z.tuple([z.number(), z.number()]).refine(([lo, hi]) => lo <= hi, 'band needs lo <= hi');
 export const BalanceSchema: z.ZodType<Balance> = z.object({
   start: z.object({ moneyEur: NonNeg, mood: NonNeg, fatigue: NonNeg, gasPct: NonNeg, serviceBankPct: NonNeg, starterBankPct: NonNeg, hour: Hour, crewSize: Int.positive() }).strict(),
-  voices: z.object({ points: Int.positive(), maxLevel: Int.positive(), prideLevel: Int.min(0), crewVoiceLevel: Int.min(0), seaSenseSignalLevel: Int.min(0), seaSenseChanceLevel: Int.min(0), seaSenseTimingLevel: Int.min(0), economistDiscountPerLevel: NonNeg, mechanicExactLevel: Int.min(0), cautionRiskPerLevel: NonNeg, cautionTimePerLevel: NonNeg, orderRiskPerLevel: NonNeg, xpToLevel: z.array(Int.positive()).min(1), xpExempt: z.array(z.enum(VOICES)), checkXp: z.object({ success: NonNeg, fail: NonNeg }).strict(), maneuverErrorXp: NonNeg, cleanManeuverXp: NonNeg }).strict()
+  voices: z.object({ points: Int.positive(), maxLevel: Int.positive(), prideLevel: Int.min(0), crewVoiceLevel: Int.min(0), seaSenseSignalLevel: Int.min(0), seaSenseChanceLevel: Int.min(0), seaSenseTimingLevel: Int.min(0), economistDiscountPerLevel: NonNeg, mechanicExactLevel: Int.min(0), cautionRiskPerLevel: NonNeg, cautionTimePerLevel: NonNeg, orderRiskPerLevel: NonNeg, xpToLevel: z.array(Int.positive()).min(1), xpExempt: z.array(z.enum(VOICES)), checkXp: z.object({ successPerDifficulty: NonNeg, failBonus: NonNeg }).strict(), maneuverErrorXp: NonNeg, cleanManeuverXp: NonNeg }).strict()
     .refine((v) => v.xpToLevel.length >= v.maxLevel, { message: 'xpToLevel needs a threshold for every level up to maxLevel', path: ['xpToLevel'] }),
   water: z.object({ perPersonPerDayL: fullRecord(SHOWERS, NonNeg), zeroMoodPenalty: NonNeg }).strict(),
   fuel: z.object({ motorLph: Pos, priceEurPerL: NonNeg }).strict(),
@@ -179,12 +196,46 @@ export const BalanceSchema: z.ZodType<Balance> = z.object({
   briefing: z.object({ slots: Int.positive(), maxDialogues: Int.min(0) }).strict(),
   weather: z.object({ frontAddKn: Pair, frontShiftSteps: Int, barometerDropHpa: NonNeg, afternoonFromHour: Hour }).strict(),
   schedule: z.object({ days: Int.positive(), returnDeadlineHour: Hour, lateFeeEur: NonNeg }).strict(),
-  rescue: z.object({ jumpStartEur: NonNeg, jumpStartDelayMin: NonNeg, moodPenalty: NonNeg }).strict(),
+  rescue: z.object({ jumpStartEur: NonNeg, jumpStartDelayMin: NonNeg, moodPenalty: NonNeg, towEur: NonNeg, towHours: NonNeg, towMoodPenalty: NonNeg }).strict(),
+  budget: z.object({ weekEur: Pos, okFactor: Pos }).strict(),
   safety: z.object({ mitigationFactor: Prob }).strict(),
   deposit: z.object({ damageCostEur: z.record(NonNeg), defaultDamageEur: NonNeg }).strict(),
   grading: z.object({ crewGoodMood: NonNeg, crewOkMood: NonNeg, boatOkLossEur: NonNeg }).strict(),
   drama: z.object({ pillarWeightByDay: z.record(z.record(z.enum(PILLARS), NonNeg)) }).strict(),
-  simTargets: z.object({ levelGain: z.object({ newbie: Band, expert: Band }).strict(), weekInjuryRate: z.object({ newbie: Band, expert: Band }).strict(), zeroFireAllow: z.array(z.string()) }).strict(),
+  simTargets: z.object({
+    levelGain: z.object({ newbie: Band, expert: Band, careful: Band }).strict(),
+    weekInjuryRate: z.object({ newbie: Band, expert: Band }).strict(),
+    zeroFireAllow: z.array(z.string()),
+    // Boat and system ids are checked against content.boats / content.systems in crossValidate.
+    weakness: z.record(Id, z.object({ systems: z.array(Id), causes: z.array(z.string().min(1)) }).strict()),
+    weaknessMinRate: Prob,
+    careful: z.object({ minMeanScore: NonNeg, weekInjuryRate: Band }).strict(),
+  }).strict(),
 }).strict();
 
 export const DeadAllowSchema = z.array(z.object({ ref: z.string().min(1), reason: z.string().min(1) }).strict());
+
+const SystemFailureSchema = z.object({
+  id: Id, phase: z.enum(EVENT_PHASES), when: z.string().min(1).optional(), chance: ChanceInputSchema,
+  effect: EffectSchema.optional(), event: Id.optional(),
+  xp: z.record(z.enum(VOICES), NonNeg).optional(),
+}).strict();
+
+const RepairOptionSchema = z.object({
+  id: Id, label: Text,
+  check: z.object({ voice: z.enum(VOICES), difficulty: Int.min(0).max(6) }).strict().optional(),
+  costEur: NonNeg.optional(), timeHours: NonNeg.optional(), requires: z.string().min(1).optional(),
+  restores: z.literal('ok').optional(),
+}).strict();
+
+export const SystemDefSchema: z.ZodType<SystemDef> = z.object({
+  id: Id, name: Text, checkpoint: z.enum(CHECKPOINTS).optional(),
+  wearPer: z.record(z.enum(WEAR_SOURCES), NonNeg).optional(),
+  failures: z.array(SystemFailureSchema),
+  brokenEffect: z.object({
+    noMotor: z.boolean().optional(), noSail: z.boolean().optional(), noCharge: z.boolean().optional(), noCook: z.boolean().optional(),
+    dailyEffect: EffectSchema.optional(), anchorEffect: EffectSchema.optional(),
+  }).strict(),
+  repairs: z.array(RepairOptionSchema),
+  returnCostEur: NonNeg.optional(),
+}).strict();

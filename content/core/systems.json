@@ -1,0 +1,529 @@
+[
+  {
+    "id": "engine_cooling",
+    "returnCostEur": 400,
+    "name": {
+      "ru": "Охлаждение двигателя",
+      "en": "Engine cooling"
+    },
+    "checkpoint": "impeller",
+    "wearPer": {
+      "motor_hour": 1
+    },
+    "failures": [
+      {
+        "id": "impeller_overheat",
+        "phase": "passage",
+        "when": "day.motor_hours > 0",
+        "chance": {
+          "base": 0.03,
+          "mods": [
+            {
+              "if": "system.engine_cooling.state == 'worn'",
+              "add": 0.45,
+              "label": "worn"
+            },
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.engine_cooling.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "impeller_overheat",
+        "xp": {
+          "mechanic": 3
+        }
+      }
+    ],
+    "brokenEffect": {
+      "noMotor": true
+    },
+    "repairs": [
+      {
+        "id": "self",
+        "label": {
+          "ru": "Починить самим",
+          "en": "Fix it yourselves"
+        },
+        "check": {
+          "voice": "mechanic",
+          "difficulty": 2
+        },
+        "costEur": 40,
+        "timeHours": 1
+      },
+      {
+        "id": "service",
+        "label": {
+          "ru": "Сервис в марине",
+          "en": "Marina service"
+        },
+        "costEur": 220,
+        "timeHours": 3,
+        "requires": "at_marina || moored_berth",
+        "restores": "ok"
+      }
+    ]
+  },
+  {
+    "id": "heads",
+    "returnCostEur": 150,
+    "name": {
+      "ru": "Гальюны",
+      "en": "Heads"
+    },
+    "checkpoint": "toilets",
+    "wearPer": {
+      "night": 1
+    },
+    "failures": [
+      {
+        "id": "toilet_clog",
+        "phase": "evening",
+        "when": "day >= 3",
+        "chance": {
+          "base": 0.05,
+          "mods": [
+            {
+              "if": "system.heads.state == 'worn'",
+              "add": 0.3,
+              "label": "worn"
+            },
+            {
+              "if": "briefing.toilet",
+              "mul": -0.6,
+              "label": "briefing"
+            },
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.heads.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "toilet_clog",
+        "xp": {
+          "mechanic": 2
+        }
+      },
+      {
+        "id": "toilet_misuse",
+        "phase": "evening",
+        "when": "boat.electric_toilet && !briefing.toilet",
+        "chance": {
+          "base": 0.4,
+          "mods": [
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.heads.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "toilet_misuse"
+      }
+    ],
+    "brokenEffect": {
+      "dailyEffect": {
+        "mood": -8
+      }
+    },
+    "repairs": [
+      {
+        "id": "self",
+        "label": {
+          "ru": "Починить самим",
+          "en": "Fix it yourselves"
+        },
+        "check": {
+          "voice": "mechanic",
+          "difficulty": 2
+        },
+        "costEur": 0,
+        "timeHours": 1.5
+      },
+      {
+        "id": "service",
+        "label": {
+          "ru": "Сервис в марине",
+          "en": "Marina service"
+        },
+        "costEur": 90,
+        "timeHours": 2,
+        "requires": "at_marina || moored_berth",
+        "restores": "ok"
+      }
+    ]
+  },
+  {
+    "id": "windlass",
+    "returnCostEur": 250,
+    "name": {
+      "ru": "Якорное устройство",
+      "en": "Anchor gear"
+    },
+    "checkpoint": "anchor",
+    "wearPer": {
+      "anchoring": 1
+    },
+    "failures": [
+      {
+        "id": "anchor_shackle_loose",
+        "phase": "arrival",
+        "when": "at_bay",
+        "chance": {
+          "base": 0.03,
+          "mods": [
+            {
+              "if": "system.windlass.state == 'worn'",
+              "add": 0.45,
+              "label": "worn"
+            },
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.windlass.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "anchor_shackle_loose",
+        "xp": {
+          "order": 2
+        }
+      }
+    ],
+    "brokenEffect": {
+      "anchorEffect": {
+        "time_hours": 0.5,
+        "fatigue": 10
+      }
+    },
+    "repairs": [
+      {
+        "id": "self",
+        "label": {
+          "ru": "Починить самим",
+          "en": "Fix it yourselves"
+        },
+        "check": {
+          "voice": "order",
+          "difficulty": 2
+        },
+        "costEur": 0,
+        "timeHours": 1
+      },
+      {
+        "id": "service",
+        "label": {
+          "ru": "Сервис в марине",
+          "en": "Marina service"
+        },
+        "costEur": 150,
+        "timeHours": 2,
+        "requires": "at_marina || moored_berth",
+        "restores": "ok"
+      }
+    ]
+  },
+  {
+    "id": "electrical",
+    "returnCostEur": 300,
+    "name": {
+      "ru": "Электрика",
+      "en": "Electrics"
+    },
+    "checkpoint": "electrics",
+    "wearPer": {
+      "night": 1
+    },
+    "failures": [
+      {
+        "id": "alternator_fault",
+        "phase": "passage",
+        "when": "day.motor_hours > 0",
+        "chance": {
+          "base": 0.02,
+          "mods": [
+            {
+              "if": "system.electrical.state == 'worn'",
+              "add": 0.35,
+              "label": "worn"
+            },
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.electrical.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "alternator_fault",
+        "xp": {
+          "mechanic": 3
+        }
+      }
+    ],
+    "brokenEffect": {
+      "noCharge": true
+    },
+    "repairs": [
+      {
+        "id": "self",
+        "label": {
+          "ru": "Починить самим",
+          "en": "Fix it yourselves"
+        },
+        "check": {
+          "voice": "mechanic",
+          "difficulty": 3
+        },
+        "costEur": 20,
+        "timeHours": 1
+      },
+      {
+        "id": "service",
+        "label": {
+          "ru": "Сервис в марине",
+          "en": "Marina service"
+        },
+        "costEur": 180,
+        "timeHours": 2,
+        "requires": "at_marina || moored_berth",
+        "restores": "ok"
+      }
+    ]
+  },
+  {
+    "id": "rig",
+    "returnCostEur": 600,
+    "name": {
+      "ru": "Паруса и такелаж",
+      "en": "Sails and rig"
+    },
+    "checkpoint": "sails",
+    "wearPer": {
+      "sail_hour": 1
+    },
+    "failures": [
+      {
+        "id": "genoa_seam_rip",
+        "phase": "passage",
+        "when": "day.sail_hours > 0 && day.max_wind >= 14",
+        "chance": {
+          "base": 0.04,
+          "mods": [
+            {
+              "if": "system.rig.state == 'worn'",
+              "add": 0.2,
+              "label": "worn"
+            },
+            {
+              "if": "day.max_wind >= 18",
+              "add": 0.25,
+              "label": "wind"
+            },
+            {
+              "if": "briefing.sails",
+              "mul": -0.3,
+              "label": "briefing"
+            },
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.rig.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "genoa_seam_rip",
+        "xp": {
+          "order": 2
+        }
+      }
+    ],
+    "brokenEffect": {
+      "noSail": true
+    },
+    "repairs": [
+      {
+        "id": "self",
+        "label": {
+          "ru": "Починить самим",
+          "en": "Fix it yourselves"
+        },
+        "check": {
+          "voice": "order",
+          "difficulty": 2
+        },
+        "costEur": 30,
+        "timeHours": 1.5
+      },
+      {
+        "id": "service",
+        "label": {
+          "ru": "Сервис в марине",
+          "en": "Marina service"
+        },
+        "costEur": 350,
+        "timeHours": 4,
+        "requires": "at_marina || moored_berth",
+        "restores": "ok"
+      }
+    ]
+  },
+  {
+    "id": "gas",
+    "returnCostEur": 100,
+    "name": {
+      "ru": "Газ",
+      "en": "Gas"
+    },
+    "checkpoint": "gas",
+    "failures": [
+      {
+        "id": "gas_smell",
+        "phase": "evening",
+        "chance": {
+          "base": 0.02,
+          "mods": [
+            {
+              "if": "system.gas.state == 'worn'",
+              "add": 0.55,
+              "label": "worn"
+            },
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.gas.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "gas_smell",
+        "xp": {
+          "caution": 2
+        }
+      }
+    ],
+    "brokenEffect": {
+      "noCook": true
+    },
+    "repairs": [
+      {
+        "id": "self",
+        "label": {
+          "ru": "Починить самим",
+          "en": "Fix it yourselves"
+        },
+        "check": {
+          "voice": "caution",
+          "difficulty": 2
+        },
+        "costEur": 0,
+        "timeHours": 0.5
+      },
+      {
+        "id": "service",
+        "label": {
+          "ru": "Сервис в марине",
+          "en": "Marina service"
+        },
+        "costEur": 60,
+        "timeHours": 1,
+        "requires": "at_marina || moored_berth",
+        "restores": "ok"
+      }
+    ]
+  },
+  {
+    "id": "bow_thruster",
+    "returnCostEur": 450,
+    "name": {
+      "ru": "Подруливающее устройство",
+      "en": "Bow thruster"
+    },
+    "failures": [
+      {
+        "id": "thruster_trip",
+        "phase": "arrival",
+        "when": "at_marina && wind >= 15",
+        "chance": {
+          "base": 0.05,
+          "mods": [
+            {
+              "if": "system.bow_thruster.state == 'worn'",
+              "add": 0.35,
+              "label": "worn"
+            },
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.bow_thruster.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "thruster_trip"
+      }
+    ],
+    "brokenEffect": {},
+    "repairs": [
+      {
+        "id": "service",
+        "label": {
+          "ru": "Сервис в марине",
+          "en": "Marina service"
+        },
+        "costEur": 300,
+        "timeHours": 3,
+        "requires": "at_marina || moored_berth",
+        "restores": "ok"
+      }
+    ]
+  }
+]

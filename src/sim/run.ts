@@ -2,6 +2,8 @@ import { buildDebrief, type Debrief } from '../engine/debrief';
 import { endDay, finishWeek } from '../engine/day/evening';
 import { startDay } from '../engine/day/morning';
 import { planDay } from '../engine/day/passage';
+import { resolveDefects } from '../engine/defects';
+import { repairOptions, repairSystem } from '../engine/repair';
 import { resolvePendingEvent } from '../engine/events';
 import { assignVoices, chooseBoat, newGame, performBriefing, performCheckin } from '../engine/setup';
 import { requireEvent } from '../engine/state';
@@ -16,7 +18,8 @@ export function setupWeek(content: Content, seed: number, strategy: Strategy, la
   let s = newGame(content, { seed, lang });
   s = assignVoices(s, content, strategy.voices);
   s = chooseBoat(s, content, strategy.boatId);
-  s = performCheckin(s, content, strategy.checkpoints);
+  s = performCheckin(s, content, strategy.checkpoints(content));
+  if (s.phase === 'defects') s = resolveDefects(s, content, strategy.fixDefects(s.checkin?.found ?? [], s, content));
   return performBriefing(s, content, strategy.briefingTopics, strategy.briefingDialogues);
 }
 
@@ -29,9 +32,22 @@ export function drainEvents(state: GameState, content: Content, strategy: Strate
   return s;
 }
 
+/** Attempt the strategy's chosen repairs, each broken system at most once per evening. */
+function repairEvening(state: GameState, content: Content, strategy: Strategy): GameState {
+  let s = state;
+  const tried = new Set<string>();
+  for (;;) {
+    const choice = strategy.repair(repairOptions(s, content).filter((ch) => !tried.has(ch.systemId)), s);
+    if (!choice) return s;
+    tried.add(choice.systemId);
+    s = repairSystem(s, content, choice.systemId, choice.repairId);
+  }
+}
+
 export function playDay(state: GameState, content: Content, strategy: Strategy): GameState {
   let s = drainEvents(startDay(state, content, strategy.morning(state, content)), content, strategy);
   s = drainEvents(planDay(s, content, strategy.plan(s, content)), content, strategy);
+  s = repairEvening(s, content, strategy);
   return endDay(s, content, strategy.evening(s, content));
 }
 
@@ -43,7 +59,7 @@ export function runWeek(content: Content, seed: number, strategy: Strategy): Wee
 }
 
 export function weekScore(d: Debrief): number {
-  const grades: Grade[] = [d.scales.safety, d.scales.crew, d.scales.boat, d.scales.schedule];
+  const grades: Grade[] = [d.scales.safety, d.scales.crew, d.scales.boat, d.scales.schedule, d.scales.budget];
   return grades.reduce((sum, g) => sum + GRADE_POINTS[g], 0);
 }
 

@@ -7,13 +7,12 @@ import { sayDialogue } from './promises';
 import { applyOutcomes } from './resources';
 import type { RngResult } from './rng';
 import { requireBoat, requireEvent } from './state';
-import { grantXp } from './xp';
-import { TRAINABLE_VOICES, type Balance, ChanceValue, Content, EventOption, EventPhase, GameEvent, GameState, Outcome, TrainableVoice, VoiceId } from './types';
+import { failureEventIds, rollFailures } from './systems';
+import { grantCheckXp } from './xp';
+import type { Balance, ChanceValue, Content, EventOption, EventPhase, GameEvent, GameState, Outcome, VoiceId } from './types';
 import { audibleLines, checkChance, rollCheck } from './voices';
 
 export { pillarWeight } from './odds';
-
-const isTrainable = (v: VoiceId): v is TrainableVoice => (TRAINABLE_VOICES as readonly string[]).includes(v);
 
 export interface EventView {
   id: string;
@@ -24,8 +23,10 @@ export interface EventView {
 }
 
 export function eligibleEvents(content: Content, state: GameState, phase: EventPhase, ctx: CondContext): GameEvent[] {
+  const reserved = failureEventIds(content);
   return content.events.filter((e) =>
-    e.trigger.phase === phase
+    !reserved.has(e.id)
+    && e.trigger.phase === phase
     && (e.trigger.once === false || !state.firedEvents.includes(e.id))
     && !state.eventQueue.includes(e.id)
     && evaluateAll(e.trigger.conditions, ctx));
@@ -80,15 +81,20 @@ export function presentEvent(event: GameEvent, state: GameState, ctx: CondContex
   };
 }
 
-export function queueEvent(state: GameState, content: Content, phase: EventPhase): GameState {
-  const r = rollEvent(state.rng, content, state, phase, buildConditionContext(state, content));
-  const s = { ...state, rng: r.next };
-  if (!r.value) return s;
-  const ev = r.value;
+function enqueue(state: GameState, ev: GameEvent): GameState {
   return appendLog(
-    { ...s, eventQueue: [...s.eventQueue, ev.id], firedEvents: [...s.firedEvents, ev.id] },
+    { ...state, eventQueue: [...state.eventQueue, ev.id], firedEvents: [...state.firedEvents, ev.id] },
     { kind: 'event', cause: `event:${ev.id}`, pillar: ev.pillar },
   );
+}
+
+/** At most one event per phase: a system failure that names an event takes the slot before the generic roll. */
+export function queueEvent(state: GameState, content: Content, phase: EventPhase): GameState {
+  const failures = rollFailures(state, content, phase);
+  if (failures.queuedEvent) return enqueue(failures.state, requireEvent(content, failures.queuedEvent));
+  const r = rollEvent(failures.state.rng, content, failures.state, phase, buildConditionContext(failures.state, content));
+  const s = { ...failures.state, rng: r.next };
+  return r.value ? enqueue(s, r.value) : s;
 }
 
 export function resolvePendingEvent(state: GameState, content: Content, optionId: string): GameState {
@@ -106,9 +112,7 @@ export function resolvePendingEvent(state: GameState, content: Content, optionId
   }
   const option = ev.options.find((x) => x.id === optionId);
   if (check && option?.check) {
-    const xp = option.xp ?? (check.success ? content.balance.voices.checkXp.success : content.balance.voices.checkXp.fail);
-    const voice = option.check.voice;
-    if (isTrainable(voice)) s = grantXp(s, { [voice]: xp }, `roll:check:${ev.id}:${optionId}`, content.balance);
+    s = grantCheckXp(s, option.check, check.success, `roll:check:${ev.id}:${optionId}`, content.balance, option.xp);
   }
   s = applyOutcomes(s, requireBoat(content, s), r.value.outcomes, content.balance);
   const context = ev.trigger.phase === 'morning' ? 'morning' : 'evening';

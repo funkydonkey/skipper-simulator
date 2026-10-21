@@ -23,8 +23,9 @@ function stableStringify(v: unknown): string {
   return JSON.stringify(v);
 }
 
+/** Covers voices and voiceXp too, so an XP or level-up drift changes the snapshot. */
 function weekHash(s: GameState): string {
-  const outcome = { resources: s.resources, damages: s.damages, injuries: s.injuries, firedEvents: s.firedEvents, rng: s.rng };
+  const outcome = { resources: s.resources, damages: s.damages, injuries: s.injuries, firedEvents: s.firedEvents, rng: s.rng, voices: s.voices, voiceXp: s.voiceXp };
   return createHash('sha256').update(stableStringify(outcome)).digest('hex').slice(0, 16);
 }
 
@@ -42,5 +43,11 @@ describe('seeded week determinism', () => {
     if (process.env.UPDATE_SNAPSHOT === '1') writeFileSync(FIXTURE, `${JSON.stringify(actual, null, 2)}\n`);
     const expected = JSON.parse(readFileSync(FIXTURE, 'utf8')) as Record<string, string>;
     expect(actual).toEqual(expected);
+  });
+
+  it('the hash sees voice levels and voice XP', () => {
+    const s = runWeek(content, 1, expert).state;
+    expect(weekHash({ ...s, voiceXp: { ...s.voiceXp, order: s.voiceXp.order + 1 } })).not.toBe(weekHash(s));
+    expect(weekHash({ ...s, voices: { ...s.voices, order: s.voices.order + 1 } })).not.toBe(weekHash(s));
   });
 });
