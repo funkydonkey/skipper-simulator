@@ -46,7 +46,7 @@
     "id": "calypso_38",
     "name": { "ru": "Калипсо 38", "en": "Calypso 38" },
     "lengthFt": 38, "cabins": 3, "berths": 6,
-    "waterTankL": 330, "fuelTankL": 120,
+    "waterTankL": 300, "fuelTankL": 120,
     "serviceBankAh": 90, "serviceBanks": 2, "starterSeparate": true,
     "solarW": 0, "electricToilet": false,
     "motorKn": 6, "hullSpeedKn": 7.2, "priceEur": 3400, "depositEur": 2000,

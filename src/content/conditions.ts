@@ -54,6 +54,15 @@ export function validateConditions(c: Content): ContentError[] {
     ev.voices.forEach((l, j) => { if (l.when) check(l.when, `events[${i}].voices[${j}].when`); });
     ev.options.forEach((o, j) => (o.requires ?? []).forEach((src, k) => check(src, `events[${i}].options[${j}].requires[${k}]`)));
   });
+  c.systems.forEach((d, i) => d.failures.forEach((f, j) => {
+    const path = `systems[${i}].failures[${j}]`;
+    if (f.when) check(f.when, `${path}.when`);
+    if (typeof f.chance === 'number') return;
+    (f.chance.mods ?? []).forEach((m, k) => {
+      if (m.if) check(m.if, `${path}.chance.mods[${k}].if`);
+      if (m.per && !known.has(m.per)) errors.push({ file: 'cross', path: `${path}.chance.mods[${k}].per`, message: `Unknown identifier "${m.per}"` });
+    });
+  }));
   c.maneuvers.forEach((m, i) => m.errors.forEach((e, j) => {
     if (e.mitigatedBy && !known.has(e.mitigatedBy)) {
       errors.push({ file: 'cross', path: `maneuvers[${i}].errors[${j}].mitigatedBy`, message: `Unknown identifier "${e.mitigatedBy}"` });

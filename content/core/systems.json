@@ -9,7 +9,38 @@
     "wearPer": {
       "motor_hour": 1
     },
-    "failures": [],
+    "failures": [
+      {
+        "id": "impeller_overheat",
+        "phase": "passage",
+        "when": "day.motor_hours > 0",
+        "chance": {
+          "base": 0.03,
+          "mods": [
+            {
+              "if": "system.engine_cooling.state == 'worn'",
+              "add": 0.45,
+              "label": "worn"
+            },
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.engine_cooling.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "impeller_overheat",
+        "xp": {
+          "mechanic": 3
+        }
+      }
+    ],
     "brokenEffect": {
       "noMotor": true
     },
@@ -50,7 +81,65 @@
     "wearPer": {
       "night": 1
     },
-    "failures": [],
+    "failures": [
+      {
+        "id": "toilet_clog",
+        "phase": "evening",
+        "when": "day >= 3",
+        "chance": {
+          "base": 0.05,
+          "mods": [
+            {
+              "if": "system.heads.state == 'worn'",
+              "add": 0.3,
+              "label": "worn"
+            },
+            {
+              "if": "briefing.toilet",
+              "mul": -0.6,
+              "label": "briefing"
+            },
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.heads.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "toilet_clog",
+        "xp": {
+          "mechanic": 2
+        }
+      },
+      {
+        "id": "toilet_misuse",
+        "phase": "evening",
+        "when": "boat.electric_toilet && !briefing.toilet",
+        "chance": {
+          "base": 0.4,
+          "mods": [
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.heads.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "toilet_misuse"
+      }
+    ],
     "brokenEffect": {
       "dailyEffect": {
         "mood": -8
@@ -93,7 +182,38 @@
     "wearPer": {
       "anchoring": 1
     },
-    "failures": [],
+    "failures": [
+      {
+        "id": "anchor_shackle_loose",
+        "phase": "arrival",
+        "when": "at_bay",
+        "chance": {
+          "base": 0.03,
+          "mods": [
+            {
+              "if": "system.windlass.state == 'worn'",
+              "add": 0.45,
+              "label": "worn"
+            },
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.windlass.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "anchor_shackle_loose",
+        "xp": {
+          "order": 2
+        }
+      }
+    ],
     "brokenEffect": {
       "anchorEffect": {
         "time_hours": 0.5,
@@ -137,7 +257,38 @@
     "wearPer": {
       "night": 1
     },
-    "failures": [],
+    "failures": [
+      {
+        "id": "alternator_fault",
+        "phase": "passage",
+        "when": "day.motor_hours > 0",
+        "chance": {
+          "base": 0.02,
+          "mods": [
+            {
+              "if": "system.electrical.state == 'worn'",
+              "add": 0.35,
+              "label": "worn"
+            },
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.electrical.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "alternator_fault",
+        "xp": {
+          "mechanic": 3
+        }
+      }
+    ],
     "brokenEffect": {
       "noCharge": true
     },
@@ -178,7 +329,48 @@
     "wearPer": {
       "sail_hour": 1
     },
-    "failures": [],
+    "failures": [
+      {
+        "id": "genoa_seam_rip",
+        "phase": "passage",
+        "when": "day.sail_hours > 0 && day.max_wind >= 14",
+        "chance": {
+          "base": 0.04,
+          "mods": [
+            {
+              "if": "system.rig.state == 'worn'",
+              "add": 0.2,
+              "label": "worn"
+            },
+            {
+              "if": "day.max_wind >= 18",
+              "add": 0.25,
+              "label": "wind"
+            },
+            {
+              "if": "briefing.sails",
+              "mul": -0.3,
+              "label": "briefing"
+            },
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.rig.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "genoa_seam_rip",
+        "xp": {
+          "order": 2
+        }
+      }
+    ],
     "brokenEffect": {
       "noSail": true
     },
@@ -216,7 +408,37 @@
       "en": "Gas"
     },
     "checkpoint": "gas",
-    "failures": [],
+    "failures": [
+      {
+        "id": "gas_smell",
+        "phase": "evening",
+        "chance": {
+          "base": 0.02,
+          "mods": [
+            {
+              "if": "system.gas.state == 'worn'",
+              "add": 0.55,
+              "label": "worn"
+            },
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.gas.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "gas_smell",
+        "xp": {
+          "caution": 2
+        }
+      }
+    ],
     "brokenEffect": {
       "noCook": true
     },
@@ -253,7 +475,35 @@
       "ru": "Подруливающее устройство",
       "en": "Bow thruster"
     },
-    "failures": [],
+    "failures": [
+      {
+        "id": "thruster_trip",
+        "phase": "arrival",
+        "when": "at_marina && wind >= 15",
+        "chance": {
+          "base": 0.05,
+          "mods": [
+            {
+              "if": "system.bow_thruster.state == 'worn'",
+              "add": 0.35,
+              "label": "worn"
+            },
+            {
+              "per": "voice.mechanic",
+              "add": -0.02
+            },
+            {
+              "per": "system.bow_thruster.wear",
+              "add": 0.004,
+              "label": "wear"
+            }
+          ],
+          "min": 0.01,
+          "max": 0.8
+        },
+        "event": "thruster_trip"
+      }
+    ],
     "brokenEffect": {},
     "repairs": [
       {

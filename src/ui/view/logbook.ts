@@ -19,6 +19,9 @@ const firstSentence = (s: string): string => s.split(/(?<=[.!?…])\s/)[0] ?? s;
 function defectText(c: Content, id: string, lang: Lang): string {
   return c.boats.flatMap((b) => b.defectPool).find((d) => d.id === id)?.description[lang] ?? label(DAMAGE_NAMES, id, lang);
 }
+function systemName(c: Content, id: string, lang: Lang): string {
+  return c.systems.find((d) => d.id === id)?.name[lang] ?? id;
+}
 function topicTitle(c: Content, id: string, lang: Lang): string {
   return c.briefing.find((t) => t.id === id)?.title[lang] ?? id;
 }
@@ -109,6 +112,19 @@ const DESCRIBE: Record<string, Describer> = {
     const key = ({ overpowered: 'sailOverpowered', break: 'sailBreak', reef_underway: 'sailReefUnderway' } as const)[what as 'break'];
     return key ? say(key, lang, {}, 'bad') : null;
   },
+  break: ([systemId = ''], _e, c, lang) => say('systemBroke', lang, { system: systemName(c, systemId, lang) }, 'bad'),
+  system: ([what, id = ''], _e, c, lang) => {
+    const system = systemName(c, id, lang);
+    switch (what) {
+      case 'daily': return say('systemDaily', lang, { system }, 'bad');
+      case 'anchor': return say('systemAnchor', lang, { system }, 'bad');
+      case 'no_cook': return say('systemNoCook', lang, {}, 'bad');
+      case 'no_motor': return say('systemNoMotor', lang, {}, 'bad');
+      case 'no_sail': return say('systemNoSail', lang, {}, 'bad');
+      default: return null;
+    }
+  },
+  repair: ([systemId = ''], _e, c, lang) => say('systemRepaired', lang, { system: systemName(c, systemId, lang) }, 'good'),
   mood_per_day: (_p, e, _c, lang) => say('moodPerDay', lang, { mood: signed(e.delta?.mood ?? 0) }, 'bad'),
   event: ([eventId = '', optionId, tag], _e, c, lang) => {
     if (!optionId) return say('eventHappened', lang, { text: firstSentence(c.events.find((x) => x.id === eventId)?.text[lang] ?? eventId) });
@@ -131,6 +147,7 @@ const DESCRIBE: Record<string, Describer> = {
       case 'marina': return p === 0 ? null : outcome('rollMarinaHit', 'rollMarinaMiss'); // early arrival: no real roll
       case 'sail_break': return outcome('rollSailHit', 'rollSailMiss');
       case 'injury': return outcome('rollInjuryHit', 'rollInjuryMiss');
+      case 'failure': return null; // one roll per eligible failure per phase; a hit shows as its `break:` line
       default: return null;
     }
   },

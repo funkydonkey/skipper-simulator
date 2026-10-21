@@ -99,11 +99,11 @@ describe('findDeadContent', () => {
 });
 
 describe('parseContent dead-content check', () => {
-  it('fails real content when the allowlist is empty, and skips the check when omitted', async () => {
+  it('real content is fully live with an empty allowlist (and the check is skipped when omitted)', async () => {
     const { content } = await loadContentDir('content');
     const raw = toRaw(content!);
     expect(parseContent(raw).errors).toEqual([]);
-    expect(parseContent(raw, []).errors.map((e) => e.path)).toContain('topic:sails');
+    expect(parseContent(raw, []).errors).toEqual([]);
   });
 
   it('rejects a malformed allowlist', async () => {

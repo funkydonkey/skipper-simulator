@@ -4,12 +4,8 @@
     "pillar": "boat",
     "trigger": {
       "phase": "evening",
-      "conditions": [
-        "day >= 3",
-        "!checkin.toilets",
-        "!briefing.toilet"
-      ],
-      "chance": 0.35
+      "conditions": [],
+      "chance": 0
     },
     "scene": "cabin_night",
     "text": {
@@ -44,7 +40,8 @@
         "fail": {
           "fatigue": 25,
           "mood": -10,
-          "damage": "toilet_broken"
+          "damage": "toilet_broken",
+          "break": "heads"
         }
       },
       {
@@ -55,7 +52,8 @@
         },
         "effects": {
           "money": -80,
-          "time_hours": 4
+          "time_hours": 4,
+          "repair": "heads"
         }
       },
       {
@@ -65,7 +63,8 @@
           "en": "Put up with it until the marina"
         },
         "effects": {
-          "mood_per_day": -8
+          "mood_per_day": -8,
+          "break": "heads"
         }
       }
     ],
@@ -79,10 +78,8 @@
     "pillar": "boat",
     "trigger": {
       "phase": "passage",
-      "conditions": [
-        "defect.worn_impeller"
-      ],
-      "chance": 0.5
+      "conditions": [],
+      "chance": 0
     },
     "scene": "engine_bay",
     "text": {
@@ -125,7 +122,8 @@
         "effects": {
           "damage": "impeller",
           "mood": -5,
-          "time_hours": 1
+          "time_hours": 1,
+          "break": "engine_cooling"
         }
       },
       {
@@ -140,12 +138,14 @@
         },
         "success": {
           "time_hours": 0.75,
-          "fatigue": 10
+          "fatigue": 10,
+          "repair": "engine_cooling"
         },
         "fail": {
           "time_hours": 1.5,
           "fatigue": 15,
-          "money": -150
+          "money": -150,
+          "break": "engine_cooling"
         }
       },
       {
@@ -156,7 +156,8 @@
         },
         "effects": {
           "time_hours": 1,
-          "mood": -2
+          "mood": -2,
+          "break": "engine_cooling"
         }
       }
     ],
@@ -399,10 +400,8 @@
     "pillar": "boat",
     "trigger": {
       "phase": "evening",
-      "conditions": [
-        "defect.gas_leak"
-      ],
-      "chance": 0.6
+      "conditions": [],
+      "chance": 0
     },
     "scene": "galley",
     "text": {
@@ -444,7 +443,8 @@
         "fail": {
           "injury": true,
           "mood": -30,
-          "gas": -30
+          "gas": -30,
+          "break": "gas"
         }
       },
       {
@@ -454,7 +454,8 @@
           "en": "Close the valve, cold dinner"
         },
         "effects": {
-          "mood": -6
+          "mood": -6,
+          "break": "gas"
         }
       },
       {
@@ -482,11 +483,8 @@
     "pillar": "boat",
     "trigger": {
       "phase": "evening",
-      "conditions": [
-        "boat.electric_toilet",
-        "!briefing.toilet"
-      ],
-      "chance": 0.4
+      "conditions": [],
+      "chance": 0
     },
     "scene": "cabin_night",
     "text": {
@@ -520,7 +518,8 @@
         "fail": {
           "fatigue": 25,
           "mood": -8,
-          "damage": "toilet_broken"
+          "damage": "toilet_broken",
+          "break": "heads"
         }
       },
       {
@@ -531,7 +530,8 @@
         },
         "effects": {
           "money": -100,
-          "time_hours": 3
+          "time_hours": 3,
+          "repair": "heads"
         }
       },
       {
@@ -541,7 +541,8 @@
           "en": "Seal the head until the marina"
         },
         "effects": {
-          "mood_per_day": -5
+          "mood_per_day": -5,
+          "break": "heads"
         }
       }
     ],
@@ -555,11 +556,8 @@
     "pillar": "boat",
     "trigger": {
       "phase": "passage",
-      "conditions": [
-        "defect.torn_genoa_seam",
-        "wind >= 14"
-      ],
-      "chance": 0.5
+      "conditions": [],
+      "chance": 0
     },
     "scene": "deck_wind",
     "text": {
@@ -593,7 +591,8 @@
         },
         "effects": {
           "damage": "sail_torn",
-          "mood": -5
+          "mood": -5,
+          "break": "rig"
         }
       },
       {
@@ -618,11 +617,8 @@
     "pillar": "boat",
     "trigger": {
       "phase": "arrival",
-      "conditions": [
-        "defect.loose_anchor_shackle",
-        "at_bay"
-      ],
-      "chance": 0.5
+      "conditions": [],
+      "chance": 0
     },
     "scene": "bow_anchor",
     "text": {
@@ -662,7 +658,8 @@
         "fail": {
           "damage": "anchor_lost",
           "time_hours": 1,
-          "mood": -8
+          "mood": -8,
+          "break": "windlass"
         }
       },
       {
@@ -2410,6 +2407,133 @@
     "debrief": {
       "ru": "Маринеро — первый человек, которого видит команда в порту. Его настроение — это ваше место у причала.",
       "en": "The marinero is the first person your crew meets in port. His mood is your place at the quay."
+    }
+  },
+  {
+    "id": "alternator_fault",
+    "pillar": "boat",
+    "trigger": {
+      "phase": "passage",
+      "conditions": [],
+      "chance": 0
+    },
+    "scene": "engine_bay",
+    "text": {
+      "ru": "На панели мигает красная лампа зарядки, ремень генератора визжит и проскальзывает.",
+      "en": "The red charge lamp blinks on the panel, and the alternator belt squeals and slips."
+    },
+    "voices": [
+      {
+        "voice": "mechanic",
+        "min_level": 1,
+        "text": {
+          "ru": "Ремень генератора ослаб. Подтянуть — десять минут.",
+          "en": "The alternator belt has gone slack. Tightening it is ten minutes."
+        }
+      },
+      {
+        "voice": "caution",
+        "min_level": 2,
+        "text": {
+          "ru": "Без зарядки к вечеру сядут аккумуляторы. Не тяни.",
+          "en": "Without charging the batteries will be flat by evening. Don't wait."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "keep_going",
+        "text": {
+          "ru": "Идти дальше, разберёмся вечером",
+          "en": "Keep going, sort it out tonight"
+        },
+        "effects": {
+          "break": "electrical",
+          "mood": -3
+        }
+      },
+      {
+        "id": "tighten_belt",
+        "text": {
+          "ru": "Заглушить мотор и подтянуть ремень",
+          "en": "Stop the engine and tighten the belt"
+        },
+        "check": {
+          "voice": "mechanic",
+          "difficulty": 2
+        },
+        "success": {
+          "time_hours": 0.5
+        },
+        "fail": {
+          "break": "electrical",
+          "time_hours": 1
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Электрику не проверили на приёмке — генератор перестал заряжать на переходе.",
+      "en": "The electrics were not checked at check-in, so the alternator stopped charging on passage."
+    }
+  },
+  {
+    "id": "thruster_trip",
+    "pillar": "boat",
+    "trigger": {
+      "phase": "arrival",
+      "conditions": [],
+      "chance": 0
+    },
+    "scene": "marina_entrance",
+    "text": {
+      "ru": "На входе в марину подруливающее вдруг замолкает. Ветер уже тянет нос к соседней яхте.",
+      "en": "At the marina entrance the bow thruster suddenly goes quiet. The wind is already pushing the bow toward the next yacht."
+    },
+    "voices": [
+      {
+        "voice": "mechanic",
+        "min_level": 1,
+        "text": {
+          "ru": "Сработала защита. Подождать и сбросить — обычно помогает.",
+          "en": "The overload protection tripped. Wait and reset it, that usually works."
+        }
+      },
+      {
+        "voice": "caution",
+        "min_level": 2,
+        "text": {
+          "ru": "Не заходи в узкость без подруливающего. Лучше отойди и подожди.",
+          "en": "Don't enter the tight spot without the thruster. Better to back off and wait."
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "wait_and_reset",
+        "text": {
+          "ru": "Отойти, подождать и сбросить защиту",
+          "en": "Back off, wait and reset the protection"
+        },
+        "effects": {
+          "time_hours": 0.5,
+          "mood": -2
+        }
+      },
+      {
+        "id": "moor_without",
+        "text": {
+          "ru": "Швартоваться без подруливающего",
+          "en": "Moor without the thruster"
+        },
+        "effects": {
+          "break": "bow_thruster",
+          "fatigue": 8
+        }
+      }
+    ],
+    "debrief": {
+      "ru": "Подруливающее было изношено — оно отключилось в самый неподходящий момент, на входе в марину.",
+      "en": "The thruster was worn, and it cut out at the worst moment, at the marina entrance."
     }
   }
 ]

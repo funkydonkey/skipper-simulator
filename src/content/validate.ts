@@ -1,4 +1,4 @@
-import { MANEUVER_KINDS, type Content } from '../engine/types';
+import { MANEUVER_KINDS, type Content, type Effect } from '../engine/types';
 import type { ContentError } from './parse';
 
 type Add = (path: string, message: string) => void;
@@ -77,6 +77,28 @@ function checkEvents(c: Content, add: Add): void {
   });
 }
 
+/** `break` / `repair` / `wear` must name a system in content.systems; a typo would otherwise silently do nothing. */
+function checkSystemRefs(c: Content, add: Add): void {
+  const known = new Set(c.systems.map((s) => s.id));
+  const check = (path: string, e: Effect | undefined): void => {
+    if (!e) return;
+    for (const id of [e.break, e.repair, ...Object.keys(e.wear ?? {})]) {
+      if (id !== undefined && !known.has(id)) add(path, `unknown system "${id}"`);
+    }
+  };
+  c.events.forEach((ev, i) => ev.options.forEach((o, j) => {
+    check(`events[${i}].options[${j}].effects`, o.effects);
+    check(`events[${i}].options[${j}].success`, o.success);
+    check(`events[${i}].options[${j}].fail`, o.fail);
+  }));
+  c.maneuvers.forEach((m, i) => m.errors.forEach((e, j) => check(`maneuvers[${i}].errors[${j}].effect`, e.effect)));
+  c.systems.forEach((s, i) => {
+    s.failures.forEach((f, j) => check(`systems[${i}].failures[${j}].effect`, f.effect));
+    check(`systems[${i}].brokenEffect.dailyEffect`, s.brokenEffect.dailyEffect);
+    check(`systems[${i}].brokenEffect.anchorEffect`, s.brokenEffect.anchorEffect);
+  });
+}
+
 export function crossValidate(c: Content): ContentError[] {
   const errors: ContentError[] = [];
   const add: Add = (path, message) => errors.push({ file: 'cross', path, message });
@@ -86,5 +108,6 @@ export function crossValidate(c: Content): ContentError[] {
   checkWeatherAndBriefing(c, add);
   checkManeuvers(c, add);
   checkEvents(c, add);
+  checkSystemRefs(c, add);
   return errors;
 }

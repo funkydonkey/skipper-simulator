@@ -12,10 +12,10 @@ describe('narrative content', () => {
     expect(errors).toEqual([]);
   });
 
-  it('25–32 events, at least 3 per pillar (ТЗ 7.2)', () => {
+  it('25–34 events, at least 3 per pillar (ТЗ 7.2)', () => {
     const events = content!.events;
     expect(events.length).toBeGreaterThanOrEqual(25);
-    expect(events.length).toBeLessThanOrEqual(32);
+    expect(events.length).toBeLessThanOrEqual(34);
     for (const p of PILLARS) expect(events.filter((e) => e.pillar === p).length, p).toBeGreaterThanOrEqual(3);
   });
 

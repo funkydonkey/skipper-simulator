@@ -180,7 +180,7 @@ describe('event check odds', () => {
 });
 
 describe('roll logging', () => {
-  const ROLL_CAUSE = /^roll:(check:\w+:\w+|injury:maneuver:\w+:\w+|sail_break:\w+|injury:reef:\w+|anchor:[1-9]|marina:\w+|front:\d+)$/;
+  const ROLL_CAUSE = /^roll:(check:\w+:\w+|injury:maneuver:\w+:\w+|sail_break:\w+|injury:reef:\w+|anchor:[1-9]|marina:\w+|front:\d+|failure:\w+:\w+)$/;
   const weeks = [1, 2, 3, 4, 5].flatMap((seed) => [runWeek(content, seed, newbie).state, runWeek(content, seed, expert).state]);
 
   it('every roll entry has a known cause, odds that sum to its value, and a hit flag', () => {
