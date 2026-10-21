@@ -32,7 +32,7 @@ if (batchSize !== null && (!/^\d+$/.test(batchArg ?? '') || batchSize < 1)) {
   console.error(`--weeks (or --batch) must be a positive integer, got "${batchArg}"`);
   process.exit(1);
 }
-const NAMES: Strategy['name'][] = ['newbie', 'expert', 'careful', 'ignore-weakness'];
+const NAMES: Strategy['name'][] = ['newbie', 'expert', 'careful', 'ignore-weakness', 'forecast-follower'];
 if (values.strategy !== undefined && !NAMES.includes(values.strategy as Strategy['name'])) {
   console.error(`--strategy must be one of ${NAMES.join(', ')}, got "${values.strategy}"`);
   process.exit(1);

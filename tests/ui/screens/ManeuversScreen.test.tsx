@@ -97,6 +97,14 @@ describe('ManeuversScreen', () => {
     expect(mooring.querySelector('button[data-step="extra_fenders_neighbor"]'), 'not tight: no extra fenders').toBeNull();
   });
 
+  it('hedges the forecast (R25): a likely marinero at Kastri still offers the boathook step', () => {
+    const toKastri: DayPlan = { ...toBay, legs: [{ ...leg, routeId: 'r_cala_azzurra_kastri_marina' }] };
+    const r = startAt(toKastri);
+    expect(forecastSituation(r.session().game!, content, toKastri)).toMatchObject({ marinero: true, source: 'forecast' });
+    const mooring = r.container.querySelector('section[data-kind="mooring"]') as HTMLElement;
+    expect(mooring.querySelector('button[data-step="pick_lazy_line_boathook"]')).not.toBeNull();
+  });
+
   it('shows the forecast situation card with the marinero chance', () => {
     startAt(toNisi);
     expect(screen.getByText('Прогноз — на месте может отличаться')).toBeInTheDocument();

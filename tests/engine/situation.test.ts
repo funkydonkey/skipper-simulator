@@ -6,7 +6,8 @@ import { arrivalSituation, marineroSpec, situationContext, windSide } from '../.
 import { forecastSituation } from '../../src/engine/preview';
 import type { DayPlan, MapPoint, Situation } from '../../src/engine/types';
 import { requirePoint } from '../../src/engine/state';
-import { validatePlan } from '../../src/engine/day/passage';
+import { planDay, validatePlan } from '../../src/engine/day/passage';
+import { previewPlan } from '../../src/engine/preview';
 import { endDay } from '../../src/engine/day/evening';
 import { deepFreeze } from '../fixtures/freeze';
 import { makeContent } from '../fixtures/content';
@@ -134,6 +135,43 @@ describe('content', () => {
     expect(MapPointSchema.safeParse({ ...bay, marineroChance: 0.5 }).success).toBe(false);
     expect(MapPointSchema.safeParse({ ...bay, berths: [] }).success).toBe(false);
     expect(MapPointSchema.safeParse({ ...bay, marineroChance: 1.5 }).success).toBe(false);
+  });
+});
+
+describe('forecast and fact share the berth clock (F3)', () => {
+  const quiet = { ...real, events: [] };
+  const motorTo = (routeId: string, departureHour: number): DayPlan => ({
+    departureHour, swimStops: 0, shower: 'normal', autopilot: false, legs: [{ routeId, mode: 'motor', reefs: 0, genoa: 'full', course: 'direct' }],
+  });
+  /** When the boat reaches the berth: departure, casting off, the legs (motor: no reefing). */
+  const berthArrival = (st: ReturnType<typeof stateAt>, plan: DayPlan): number => {
+    const p = previewPlan(st, real, plan);
+    return p.departureMin! + b.time.departureMin + p.legs.reduce((t, l) => t + l.hours * 60, 0);
+  };
+  const timed = (st: ReturnType<typeof stateAt>, plan: DayPlan, targetMin: number): DayPlan => {
+    const p = { ...plan, departureHour: plan.departureHour + (targetMin - berthArrival(st, plan)) / 60 };
+    expect(Math.abs(berthArrival(st, p) - targetMin)).toBeLessThan(2);
+    return p;
+  };
+  const factOdds = (st: ReturnType<typeof stateAt>, plan: DayPlan, pointId: string): number =>
+    planDay(st, quiet, plan).log.find((e) => e.cause === `roll:marinero:${pointId}`)!.odds!.value;
+
+  it('a berth reached at 17:50 has the pre-18:00 marinero odds in forecast and fact', () => {
+    const st = stateAt('cala_azzurra', { clockMin: 8 * 60 });
+    const plan = timed(st, motorTo('r_base_marina_cala_azzurra', 15), 17 * 60 + 50);
+    const base = requirePoint(real, 'base_marina').marineroChance;
+    expect(forecastSituation(st, real, plan)!.marineroOdds!.value).toBeCloseTo(base, 12);
+    expect(factOdds(st, plan, 'base_marina')).toBeCloseTo(base, 12);
+  });
+  it('a late quay arrival counts the wait for a place, in forecast and fact', () => {
+    // Nisi places go at 16: reached at 17:00, the boat waits until 17:45, still before 18:00.
+    const st = stateAt('cala_azzurra', { clockMin: 8 * 60 });
+    const plan = timed(st, motorTo('r_cala_azzurra_nisi_quay', 15), 17 * 60);
+    const nisi = requirePoint(real, 'nisi_quay').marineroChance;
+    expect(forecastSituation(st, real, plan)!.marineroOdds!.value).toBeCloseTo(nisi, 12);
+    const s = planDay(st, quiet, plan);
+    expect(s.log.some((e) => e.cause === 'marina:refused'), 'this seed gets a place').toBe(false);
+    expect(factOdds(st, plan, 'nisi_quay')).toBeCloseTo(nisi, 12);
   });
 });
 

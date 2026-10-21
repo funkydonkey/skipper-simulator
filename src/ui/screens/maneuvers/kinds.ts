@@ -1,5 +1,5 @@
 import {
-  berthForKind, correctOrder, maneuverFor, otherEnd, requirePoint, requireRoute, situationCondContext, situationHint,
+  berthForKind, forecastStepPool, maneuverFor, otherEnd, requirePoint, requireRoute, situationCondContext, situationHint,
   type Content, type DayPlan, type GameState, type Maneuver, type ManeuverKind, type ManeuverStep, type Situation,
 } from '../../../engine';
 
@@ -7,7 +7,7 @@ export interface ManeuverSpec {
   kind: ManeuverKind;
   maneuver: Maneuver;
   fallback: boolean;
-  /** Ids of the steps the forecast situation calls for, in content order: the pool to order. */
+  /** Ids of the steps any likely fact may call for (R25: the forecast's uncertainty hedged), in content order: the pool to order. */
   steps: string[];
   /** The conditional step the Order voice points out (Order 3+), or null. */
   hint: ManeuverStep | null;
@@ -15,7 +15,8 @@ export interface ManeuverSpec {
 
 /**
  * The maneuvers the engine may run today, in order (see day/arrival.ts). The forecast situation's berth picks the
- * maneuver of its own kind (as validatePlan and runManeuver do), and its keys pick the steps.
+ * maneuver of its own kind (as validatePlan and runManeuver do); the pool hedges its marinero and wind side (R25),
+ * the hint follows its most likely keys.
  */
 export function maneuversFor(game: GameState, content: Content, plan: DayPlan, situation: Situation | null): ManeuverSpec[] {
   const origin = requirePoint(content, game.locationId);
@@ -31,7 +32,7 @@ export function maneuversFor(game: GameState, content: Content, plan: DayPlan, s
   return kinds.flatMap(([kind, fallback]) => {
     const maneuver = maneuverFor(content, kind, berthForKind(kind, situation?.berth));
     if (!maneuver) return [];
-    return [{ kind, maneuver, fallback, steps: correctOrder(maneuver, ctx), hint: situationHint(maneuver, ctx, game.voices.order) }];
+    return [{ kind, maneuver, fallback, steps: forecastStepPool(maneuver, game, content, situation, dest).map((x) => x.id), hint: situationHint(maneuver, ctx, game.voices.order) }];
   });
 }
 

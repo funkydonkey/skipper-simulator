@@ -3,9 +3,11 @@ import { EngineError } from './errors';
 import { buildConditionContext, evaluateCondition, type CondContext } from './expr';
 import { injurySpec } from './odds';
 import type { RngResult } from './rng';
+import { dirToDeg } from './sailing';
+import { windSide } from './situation';
 import { round1 } from './state';
 import { situationContext } from './situation-context';
-import type { Balance, BerthType, ChanceValue, Content, Effect, GameState, Maneuver, ManeuverError, ManeuverKind, ManeuverStep, Outcome, Situation } from './types';
+import { DIRS, type Balance, type BerthType, type ChanceValue, type Content, type Effect, type GameState, type Maneuver, type ManeuverError, type ManeuverKind, type ManeuverStep, type MapPoint, type Outcome, type Situation, type WindSide } from './types';
 
 const NUMERIC_EFFECT_KEYS = ['mood', 'fatigue', 'money', 'water', 'fuel', 'service_bank', 'starter_bank', 'gas', 'time_hours', 'mood_per_day'] as const;
 
@@ -107,6 +109,29 @@ export function evaluateManeuver(
 export function situationCondContext(state: GameState, content: Content, situation: Situation | null | undefined): CondContext {
   const now = buildConditionContext(state, content);
   return situation ? { ...now, ...situationContext(situation), 'place.seabed': situation.seabed } : now;
+}
+
+/** Wind sides at `point`'s berth for the forecast direction and its two compass neighbours (calm stays calm). */
+function likelyWindSides(situation: Situation, point: MapPoint, b: Balance): WindSide[] {
+  const heading = (point.berths.find((x) => x.type === situation.berth) ?? point.berths[0])?.headingDeg ?? 0;
+  const i = DIRS.indexOf(situation.windDir);
+  const dirs = [i - 1, i, i + 1].map((k) => DIRS[(k + DIRS.length) % DIRS.length]!);
+  return [...new Set(dirs.map((d) => windSide(dirToDeg(d), heading, situation.windKn, b)))];
+}
+
+/**
+ * R25: the steps to offer for a forecast `situation` at `point`: the union of today's steps over the forecast's
+ * uncertainty, in content order. Marinero both ways while its odds are strictly between 0 and 1; the wind side for
+ * the forecast direction ±1 compass step. The engine then drops the steps the fact does not need (reconcileOrder).
+ */
+export function forecastStepPool(m: Maneuver, state: GameState, content: Content, situation: Situation | null, point: MapPoint): ManeuverStep[] {
+  const now = situationCondContext(state, content, situation);
+  if (!situation) return stepsFor(m, now);
+  const odds = situation.marineroOdds?.value;
+  const marineros = odds !== undefined && odds > 0 && odds < 1 ? [true, false] : [situation.marinero];
+  const sides = likelyWindSides(situation, point, content.balance);
+  const ctxs = marineros.flatMap((marinero) => sides.map((side) => ({ ...now, ...situationContext({ ...situation, marinero, windSide: side }) })));
+  return m.steps.filter((s) => ctxs.some((ctx) => applies(s.when, ctx)));
 }
 
 /**

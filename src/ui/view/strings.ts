@@ -155,6 +155,7 @@ export const CHANCE_PARTS = dict({
   checkin: { ru: 'приёмка', en: 'check-in' },
   worn: { ru: 'износ', en: 'wear' },
   marinero: { ru: 'маринеро', en: 'marinero' },
+  berth: { ru: 'кормовой на берег', en: 'stern line ashore' },
   unknown: { ru: 'прочее', en: 'other' },
 });
 

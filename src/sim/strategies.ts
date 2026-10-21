@@ -1,10 +1,12 @@
+import { berthForKind } from '../engine/berths';
 import { canAfford } from '../engine/budget';
 import { tavernaBill, tavernaOpen, type EveningChoice } from '../engine/day/evening';
 import type { MorningChoice } from '../engine/day/morning';
 import { optionAvailable } from '../engine/events';
 import { buildConditionContext } from '../engine/expr';
-import { correctOrder, maneuverFor } from '../engine/maneuver';
+import { correctOrder, forecastStepPool, maneuverFor } from '../engine/maneuver';
 import { previewPlan } from '../engine/preview';
+import { requirePoint } from '../engine/state';
 import { pointShelter } from '../engine/weather';
 import { MANEUVER_KINDS, type BerthType, type CheckpointId, type Content, type DayPlan, type Effect, type EventOption, type GameEvent, type GameState, type LegPlan, type ManeuverKind, type TrainableVoice } from '../engine/types';
 import { checkChance } from '../engine/voices';
@@ -12,7 +14,7 @@ import type { RepairChoice } from '../engine/repair';
 import { weakSystems } from './weakness';
 
 export interface Strategy {
-  name: 'newbie' | 'expert' | 'careful' | 'ignore-weakness';
+  name: 'newbie' | 'expert' | 'careful' | 'ignore-weakness' | 'forecast-follower';
   voices: Partial<Record<TrainableVoice, number>>;
   boatId: string;
   checkpoints(c: Content): CheckpointId[];
@@ -136,6 +138,31 @@ export const expert: Strategy = {
   evening: (s, c) => ({ dinner: hasTaverna(s, c) && s.resources.moneyEur > EXPERT_TAVERNA_MIN_MONEY ? 'taverna' : 'cook', dialogueId: 'decide_morning' }),
   fixDefects: fixNothing,
   repair: repairNothing,
+};
+
+/**
+ * R25 measurement: for every kind, exactly the maneuver screen's pool (forecastStepPool over the plan's forecast) in
+ * content order. Kinds the day does not run are ignored by the engine.
+ */
+function poolOrders(s: GameState, c: Content, plan: DayPlan): Partial<Record<ManeuverKind, string[]>> {
+  const p = previewPlan(s, c, plan);
+  const dest = requirePoint(c, p.destinationId);
+  const orders: Partial<Record<ManeuverKind, string[]>> = {};
+  for (const kind of MANEUVER_KINDS) {
+    const m = maneuverFor(c, kind, berthForKind(kind, p.situation?.berth));
+    if (m) orders[kind] = forecastStepPool(m, s, c, p.situation, dest).map((x) => x.id);
+  }
+  return orders;
+}
+
+/** Expert play that orders by the forecast exactly as the maneuver screen offers it (no hidden knowledge of the fact). */
+export const forecastFollower: Strategy = {
+  ...expert,
+  name: 'forecast-follower',
+  plan: (s, c) => {
+    const plan = expert.plan(s, c);
+    return plan.legs.length === 0 ? plan : { ...plan, maneuverOrders: poolOrders(s, c, plan) };
+  },
 };
 
 export const newbie: Strategy = {
@@ -281,5 +308,6 @@ function weaknessStrategy(style: Style, boatId: string): Strategy {
 export function makeStrategy(name: Strategy['name'], boatId?: string): Strategy {
   if (name === 'newbie') return newbie;
   if (name === 'expert') return expert;
+  if (name === 'forecast-follower') return forecastFollower;
   return weaknessStrategy(name, boatId ?? expert.boatId);
 }

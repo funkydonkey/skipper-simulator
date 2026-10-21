@@ -547,7 +547,7 @@ export interface Situation {
   seabed: Seabed; tight: boolean; source: 'forecast' | 'fact';
 }
 
-export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn', 'thruster', 'broken', 'wear', 'marinero'] as const;
+export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn', 'thruster', 'broken', 'wear', 'marinero', 'berth'] as const;
 export type ChanceLabel = (typeof CHANCE_LABELS)[number];
 /**
  * add: value += add * scale. mul: always a delta factor, value *= (1 + mul * scale); write deltas such as (weight - 1).

@@ -88,7 +88,8 @@ export function buildDebrief(state: GameState, content: Content, maxItems = 5): 
   const links = findLinks(state.log, content.debrief, maxItems);
   const covered = (eventId: string): boolean =>
     links.some((l) => causeMatches(l.consequence.cause, `event:${eventId}`) || causeMatches(l.consequence.cause, `injury:event:${eventId}`));
-  const eventNotes = state.firedEvents
+  // Repeatable events (once: false) appear in firedEvents each time they fire: one note each, first occurrence first.
+  const eventNotes = [...new Set(state.firedEvents)]
     .filter((id) => !covered(id))
     .flatMap((id) => {
       const note = content.events.find((e) => e.id === id)?.debrief;

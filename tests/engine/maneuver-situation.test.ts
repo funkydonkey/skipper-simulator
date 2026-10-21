@@ -7,8 +7,9 @@ import { runManeuver } from '../../src/engine/day/arrival';
 import { buildConditionContext } from '../../src/engine/expr';
 import { planDay, validatePlan } from '../../src/engine/day/passage';
 import {
-  correctOrder, errorsFor, evaluateManeuver, maneuverFor, maneuverRisk, reconcileOrder, situationHint, stepsFor, validateOrder,
+  correctOrder, errorsFor, evaluateManeuver, forecastStepPool, maneuverFor, maneuverRisk, reconcileOrder, situationHint, stepsFor, validateOrder,
 } from '../../src/engine/maneuver';
+import { requirePoint } from '../../src/engine/state';
 import { anchorFailSpec } from '../../src/engine/odds';
 import { priceFor } from '../../src/engine/perks';
 import { previewPlan } from '../../src/engine/preview';
@@ -131,6 +132,42 @@ describe('runManeuver order log', () => {
   });
 });
 
+describe('forecastStepPool (R25): the steps any likely fact may need', () => {
+  const med = real.maneuvers.find((x) => x.id === 'mooring_med')!;
+  const kastri = requirePoint(real, 'kastri_marina');
+  const st = makeState({ boatId: real.boats[0]!.id, systems: {}, weatherTemplateId: 'meltemi_week' });
+  const ids = (sit: Situation, point = kastri, mm = med) => forecastStepPool(mm, st, real, sit, point).map((x) => x.id);
+  const odds = (value: number) => ({ value, parts: [] });
+  it('a 0.8 marina forecasts a marinero yet keeps the boathook step in the pool', () => {
+    const sit = situation('stern', { marinero: true, marineroOdds: odds(0.8), tight: true, windDir: 'W' });
+    expect(correctOrder(med, { ...buildConditionContext(st, real), 'place.marinero': true })).not.toContain('pick_lazy_line_boathook');
+    expect(ids(sit)).toContain('pick_lazy_line_boathook');
+    expect(ids(sit)).toContain('extra_fenders_neighbor');
+  });
+  it('certain odds (0 or 1) and bays with no odds add no hedged step', () => {
+    expect(ids(situation('stern', { marinero: true, marineroOdds: odds(1), windDir: 'W' }))).not.toContain('pick_lazy_line_boathook');
+    expect(ids(situation('stern', { marinero: false, marineroOdds: odds(0), windDir: 'W' }))).toContain('pick_lazy_line_boathook');
+    const bay = requirePoint(real, 'cala_azzurra');
+    const anch = real.maneuvers.find((x) => x.id === 'anchoring_bay')!;
+    const bayIds = ids(situation('bow', { berth: 'anchor', marineroOdds: null, seabed: 'sand', windDir: 'N' }), bay, anch);
+    expect(bayIds).toEqual(['choose_spot', 'brief_bow', 'stop_boat', 'drop_anchor', 'back_down']);
+  });
+  it('wind on the bow with a neighbouring compass step abeam adds the windward step, in content order', () => {
+    // Kastri's berth heads 90 (E): wind from NE is 45 off the bow; N (one step) is abeam.
+    const sit = situation('bow', { marinero: true, marineroOdds: odds(1), windDir: 'NE', tight: true });
+    const pool = ids(sit);
+    expect(pool).toContain('windward_stern_first');
+    expect(pool).toEqual(med.steps.map((x) => x.id).filter((id) => pool.includes(id)));
+  });
+  it('calm stays calm: no windward step under the calm threshold', () => {
+    const sit = situation('none', { marinero: true, marineroOdds: odds(1), windDir: 'NE', windKn: b.situation.calmKn - 1 });
+    expect(ids(sit)).not.toContain('windward_stern_first');
+  });
+  it('without a situation, the steps of the context as it is', () => {
+    expect(forecastStepPool(med, st, real, null, kastri).map((x) => x.id)).toEqual(correctOrder(med, buildConditionContext(st, real)));
+  });
+});
+
 describe('maneuverRisk against a situation', () => {
   it('judges only the errors that apply in the given situation', () => {
     const c: Content = { ...makeContent(), maneuvers: [...makeContent().maneuvers.filter((x) => x.kind !== 'mooring'), abc()] };
@@ -140,12 +177,14 @@ describe('maneuverRisk against a situation', () => {
 });
 
 describe('anchor ashore', () => {
-  it('halves the anchor-drag odds through a seabed mod', () => {
+  it('halves the anchor-drag odds through its own berth mod, not a seabed one', () => {
     const ctx = { 'place.seabed': 'sand', wind: 10, night: false };
     const plain = evaluateChance(anchorFailSpec(b), { ...ctx, 'place.berth': 'anchor' });
     const ashore = evaluateChance(anchorFailSpec(b), { ...ctx, 'place.berth': 'anchor_ashore' });
     expect(ashore.value).toBeCloseTo(plain.value * (1 + b.berths.ashoreAnchorFailMul), 12);
-    expect(ashore.parts.filter((x) => x.source === 'seabed').length).toBeGreaterThan(plain.parts.filter((x) => x.source === 'seabed').length);
+    expect(ashore.parts.filter((x) => x.source === 'seabed').length).toBe(plain.parts.filter((x) => x.source === 'seabed').length);
+    expect(ashore.parts.filter((x) => x.source === 'berth')).toHaveLength(1);
+    expect(plain.parts.some((x) => x.source === 'berth')).toBe(false);
   });
 });
 

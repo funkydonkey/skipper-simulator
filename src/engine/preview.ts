@@ -108,11 +108,19 @@ function swimsBeforeSunset(clockMin: number, stops: number, content: Content): {
   return { count, clockMin: clock };
 }
 
-function mooringMinutes(dest: MapPoint, late: boolean, state: GameState, content: Content): number {
-  const t = content.balance.time;
+/** Minutes from reaching the destination to being moored; the stern line ashore adds its time unscaled, as arrive() does. */
+function mooringMinutes(dest: MapPoint, berth: BerthType, late: boolean, state: GameState, content: Content): number {
+  const b = content.balance;
+  const t = b.time;
   const anchoring = (t.anchorMin[0] + t.anchorMin[1]) / 2;
   const base = dest.kind === 'bay' ? anchoring : late ? t.marinaWaitMin + anchoring : t.marinaMooringMin;
-  return base * cautionTimeFactor(state.voices.caution, content.balance);
+  const ashore = berth === 'anchor_ashore' ? b.berths.ashoreTimeHours * 60 : 0;
+  return base * cautionTimeFactor(state.voices.caution, b) + ashore;
+}
+
+/** The clock arrive() settles the situation at: on reaching a bay; at a marina or quay after the wait for a place when late. */
+function settleClock(dest: MapPoint, reachedMin: number, late: boolean, content: Content): number {
+  return dest.kind !== 'bay' && late ? reachedMin + content.balance.time.marinaWaitMin : reachedMin;
 }
 
 /** Odds the captain can foresee at the destination, on arrival at `clockMin`. */
@@ -177,8 +185,8 @@ export function previewPlan(state: GameState, content: Content, plan: DayPlan): 
   const swims = swimsBeforeSunset(clock, plan.swimStops, content);
   const dest = requirePoint(content, at);
   const marinaLate = dest.kind !== 'bay' && dest.placesGoneHour !== null && swims.clockMin / 60 > dest.placesGoneHour;
-  const arrivalMin = Math.round(swims.clockMin + mooringMinutes(dest, marinaLate, state, content));
   const berth = plannedBerth(dest, plan);
+  const arrivalMin = Math.round(swims.clockMin + mooringMinutes(dest, berth, marinaLate, state, content));
   const motorHours = legs.reduce((sum, l) => sum + (l.mode === 'motor' && !l.tow ? l.hours : 0), 0);
   return {
     legs, departureMin, arrivalMin, destinationId: at, swimStops: swims.count,
@@ -189,7 +197,7 @@ export function previewPlan(state: GameState, content: Content, plan: DayPlan): 
     ...arrivalOdds(ctx, dest, berth, swims.clockMin, marinaLate),
     marinaAffordable: affordable(state, dest, berth, content),
     destinationSeabed: dest.seabed,
-    situation: forecastAt(state, content, weather, dest, berth, arrivalMin),
+    situation: forecastAt(state, content, weather, dest, berth, settleClock(dest, swims.clockMin, marinaLate, content)),
     berths: dest.berths.map((x) => x.type),
     berthFees: berthFees(state, dest, content),
   };

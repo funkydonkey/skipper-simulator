@@ -4,6 +4,7 @@ import { runBatch, varietyOf } from '../../src/sim/batch';
 import { runWeek, setupWeek } from '../../src/sim/run';
 import { carefulBerth, makeStrategy } from '../../src/sim/strategies';
 import { startDay } from '../../src/engine/day/morning';
+import { planDay } from '../../src/engine/day/passage';
 import type { DayPlan, DayWeather, GameState, LogEntry } from '../../src/engine/types';
 
 const loaded = await loadContentDir('content');
@@ -91,7 +92,22 @@ describe('carefulBerth', () => {
     expect(carefulBerth(morning('cala_azzurra', 'S'), content, planTo('r_base_marina_cala_azzurra'))).toBeUndefined();
   });
 
-  it('careful plans carry the chosen berth through a real week without validation errors', () => {
+  it('a forced quay day: the side-to berth carefulBerth picks reaches the day log (maneuver and x1.5 fee)', () => {
+    const s = morning('cala_azzurra', 'N');
+    const plan = planTo('r_cala_azzurra_nisi_quay');
+    const berth = carefulBerth(s, content, plan);
+    expect(berth).toBe('side_to');
+    const quiet = { ...content, events: [] };
+    const sideDay = planDay(s, quiet, { ...plan, berth });
+    const sternDay = planDay(s, quiet, plan);
+    expect(sideDay.log.some((e) => /^order:(ok|wrong):mooring_side_to$/.test(e.cause))).toBe(true);
+    const fee = (d: GameState) => d.log.find((e) => e.cause === 'marina:fee')!.delta!.moneyEur!;
+    expect(fee(sideDay)).toBeCloseTo(fee(sternDay) * content.balance.berths.sideToPriceFactor, 0);
+  });
+
+  // The careful itinerary (blue_lagoon, cala_azzurra, kastri_marina) has no multi-berth choice carefulBerth acts on,
+  // so a real careful week can only show that its plans validate.
+  it('careful weeks play to the debrief without validation errors (smoke)', () => {
     for (const boat of ['aurora_45', 'meltemi_40', 'calypso_38']) {
       for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) expect(runWeek(content, seed, makeStrategy('careful', boat)).state.phase).toBe('debrief');
     }

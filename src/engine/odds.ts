@@ -51,7 +51,7 @@ export function anchorFailSpec(b: Balance): ChanceSpec {
       { if: 'night', add: t.nightAnchorPenalty, label: 'night' },
       { if: 'briefing.anchor', add: -t.anchorBriefedReduction, label: 'briefing' },
       // Stern lines ashore hold the boat: the anchor drags less.
-      { if: "place.berth == 'anchor_ashore'", mul: b.berths.ashoreAnchorFailMul, label: 'seabed' },
+      { if: "place.berth == 'anchor_ashore'", mul: b.berths.ashoreAnchorFailMul, label: 'berth' },
     ],
     max: 0.95,
   };
