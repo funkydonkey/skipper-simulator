@@ -27,7 +27,7 @@
     "id": "meltemi_40",
     "name": { "ru": "Мельтеми 40", "en": "Meltemi 40" },
     "lengthFt": 40, "cabins": 3, "berths": 6,
-    "waterTankL": 450, "fuelTankL": 140,
+    "waterTankL": 450, "fuelTankL": 140, "motorLph": 6.5,
     "serviceBankAh": 110, "serviceBanks": 3, "starterSeparate": true,
     "solarW": 200, "electricToilet": false,
     "motorKn": 6.5, "hullSpeedKn": 7.6, "priceEur": 4300, "depositEur": 2500,

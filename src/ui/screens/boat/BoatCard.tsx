@@ -15,7 +15,7 @@ export function BoatCard({ boat, affordable, onTake }: BoatCardProps) {
   const facts = [
     t('size', { ft: boat.lengthFt, cabins: boat.cabins, berths: boat.berths }),
     t('water', { l: boat.waterTankL }),
-    t('fuel', { l: boat.fuelTankL, kn: boat.motorKn }),
+    t('fuel', { l: boat.fuelTankL, kn: boat.motorKn, lph: boat.motorLph ?? content.balance.fuel.motorLph }),
     t('bank', { ah: boat.serviceBankAh, n: boat.serviceBanks }),
     boat.starterSeparate ? t('starterSeparate') : t('starterShared'),
     boat.solarW > 0 ? t('solar', { w: boat.solarW }) : t('noSolar'),

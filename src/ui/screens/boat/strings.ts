@@ -10,7 +10,7 @@ export const BOAT = dict({
   smallPrint: { ru: 'Технические данные', en: 'Specifications' },
   size: { ru: '{ft} футов · каюты {cabins} · места {berths}', en: '{ft} ft · {cabins} cabins · {berths} berths' },
   water: { ru: 'Бак воды: {l} л', en: 'Water tank: {l} L' },
-  fuel: { ru: 'Топливо: {l} л · мотор {kn} уз', en: 'Fuel: {l} L · engine {kn} kn' },
+  fuel: { ru: 'Топливо: {l} л · мотор {kn} уз · {lph} л/ч', en: 'Fuel: {l} L · engine {kn} kn · {lph} L/h' },
   bank: { ru: 'Сервисный банк: {ah} А·ч × {n}', en: 'Service bank: {ah} Ah × {n}' },
   starterSeparate: { ru: 'Стартовый аккумулятор отдельный', en: 'Separate starter battery' },
   starterShared: { ru: 'Стартовый и сервисный — один банк', en: 'Starter and service share one bank' },
