@@ -2105,8 +2105,8 @@
         "voice": "pride",
         "min_level": 1,
         "text": {
-          "ru": "Пусть учится, он взрослый.",
-          "en": "Let him learn, he's an adult."
+          "ru": "Пусть учится — взрослые люди.",
+          "en": "Let them learn, they're adults."
         }
       },
       {
@@ -2123,7 +2123,7 @@
         "id": "let_him",
         "text": {
           "ru": "Пусть попробует",
-          "en": "Let him try"
+          "en": "Let them try"
         },
         "check": {
           "voice": "order",
@@ -2139,7 +2139,7 @@
         "id": "stop_explain",
         "text": {
           "ru": "Остановить и показать, как правильно",
-          "en": "Stop him and show the right way"
+          "en": "Stop and show the right way"
         },
         "effects": {
           "time_hours": 0.25,
@@ -2189,8 +2189,8 @@
       {
         "id": "ignore",
         "text": {
-          "ru": "Он же умеет плавать",
-          "en": "He can swim, can't he"
+          "ru": "Плавать-то умеют",
+          "en": "They can swim, can't they"
         },
         "check": {
           "voice": "caution",
@@ -2242,8 +2242,8 @@
         "en": "One of the guests has turned green and quietly asks how long until land."
       },
       {
-        "ru": "Гостья прижалась к леерам и смотрит в одну точку. Ей явно нехорошо.",
-        "en": "A guest clings to the lifelines, staring at a single spot. She is clearly unwell."
+        "ru": "Один из гостей у леера смотрит в одну точку — явно укачало.",
+        "en": "A guest at the lifelines stares at a single spot, clearly seasick."
       }
     ],
     "voices": [
@@ -2259,8 +2259,8 @@
         "voice": "caution",
         "min_level": 3,
         "text": {
-          "ru": "Через час она не сможет стоять. Посади к рулю и дай ей горизонт.",
-          "en": "In an hour she won't be able to stand. Put her at the helm and give her the horizon."
+          "ru": "Через час стоять будет трудно. Посади к рулю, дай горизонт.",
+          "en": "In an hour standing will be hard. Put a guest at the helm and give them the horizon."
         }
       }
     ],
@@ -2269,7 +2269,7 @@
         "id": "send_below",
         "text": {
           "ru": "Отправить вниз отдохнуть",
-          "en": "Send her below to rest"
+          "en": "Send them below to rest"
         },
         "effects": {
           "mood": -12
@@ -2279,7 +2279,7 @@
         "id": "horizon",
         "text": {
           "ru": "Посадить на подветренный борт, смотреть на горизонт",
-          "en": "Seat her on the lee side, eyes on the horizon"
+          "en": "Seat them on the lee side, eyes on the horizon"
         },
         "effects": {
           "mood": -4

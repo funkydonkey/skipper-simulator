@@ -24,6 +24,20 @@ describe('seedHash', () => {
   });
 });
 
+describe('seedHash distribution', () => {
+  it('keys differing in one trailing digit spread over both parities', () => {
+    const parities = new Set(Array.from({ length: 10 }, (_, d) => seedHash(7, 'crew', d) % 2));
+    expect(parities.size).toBe(2);
+  });
+
+  it('a 2-variant pick does not strictly alternate with day parity', () => {
+    const picks = Array.from({ length: 24 }, (_, i) => seedHash(3, 'ev', i + 1) % 2);
+    const alternating = picks.every((p, i) => i === 0 || p !== picks[i - 1]);
+    expect(alternating).toBe(false);
+    expect(new Set(picks.filter((_, i) => i % 2 === 0)).size, 'odd days alone take both variants').toBe(2);
+  });
+});
+
 describe('newGame template choice', () => {
   it('uses all 4 bundled templates over seeds 1..200 and leaves rng === seed', () => {
     const used = new Set<string>();

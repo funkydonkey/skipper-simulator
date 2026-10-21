@@ -7,7 +7,6 @@ import { makeContent } from '../fixtures/content';
 import { makeState } from '../fixtures/state';
 
 const { content: bundled } = await loadContentDir('content');
-const names = (n: string, ru: string, en: string) => ({ ru: `${ru}${n}`, en: `${en}${n}` });
 
 describe('makeCrew', () => {
   const seeds = Array.from({ length: 100 }, (_, i) => i + 1);
@@ -76,7 +75,6 @@ describe('renderText', () => {
 
   it('leaves text without placeholders untouched', () => {
     expect(renderText('Ничего', state, withRoles, 'k')).toBe('Ничего');
-    void names;
   });
 });
 

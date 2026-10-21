@@ -49,4 +49,18 @@ describe('crew names in content', () => {
       for (const tx of texts) for (const n of all) expect(`${tx.ru} ${tx.en}`, `${e.id}: ${n}`).not.toMatch(new RegExp(`(?<![\\p{L}\\p{N}])${n}(?![\\p{L}\\p{N}])`, 'u'));
     }
   });
+
+  it('events with a crew placeholder use no gendered pronouns for the person', () => {
+    const pronouns = /(?<![\p{L}\p{N}])(он|она|его|её|ей|ему|него|неё|he|she|him|her|his|hers)(?![\p{L}\p{N}])/giu;
+    // Non-person referents: «он» in loaded_sheet is the sheet; «ему»/him is the marinero.
+    const allowed = [{ id: 'loaded_sheet', phrase: 'Руки он забирает' }, { id: 'marinero_commands', phrase: 'бросает ему' }, { id: 'marinero_commands', phrase: 'tosses him' }, { id: 'marinero_commands', phrase: 'Перекричи его' }, { id: 'marinero_commands', phrase: 'louder than him' }];
+    for (const e of c.events.filter((x) => JSON.stringify(x).includes('{crew.'))) {
+      const texts = [...eventTexts(e), ...e.voices.map((v) => v.text), ...e.options.map((o) => o.text), ...(e.debrief ? [e.debrief] : [])];
+      for (const tx of texts) for (const lang of ['ru', 'en'] as const) {
+        const line = tx[lang];
+        if (allowed.some((a) => a.id === e.id && line.includes(a.phrase))) continue;
+        expect([...line.matchAll(pronouns)].map((m) => m[0]), `${e.id}: ${line}`).toEqual([]);
+      }
+    }
+  });
 });
