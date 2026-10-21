@@ -46,7 +46,7 @@ export function PreviewPanel({ preview, berth, onBerth }: PreviewPanelProps) {
             <div role="radiogroup" aria-label={t('berthTitle')} className={styles.berths}>
               {preview.berths.map((type) => {
                 const fee = preview.berthFees[type];
-                const feeText = fee === undefined ? null : type === 'side_to' ? t('berthFeeFactor', { eur: fee, factor: b.berths.sideToPriceFactor }) : t('berthFee', { eur: fee });
+                const feeText = fee === undefined ? null : type === 'side_to' ? t('berthFeeFactor', { eur: fee, factor: lang === 'ru' ? String(b.berths.sideToPriceFactor).replace('.', ',') : b.berths.sideToPriceFactor }) : t('berthFee', { eur: fee });
                 return (
                   <label key={type}>
                     <input type="radio" name="berth" checked={type === (berth ?? preview.berths[0])} onChange={() => onBerth(type)} />

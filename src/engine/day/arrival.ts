@@ -1,9 +1,9 @@
+import { berthFee } from '../berths';
 import { canAfford } from '../budget';
 import { EngineError } from '../errors';
 import { buildConditionContext } from '../expr';
 import { appendLog } from '../log';
 import { correctOrder, evaluateManeuver, maneuverFor } from '../maneuver';
-import { priceFor } from '../perks';
 import { applyOutcome, applyOutcomes } from '../resources';
 import { arrivalSituation } from '../situation';
 import { advanceClock, requireBoat, requirePoint } from '../state';
@@ -90,13 +90,6 @@ function nightArrival(state: GameState, boat: Boat, b: Balance): GameState {
   return applyOutcome(state, boat, { cause: 'night:arrival', pillar: 'time', effect: { fatigue: b.fatigue.nightArrival, mood: -b.mood.nightArrival } });
 }
 
-/** The berth fee: side-to costs `balance.berths.sideToPriceFactor` times the listed price. */
-function berthFee(point: MapPoint, berth: BerthType, state: GameState, b: Balance): { eur: number; savedEur: number } | null {
-  if (point.priceEur <= 0) return null;
-  const factor = berth === 'side_to' ? b.berths.sideToPriceFactor : 1;
-  return priceFor(point.priceEur * factor, state.voices.economist, b);
-}
-
 /** `berth` is the plan's berth (validated by validatePlan); the point's first berth when absent. */
 export function arrive(state: GameState, content: Content, boat: Boat, orders?: Orders, plannedBerth?: BerthType): ArrivalResult {
   const b = content.balance;
@@ -104,7 +97,7 @@ export function arrive(state: GameState, content: Content, boat: Boat, orders?: 
   const berth = plannedBerth ?? point.berths[0]!.type;
   const arrived = nightArrival(state, boat, b);
   if (point.kind === 'bay') return anchorHere(arrived, content, boat, point, berth, orders);
-  const fee = berthFee(point, berth, arrived, b);
+  const fee = berthFee(point, berth, arrived.voices.economist, b);
   if (fee && !canAfford(arrived, fee.eur)) {
     const broke = applyOutcome(arrived, boat, { cause: 'marina:no_money', pillar: 'boat', effect: { mood: -b.mood.marinaRefused } });
     return anchorHere(broke, content, boat, point, 'anchor', orders);

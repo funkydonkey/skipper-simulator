@@ -39,6 +39,7 @@ interface ChartPointProps { point: MapPoint; name: string; at: { x: number; y: n
 function ChartPoint({ point, name, at, chartWidth, shelter, onPick }: ChartPointProps) {
   const t = useT(CHART);
   const label = labelPlacement(name, at.x, chartWidth);
+  const shelterLabel = shelter ? t(`${shelter.state}Label`, { dir: shelter.dir }) : null;
   const press = (e: KeyboardEvent<SVGGElement>) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick?.(point.id); }
   };
@@ -48,14 +49,14 @@ function ChartPoint({ point, name, at, chartWidth, shelter, onPick }: ChartPoint
       className={styles.point}
       data-kind={point.kind}
       data-reachable={!!onPick}
-      {...(onPick ? { role: 'button', tabIndex: 0, 'aria-label': name, onClick: () => onPick(point.id), onKeyDown: press } : {})}
+      {...(onPick ? { role: 'button', tabIndex: 0, 'aria-label': shelterLabel ? `${name}, ${shelterLabel}` : name, onClick: () => onPick(point.id), onKeyDown: press } : {})}
     >
       {onPick && <circle data-hit="" r={HIT_RADIUS} fill="transparent" pointerEvents="visible" />}
       {onPick && <circle className={styles.halo} r="16" />}
       <PointSymbol kind={point.kind} />
       <text className={styles.label} x={label.x} y="4" textAnchor={label.anchor}>{name}</text>
       {shelter && (
-        <g className={styles.shelter} data-shelter={shelter.state} role="img" aria-label={t(`${shelter.state}Label`, { dir: shelter.dir })}>
+        <g className={styles.shelter} data-shelter={shelter.state} {...(onPick ? { 'aria-hidden': true } : { role: 'img', 'aria-label': shelterLabel ?? undefined })}>
           <text y={SHELTER_BADGE_Y} textAnchor="middle">{t(shelter.state)}</text>
         </g>
       )}

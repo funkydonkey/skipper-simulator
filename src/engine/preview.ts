@@ -3,7 +3,7 @@ import { evaluateChance } from './chance';
 import { resolveMode } from './day/legs';
 import { EngineError } from './errors';
 import { buildConditionContext, type CondContext } from './expr';
-import { priceFor } from './perks';
+import { berthFee } from './berths';
 import { anchorFailSpec, marinaRefusalSpec, sailBreakSpec } from './odds';
 import { bearingDeg, dirToDeg, planLeg } from './sailing';
 import { otherEnd, requireBoat, requirePoint, requireRoute, requireTemplate, round1 } from './state';
@@ -136,21 +136,15 @@ function plannedBerth(dest: MapPoint, plan: DayPlan): BerthType {
   return dest.berths.some((x) => x.type === plan.berth) ? plan.berth! : dest.berths[0]!.type;
 }
 
-function feeFor(state: GameState, dest: MapPoint, berth: BerthType, content: Content): number {
-  const b = content.balance;
-  const factor = berth === 'side_to' ? b.berths.sideToPriceFactor : 1;
-  return priceFor(dest.priceEur * factor, state.voices.economist, b).eur;
-}
-
 /** The fee for `berth` (side-to costs more) is within the money. */
 function affordable(state: GameState, dest: MapPoint, berth: BerthType, content: Content): boolean {
   if (dest.kind === 'bay' || dest.priceEur <= 0) return true;
-  return canAfford(state, feeFor(state, dest, berth, content));
+  return canAfford(state, berthFee(dest, berth, state.voices.economist, content.balance)?.eur ?? 0);
 }
 
 function berthFees(state: GameState, dest: MapPoint, content: Content): Partial<Record<BerthType, number>> {
   if (dest.kind === 'bay' || dest.priceEur <= 0) return {};
-  return Object.fromEntries(dest.berths.map((x) => [x.type, feeFor(state, dest, x.type, content)]));
+  return Object.fromEntries(dest.berths.map((x) => [x.type, berthFee(dest, x.type, state.voices.economist, content.balance)?.eur ?? 0]));
 }
 
 /** What the captain can foresee for a plan. Pure: no RNG, no state change. */

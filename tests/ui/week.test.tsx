@@ -65,7 +65,7 @@ async function playWeek(lang: Lang, random = 0.123): Promise<Week> {
       case 'morning': await user.click(button(MORNING.start[lang])); break;
       case 'planning': {
         const target = game.locationId === 'base_marina' ? 'cala_azzurra' : 'base_marina';
-        const point = screen.queryByRole('button', { name: name(target, lang) });
+        const point = screen.queryByRole('button', { name: new RegExp(`^${name(target, lang)}(,|$)`) });
         if (point) {
           await user.click(point);
           await user.click(button(PLANNING.toManeuvers[lang]));

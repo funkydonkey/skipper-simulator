@@ -9,7 +9,7 @@ describe('PlanningScreen', () => {
   it('shows the forecast and lets you add and remove a leg on the chart', async () => {
     const r = renderShell(atBase());
     expect(screen.getAllByRole('img', { name: /уз/ }).length).toBeGreaterThan(0);
-    await r.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+    await r.user.click(screen.getByRole('button', { name: /^Кала-Адзурра/ }));
     expect(screen.getByText(/Марина Порто-Кало \(база\) → Кала-Адзурра/)).toBeInTheDocument();
     expect(screen.getByText(/Приход около/)).toBeInTheDocument();
     await r.user.click(screen.getByRole('button', { name: 'Убрать последний переход' }));
@@ -18,7 +18,7 @@ describe('PlanningScreen', () => {
 
   it('previews seabed and anchor odds for a bay, and sail damage risk under sail', async () => {
     const r = renderShell(atBase());
-    await r.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+    await r.user.click(screen.getByRole('button', { name: /^Кала-Адзурра/ }));
     await r.user.click(screen.getByLabelText('Под парусом'));
     expect(screen.getByText(/Грунт: /)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Якорь не возьмёт \(за попытку\) · \d+%$/ })).toBeInTheDocument();
@@ -29,7 +29,7 @@ describe('PlanningScreen', () => {
   it('shows the sail damage risk when the wind is strong', async () => {
     const base = atBase();
     const r = renderShell({ ...base, weather: { ...base.weather!, forecastKn: 30, forecastGustKn: 36 } });
-    await r.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+    await r.user.click(screen.getByRole('button', { name: /^Кала-Адзурра/ }));
     await r.user.click(screen.getByLabelText('Под парусом'));
     expect(screen.getByText(/Риск порвать парус/)).toBeInTheDocument();
   });
@@ -38,19 +38,19 @@ describe('PlanningScreen', () => {
     const base = atBase();
     const dead = { ...base, systems: { ...base.systems, engine_cooling: { ...base.systems.engine_cooling!, broken: true } } };
     const breeze = renderShell({ ...dead, weather: { ...dead.weather!, forecastKn: 12, forecastGustKn: 15 } });
-    await breeze.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+    await breeze.user.click(screen.getByRole('button', { name: /^Кала-Адзурра/ }));
     expect(screen.getByText('Мотор не работает: этот переход под парусом.')).toBeInTheDocument();
     expect(screen.queryByText(/буксир/i)).toBeNull();
     breeze.unmount();
     const calm = renderShell({ ...dead, lang: 'en', weather: { ...dead.weather!, forecastKn: 2, forecastGustKn: 3 } }, { lang: 'en' });
-    await calm.user.click(screen.getByRole('button', { name: 'Cala Azzurra' }));
+    await calm.user.click(screen.getByRole('button', { name: /^Cala Azzurra/ }));
     expect(screen.getByText('You will need a tow: €250, 2 h.')).toBeInTheDocument();
   });
 
   it('warns when a broken rig turns a sail leg into a motor leg', async () => {
     const base = atBase();
     const r = renderShell({ ...base, systems: { ...base.systems, rig: { ...base.systems.rig!, broken: true } } });
-    await r.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+    await r.user.click(screen.getByRole('button', { name: /^Кала-Адзурра/ }));
     expect(screen.queryByText(/Паруса не работают/)).toBeNull();
     await r.user.click(screen.getByLabelText('Под парусом'));
     expect(screen.getByText('Паруса не работают: этот переход под мотором.')).toBeInTheDocument();
@@ -64,7 +64,7 @@ describe('PlanningScreen', () => {
 
   it('a sailing day goes to the maneuvers with the plan as drafted', async () => {
     const r = renderShell(atBase());
-    await r.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+    await r.user.click(screen.getByRole('button', { name: /^Кала-Адзурра/ }));
     await r.user.click(screen.getByLabelText('Под парусом'));
     await r.user.click(screen.getByRole('button', { name: 'К манёврам' }));
     expect(r.currentScreen()).toBe('maneuvers');
@@ -74,7 +74,7 @@ describe('PlanningScreen', () => {
   it('after sunset only offers to stay', () => {
     renderShell({ ...atBase(), clockMin: 20 * 60 + 30 });
     expect(screen.getByText('Сегодня уже поздно выходить')).toBeInTheDocument();
-    expect(screen.queryAllByRole('button', { name: 'Кала-Адзурра' })).toHaveLength(0);
+    expect(screen.queryAllByRole('button', { name: /^Кала-Адзурра/ })).toHaveLength(0);
     expect(screen.getByRole('button', { name: 'Провести день здесь' })).toBeEnabled();
   });
 
@@ -115,7 +115,7 @@ describe('PlanningScreen', () => {
 
   describe('berth choice and template', () => {
     const toNisi = async (r: ReturnType<typeof renderShell>, name = 'Городская набережная Ниси') => {
-      await r.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+      await r.user.click(screen.getByRole('button', { name: /^Кала-Адзурра/ }));
       await r.user.click(screen.getByRole('button', { name: name }));
     };
 
@@ -135,7 +135,7 @@ describe('PlanningScreen', () => {
 
     it('shows no selector at a single-berth destination and sends no berth', async () => {
       const r = renderShell(atBase());
-      await r.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+      await r.user.click(screen.getByRole('button', { name: /^Кала-Адзурра/ }));
       expect(screen.queryByRole('radiogroup', { name: 'Как швартоваться' })).toBeNull();
       await r.user.click(screen.getByRole('button', { name: 'К манёврам' }));
       expect(r.session().ui.draftPlan?.berth).toBeUndefined();
@@ -148,6 +148,23 @@ describe('PlanningScreen', () => {
       await r.user.click(screen.getByRole('button', { name: 'Убрать последний переход' }));
       await r.user.click(screen.getByRole('button', { name: 'К манёврам' }));
       expect(r.session().ui.draftPlan?.berth).toBeUndefined();
+    });
+
+    it('shows the berth fee factor with a decimal comma in Russian', async () => {
+      const r = renderShell(atBase());
+      await toNisi(r);
+      expect(screen.getByLabelText(/Лагом/).closest('label')).toHaveTextContent('×1,5');
+    });
+
+    it('shelters the chart from the front direction when its signs are visible, else from the forecast', () => {
+      const base = atBase();
+      const w = { ...base.weather!, forecastDir: 'N' as const, front: true, frontDir: 'NW' as const };
+      const hidden = renderShell({ ...base, weather: { ...w, signalsVisible: false } });
+      expect(screen.getAllByLabelText(/Бухта .* ветр[а-я]* N$/).length).toBeGreaterThan(0);
+      expect(screen.queryAllByLabelText(/ветр[а-я]* NW$/)).toHaveLength(0);
+      hidden.unmount();
+      renderShell({ ...base, weather: { ...w, signalsVisible: true } });
+      expect(screen.getAllByLabelText(/ветр[а-я]* NW$/).length).toBeGreaterThan(0);
     });
 
     it('names the weeks weather template in the forecast panel', () => {

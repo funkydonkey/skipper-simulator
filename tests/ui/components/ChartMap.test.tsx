@@ -73,6 +73,11 @@ describe('ChartMap', () => {
     expect(cala.querySelector('[data-shelter]')).toHaveAttribute('data-shelter', 'sheltered');
   });
 
+  it('puts the shelter into the accessible name of a reachable bay', () => {
+    renderWithSession(<ChartMap locationId="base_marina" forecastDir="NW" reachableIds={['vela_bay']} onPointClick={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Бухта Вела, Бухта открыта ветру NW' })).toBeInTheDocument();
+  });
+
   it('draws no shelter badges without a forecast direction', () => {
     const { container } = renderWithSession(<ChartMap locationId="base_marina" />);
     expect(container.querySelector('[data-shelter]')).toBeNull();

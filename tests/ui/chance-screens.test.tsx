@@ -21,7 +21,7 @@ const openBadges = async (r: ReturnType<typeof renderShell>, root: HTMLElement =
 describe('screens with chance badges render without DOM warnings', () => {
   it('planning preview', async () => {
     const r = renderShell({ ...gameAt('planning'), locationId: 'base_marina', clockMin: 8 * 60 });
-    await r.user.click(screen.getByRole('button', { name: 'Кала-Адзурра' }));
+    await r.user.click(screen.getByRole('button', { name: /^Кала-Адзурра/ }));
     await r.user.click(screen.getByLabelText('Под парусом'));
     expect(await openBadges(r)).toBeGreaterThan(0);
     expect(domWarnings()).toEqual([]);
