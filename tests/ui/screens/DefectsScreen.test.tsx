@@ -48,4 +48,20 @@ describe('DefectsScreen', () => {
     expect(r.session().game!.checkin?.fixed).toEqual(['worn_furler']);
     expect(r.session().game!.defects).toEqual(['torn_genoa_seam']);
   });
+
+  it('disables a fix the player cannot afford', () => {
+    const { game: base } = atDefects();
+    const game = {
+      ...base,
+      boatId: 'meltemi_40',
+      resources: { ...base.resources, moneyEur: 100 },
+      defects: ['torn_genoa_seam', 'worn_furler'],
+      checkin: { found: ['torn_genoa_seam', 'worn_furler'], fixed: [], minutesLeft: 60 },
+    };
+    renderShell(game);
+    expect(screen.getByRole('button', { name: 'Чинить на базе — 150 €, 30 мин' })).toBeDisabled();
+    expect(screen.getByText('не хватает денег')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Чинить на базе — 90 €, 20 мин' })).toBeEnabled();
+    expect(screen.getAllByText('как есть')).toHaveLength(1);
+  });
 });

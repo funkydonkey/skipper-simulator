@@ -15,6 +15,8 @@ export const DEFECTS = dict({
   system: { ru: 'Система: {name}', en: 'System: {name}' },
   fix: { ru: 'Чинить на базе — {eur} €, {min} мин', en: 'Fix at base — €{eur}, {min} min' },
   sailOn: { ru: 'Плыть так', en: 'Sail on' },
+  asIs: { ru: 'как есть', en: 'as is' },
+  noMoney: { ru: 'не хватает денег', en: 'not enough money' },
   noTime: { ru: 'не хватает времени', en: 'not enough time' },
   minutesLeft: { ru: 'Осталось времени: {n} мин', en: 'Time left: {n} min' },
   confirm: { ru: 'Подтвердить', en: 'Confirm' },

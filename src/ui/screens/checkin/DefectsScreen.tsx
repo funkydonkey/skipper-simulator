@@ -15,6 +15,7 @@ export function DefectsScreen() {
   const [fixIds, setFixIds] = useState<readonly string[]>([]);
   const minutesOf = (id: string): number => found.find((d) => d.id === id)?.fixMin ?? 0;
   const left = (game.checkin?.minutesLeft ?? 0) - fixIds.reduce((sum, id) => sum + minutesOf(id), 0);
+  const moneyLeft = game.resources.moneyEur - fixIds.reduce((sum, id) => sum + (found.find((d) => d.id === id)?.fixEur ?? 0), 0);
   const toggle = (id: string): void => setFixIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   return (
@@ -30,16 +31,17 @@ export function DefectsScreen() {
           const fixable = d.system !== undefined && d.fixEur !== undefined && d.fixMin !== undefined;
           const chosen = fixIds.includes(d.id);
           const noTime = fixable && !chosen && (d.fixMin ?? 0) > left;
+          const noMoney = fixable && !chosen && !noTime && (d.fixEur ?? 0) > moneyLeft;
           return (
             <li key={d.id} className={styles.item}>
               <p>{d.description[lang]}</p>
               {d.system && <p className={styles.system}>{t('system', { name: systemName(content, d.system, lang) })}</p>}
               {fixable && (
                 <>
-                  <Button variant={chosen ? 'primary' : 'secondary'} aria-pressed={chosen} disabled={noTime} onClick={() => toggle(d.id)}>
+                  <Button variant={chosen ? 'primary' : 'secondary'} aria-pressed={chosen} disabled={noTime || noMoney} onClick={() => toggle(d.id)}>
                     {t('fix', { eur: d.fixEur ?? 0, min: d.fixMin ?? 0 })}
                   </Button>
-                  {noTime ? <p className={styles.reason}>{t('noTime')}</p> : !chosen && <p className={styles.choice}>{t('sailOn')}</p>}
+                  {noTime || noMoney ? <p className={styles.reason}>{t(noTime ? 'noTime' : 'noMoney')}</p> : !chosen && <p className={styles.choice}>{t('asIs')}</p>}
                 </>
               )}
             </li>

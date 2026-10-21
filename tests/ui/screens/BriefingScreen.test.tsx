@@ -17,6 +17,16 @@ describe('BriefingScreen', () => {
     for (const id of hidden) expect(screen.queryByText(new RegExp(defects.find((d) => d.id === id)!.description.ru))).toBeNull();
   });
 
+  it('labels found defects as fixed at base or sailing as is', () => {
+    const base = gameAt('briefing');
+    const [a, b] = ['worn_furler', 'torn_genoa_seam'];
+    const stamp = base.log[0]!;
+    const log = [...base.log.filter((e) => !e.cause.startsWith('checkin:found:')), ...[a, b].map((id) => ({ ...stamp, kind: 'info' as const, cause: `checkin:found:${id}` }))];
+    renderShell({ ...base, boatId: 'meltemi_40', log, defects: [b], checkin: { found: [a, b], fixed: [a], minutesLeft: 0 } });
+    expect(screen.getByText(/Стаксель-фурлер заедает \(починено на базе\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Шов на генуе расходится у шкотового угла \(плывём так\)/)).toBeInTheDocument();
+  });
+
   it('needs exactly four topics and starts the week', async () => {
     const r = renderShell(gameAt('briefing'));
     const start = screen.getByRole('button', { name: 'Начать неделю' });
