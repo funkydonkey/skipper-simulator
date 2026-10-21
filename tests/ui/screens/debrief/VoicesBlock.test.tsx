@@ -39,6 +39,12 @@ describe('VoicesBlock', () => {
     expect(screen.queryByText(/clean maneuvers/)).toBeNull();
   });
 
+  it('labels system-failure XP by its first segment', () => {
+    const v = report({ voice: 'mechanic', xp: [{ cause: 'break:engine_cooling', xp: 2 }] });
+    render(<VoicesBlock voices={[v]} lang="ru" />);
+    expect(screen.getByText(/\+2 отказы систем$/)).toBeInTheDocument();
+  });
+
   it('words a raised risk per roll too', () => {
     render(<VoicesBlock voices={[report({ voice: 'order', impacts: [{ kind: 'risk', rolls: 3, avgDeltaPp: 2 }] })]} lang="ru" />);
     expect(screen.getByText('риск выше на 2 п.п. за бросок (бросков: 3)')).toBeInTheDocument();

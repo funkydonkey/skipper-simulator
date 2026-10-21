@@ -9,7 +9,7 @@ import { BRIEFING } from '../../src/ui/screens/briefing/strings';
 import { CAPTAIN } from '../../src/ui/screens/captain/strings';
 import { CHECKIN } from '../../src/ui/screens/checkin/strings';
 import { DEBRIEF } from '../../src/ui/screens/debrief/strings';
-import { EVENING } from '../../src/ui/screens/evening/strings';
+import { EVENING, REPAIR } from '../../src/ui/screens/evening/strings';
 import { MANEUVERS } from '../../src/ui/screens/maneuvers/strings';
 import { MENU } from '../../src/ui/screens/menu/strings';
 import { MORNING } from '../../src/ui/screens/morning/strings';
@@ -31,9 +31,10 @@ function assertHealthy(lang: Lang): void {
 
 interface Week { r: ReturnType<typeof renderShell>; eveningXpLines: number }
 
-async function playWeek(lang: Lang): Promise<Week> {
+export async function playWeek(lang: Lang, random = 0.123): Promise<Week> {
   let eveningXpLines = 0;
-  vi.spyOn(Math, 'random').mockReturnValue(0.123);
+  const repairedOn = new Set<number>();
+  vi.spyOn(Math, 'random').mockReturnValue(random);
   const r = renderShell(null, { lang });
   const { user } = r;
   assertHealthy(lang);
@@ -91,9 +92,16 @@ async function playWeek(lang: Lang): Promise<Week> {
         await user.click(option!);
         break;
       }
-      case 'evening':
+      case 'evening': {
         eveningXpLines += screen.queryAllByText(/^\+\d+ /).length;
-        await user.click(button(EVENING.sleep[lang])); break;
+        const block = screen.queryByRole('region', { name: REPAIR.title[lang] });
+        const repair = block && within(block).queryAllByRole('button').find((b) => !b.hasAttribute('disabled') && b.closest('li') && !b.getAttribute('aria-controls'));
+        if (repair && !repairedOn.has(game.day)) {
+          repairedOn.add(game.day);
+          await user.click(repair);
+        } else await user.click(button(EVENING.sleep[lang]));
+        break;
+      }
       case 'return': await user.click(button(RETURN.handover[lang])); break;
       default: throw new Error(`Dead end on screen ${r.currentScreen()}`);
     }
@@ -101,16 +109,29 @@ async function playWeek(lang: Lang): Promise<Week> {
   return { r, eveningXpLines };
 }
 
+// Seed chosen by scanning: this week breaks the windlass and the first repair attempt fails, the second succeeds.
+const FAILURE_WEEK_RANDOM = 0.3;
+const LOGBOOK_LINES = {
+  ru: { broke: 'Сломалось: якорное устройство', fixed: 'Починили: якорное устройство', failed: 'Починить не вышло: якорное устройство' },
+  en: { broke: 'Broke down: anchor gear', fixed: 'Repaired: anchor gear', failed: "Couldn't repair: anchor gear" },
+} as const;
+
 describe('a whole week in the browser UI', () => {
   afterEach(() => vi.restoreAllMocks());
 
   it.each(['ru', 'en'] as const)('plays from the menu to the debrief without dead ends (%s)', async (lang) => {
-    const { r, eveningXpLines } = await playWeek(lang);
+    const { r, eveningXpLines } = await playWeek(lang, FAILURE_WEEK_RANDOM);
     expect(r.currentScreen()).toBe('debrief');
-    expect(screen.getAllByLabelText(/^(Оценка|Grade):/)).toHaveLength(4);
+    expect(screen.getAllByLabelText(/^(Оценка|Grade):/)).toHaveLength(5);
+    expect(screen.getByRole('heading', { name: DEBRIEF.budget[lang] })).toBeInTheDocument();
     expect(r.session().game!.phase).toBe('debrief');
     expect(eveningXpLines, 'the evening screen showed an XP line during the week').toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: DEBRIEF.voices[lang] })).toBeInTheDocument();
     assertHealthy(lang);
+
+    await r.user.click(button(COMMON.logbook[lang]));
+    const text = screen.getByRole('dialog', { name: COMMON.logbook[lang] }).textContent ?? '';
+    for (const line of Object.values(LOGBOOK_LINES[lang])) expect(text, line).toContain(line);
+    expect(text).not.toMatch(/\{\w+\}|undefined|NaN/);
   }, 120_000);
 });

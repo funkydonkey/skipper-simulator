@@ -4,6 +4,7 @@ import { Button } from '../../components/Button';
 import { ChartMap } from '../../components/chart/ChartMap';
 import { ResourcePanel } from '../../components/ResourcePanel';
 import { ScreenFrame } from '../../components/ScreenFrame';
+import { SystemsPanel } from '../../components/SystemsPanel';
 import { ENGINE_ERRORS } from '../../i18n/common';
 import { useAct, useGame, useSession, useT } from '../../session/SessionContext';
 import { DaySettings } from './DaySettings';
@@ -15,7 +16,7 @@ import styles from './Planning.module.css';
 import { PLANNING } from './strings';
 
 export function PlanningScreen() {
-  const { game, content } = useGame();
+  const { game, content, lang } = useGame();
   const act = useAct();
   const t = useT(PLANNING);
   const te = useT(ENGINE_ERRORS);
@@ -37,7 +38,7 @@ export function PlanningScreen() {
       screen="planning"
       title={t('title', { n: game.day })}
       subtitle={canSail ? t('subtitle') : t('tooLate')}
-      side={<><ForecastPanel /><ResourcePanel /></>}
+      side={<><ForecastPanel /><ResourcePanel /><SystemsPanel systems={game.systems} content={content} lang={lang} /></>}
       actions={draft.legs.length === 0
         ? <Button onClick={() => act({ type: 'draft_plan', plan: toDayPlan(draft) })}>{t('stay')}</Button>
         : <Button disabled={!canSail} onClick={() => act({ type: 'draft_plan', plan: toDayPlan(draft) })}>{t('toManeuvers')}</Button>}

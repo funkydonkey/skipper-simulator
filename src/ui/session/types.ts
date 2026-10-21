@@ -50,6 +50,7 @@ export type ActionBody =
   | { type: 'resolve_event'; optionId: string }
   | { type: 'outcome_seen' }
   | { type: 'end_day'; choice: EveningChoice }
+  | { type: 'repair'; systemId: string; repairId: string }
   | { type: 'finish_week' }
   | { type: 'dismiss_error' };
 

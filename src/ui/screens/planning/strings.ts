@@ -38,6 +38,7 @@ export const PLANNING = dict({
   overpowered: { ru: 'Парусов слишком много для такого ветра: крен и укачивание.', en: 'Too much sail for this wind: heeling and seasickness.' },
   forcedReef: { ru: 'Придётся рифиться на ходу.', en: 'You will have to reef underway.' },
   afterSunset: { ru: 'Придёте после заката.', en: 'You will arrive after sunset.' },
+  marinaNoMoney: { ru: 'Марина: нет денег, встанете на якорь.', en: 'Marina: no money, you will anchor out.' },
   marinaLate: { ru: 'К этому часу места в марине могут кончиться.', en: 'The marina may be full by then.' },
   mustReturn: { ru: 'Сегодня нужно вернуться на базу.', en: 'You need to be back at base today.' },
   tooLateForBase: { ru: 'Не успеваете на базу к {time}.', en: 'You will not make base by {time}.' },

@@ -1,6 +1,6 @@
 import {
   assignVoices, chooseBoat, endDay, EngineError, finishWeek, newGame, performBriefing, performCheckin, planDay,
-  resolveDefects, resolvePendingEvent, startDay, validatePlan, type Content, type DayPlan, type GameState, type Lang,
+  repairSystem, resolveDefects, resolvePendingEvent, startDay, validatePlan, type Content, type DayPlan, type GameState, type Lang,
 } from '../../engine';
 import { screenKey } from './screen';
 import type { Action, ManeuverOrders, Session, UiState } from './types';
@@ -62,6 +62,7 @@ function reduce(s: Session, a: Action): Session {
     case 'resolve_event': return resolveEvent(s, a.optionId);
     case 'outcome_seen': return { ...s, ui: { ...s.ui, outcome: null } };
     case 'end_day': return step(endDay(requireGame(s), c, a.choice));
+    case 'repair': return step(repairSystem(requireGame(s), c, a.systemId, a.repairId));
     case 'finish_week': return step(finishWeek(requireGame(s), c));
     case 'dismiss_error': return { ...s, error: null };
   }

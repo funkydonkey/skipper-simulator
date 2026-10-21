@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { buildDebrief, type Grade } from '../../../engine';
+import { buildDebrief, weekSpend, type Grade } from '../../../engine';
 import { Button } from '../../components/Button';
 import { ScreenFrame } from '../../components/ScreenFrame';
 import { COMMON } from '../../i18n/common';
@@ -21,11 +21,12 @@ export function DebriefScreen() {
   const tc = useT(COMMON);
   useEffect(() => clearSave(storage), [storage]);
   const d = buildDebrief(game, content);
-  const scales: Array<[Exclude<keyof typeof d.scales, 'budget'>, Grade, string]> = [
+  const scales: Array<[keyof typeof d.scales, Grade, string]> = [
     ['safety', d.scales.safety, game.injuries > 0 ? t('injuries', { n: game.injuries }) : t('noInjuries')],
     ['crew', d.scales.crew, t('mood', { n: Math.round(game.resources.mood) })],
     ['boat', d.scales.boat, t('deposit', { returned: d.depositReturnedEur, loss: d.depositLossEur })],
     ['schedule', d.scales.schedule, game.returnedOnTime ? t('onTime') : t('late')],
+    ['budget', d.scales.budget, t('spend', { spend: Math.round(weekSpend(game, d.depositLossEur)), budget: content.balance.budget.weekEur })],
   ];
   return (
     <ScreenFrame

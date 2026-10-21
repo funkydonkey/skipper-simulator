@@ -15,10 +15,14 @@ export interface EveningChoice { dinner: 'cook' | 'taverna'; dialogueId?: string
 
 export const tavernaOpen = (clockMin: number, b: Balance): boolean => clockMin < b.time.tavernaCloseHour * 60;
 
+/** What the crew's taverna dinner costs this evening, after the economist's discount. */
+export const tavernaBill = (state: GameState, b: Balance): { eur: number; savedEur: number } =>
+  priceFor(state.crew.length * b.mood.tavernaEurPerPerson, state.voices.economist, b);
+
 function dinner(state: GameState, content: Content, choice: EveningChoice['dinner']): { outcomes: Outcome[]; cooked: boolean; activity: Activity | null } {
   const b = content.balance;
   if (choice === 'taverna') {
-    const bill = priceFor(state.crew.length * b.mood.tavernaEurPerPerson, state.voices.economist, b);
+    const bill = tavernaBill(state, b);
     if (!canAfford(state, bill.eur)) throw new EngineError('NO_MONEY', `Dinner costs ${bill.eur} EUR`);
     const effect = { money: -bill.eur, mood: b.mood.tavernaDinner };
     return { outcomes: [{ cause: 'activity:taverna', pillar: 'promises', effect, saved: bill.savedEur }], cooked: false, activity: 'taverna' };

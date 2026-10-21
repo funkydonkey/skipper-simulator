@@ -18,7 +18,11 @@ function impactText(i: VoiceImpact, t: TFn<keyof typeof DEBRIEF>): string | null
   }
 }
 
-const xpRootLabel = (cause: string, lang: Lang): string => (Object.hasOwn(XP_ROOTS, cause) ? XP_ROOTS[cause]! : XP_ROOT_OTHER)[lang];
+/** Roots are two segments (`break:<system>`); a root may also be labelled by its first segment alone. */
+const xpRootLabel = (cause: string, lang: Lang): string => {
+  const key = [cause, cause.split(':')[0] ?? ''].find((k) => Object.hasOwn(XP_ROOTS, k));
+  return (key ? XP_ROOTS[key]! : XP_ROOT_OTHER)[lang];
+};
 
 /** XP grouped by its readable label (unknown roots fold into «other»), biggest first, top three. */
 function topSources(xp: VoiceReport['xp'], lang: Lang): Array<{ label: string; xp: number }> {

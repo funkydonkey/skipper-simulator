@@ -6,13 +6,14 @@ import { content, gameAt } from '../fixtures';
 import { renderShell } from '../render';
 
 describe('DebriefScreen', () => {
-  it('shows the four scales and every debrief link', () => {
+  it('shows the five scales and every debrief link', () => {
     const game = gameAt('debrief');
     renderShell(game);
-    for (const name of ['Безопасность', 'Экипаж', 'Лодка', 'Расписание']) expect(screen.getByRole('heading', { name })).toBeInTheDocument();
+    for (const name of ['Безопасность', 'Экипаж', 'Лодка', 'Расписание', 'Бюджет']) expect(screen.getByRole('heading', { name })).toBeInTheDocument();
     const d = buildDebrief(game, content);
     for (const l of d.links) expect(screen.getByText(l.text.ru)).toBeInTheDocument();
-    expect(screen.getAllByLabelText(/Оценка:/)).toHaveLength(4);
+    expect(screen.getAllByLabelText(/Оценка:/)).toHaveLength(5);
+    expect(screen.getByText(/^Потрачено \d+ € из \d+ €$/)).toBeInTheDocument();
   });
 
   it('clears the save slot and replays the same week', async () => {

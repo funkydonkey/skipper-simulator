@@ -22,6 +22,11 @@ function defectText(c: Content, id: string, lang: Lang): string {
 function systemName(c: Content, id: string, lang: Lang): string {
   return c.systems.find((d) => d.id === id)?.name[lang] ?? id;
 }
+/** The system name in running text: «Сломалось: охлаждение двигателя». */
+function systemInline(c: Content, id: string, lang: Lang): string {
+  const name = systemName(c, id, lang);
+  return name.charAt(0).toLowerCase() + name.slice(1);
+}
 function topicTitle(c: Content, id: string, lang: Lang): string {
   return c.briefing.find((t) => t.id === id)?.title[lang] ?? id;
 }
@@ -39,6 +44,8 @@ function routeName(c: Content, id: string, lang: Lang): string {
 /** Human reason for an xp grant, from the inner cause (`roll:check:<event>:<option>`, `order:wrong:<m>:<err>`, `order:ok:<m>`); null when unknown. */
 export function xpCauseText(inner: string[], c: Content, lang: Lang): string | null {
   const [root, a = '', b = ''] = inner;
+  if (root === 'break') return fmt(LOG.xpBreak[lang], { system: systemInline(c, a, lang) });
+  if (root === 'roll' && a === 'check' && inner[2] === 'repair') return fmt(LOG.xpRepair[lang], { system: systemInline(c, inner[3] ?? '', lang) });
   if (root === 'roll' && a === 'check') return fmt(LOG.xpCheck[lang], { option: optionText(c, inner[2] ?? '', inner[3] ?? '', lang) });
   if (root === 'order' && a === 'wrong') return fmt(LOG.xpManeuverWrong[lang], { title: maneuverTitle(c, b, lang) });
   if (root === 'order' && a === 'ok') return fmt(LOG.xpManeuverOk[lang], { title: maneuverTitle(c, b, lang) });
@@ -49,6 +56,8 @@ const DESCRIBE: Record<string, Describer> = {
   boat: ([, id = ''], _e, c, lang) => say('boatChosen', lang, { name: c.boats.find((b) => b.id === id)?.name[lang] ?? id }),
   checkin: ([verb, id = ''], _e, c, lang) => {
     if (verb === 'found') return say('defectFound', lang, { what: defectText(c, id, lang) }, 'good');
+    if (verb === 'fix') return say('checkinFixed', lang, { what: defectText(c, id, lang) }, 'good');
+    if (verb === 'sail_on') return say('checkinSailOn', lang, { what: defectText(c, id, lang) });
     return say(verb === 'check' ? 'checked' : 'skipped', lang, { what: label(CHECKPOINT_NAMES, id, lang) });
   },
   defect: ([, id = ''], _e, c, lang) => say('defectHidden', lang, { what: defectText(c, id, lang) }, 'bad'),
@@ -112,11 +121,11 @@ const DESCRIBE: Record<string, Describer> = {
     const key = ({ overpowered: 'sailOverpowered', break: 'sailBreak', reef_underway: 'sailReefUnderway' } as const)[what as 'break'];
     return key ? say(key, lang, {}, 'bad') : null;
   },
-  break: ([systemId = ''], _e, c, lang) => say('systemBroke', lang, { system: systemName(c, systemId, lang) }, 'bad'),
+  break: ([systemId = ''], _e, c, lang) => say('systemBroke', lang, { system: systemInline(c, systemId, lang) }, 'bad'),
   system: ([what, id = ''], _e, c, lang) => {
     const system = systemName(c, id, lang);
     switch (what) {
-      case 'daily': return say('systemDaily', lang, { system }, 'bad');
+      case 'daily': return say('systemDaily', lang, { system: systemInline(c, id, lang) }, 'bad');
       case 'anchor': return say('systemAnchor', lang, { system }, 'bad');
       case 'no_cook': return say('systemNoCook', lang, {}, 'bad');
       case 'no_motor': return say('systemNoMotor', lang, {}, 'bad');
@@ -124,8 +133,13 @@ const DESCRIBE: Record<string, Describer> = {
       default: return null;
     }
   },
-  rescue: ([what], e, _c, lang) => (what === 'tow' ? say('towed', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0) }, 'bad') : null),
-  repair: ([systemId = ''], _e, c, lang) => say('systemRepaired', lang, { system: systemName(c, systemId, lang) }, 'good'),
+  rescue: ([what], e, _c, lang) => (what === 'tow' ? say('towed', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0), hours: num(e, 'time_hours') }, 'bad') : null),
+  // `repair:<sys>:<id>` is the payment (noise); `…:success|fail` is the outcome the captain sees.
+  repair: ([systemId = '', , outcome], _e, c, lang) => {
+    const system = systemInline(c, systemId, lang);
+    if (outcome === 'success') return say('systemRepaired', lang, { system }, 'good');
+    return outcome === 'fail' ? say('systemRepairFailed', lang, { system }, 'bad') : null;
+  },
   mood_per_day: (_p, e, _c, lang) => say('moodPerDay', lang, { mood: signed(e.delta?.mood ?? 0) }, 'bad'),
   event: ([eventId = '', optionId, tag], _e, c, lang) => {
     if (!optionId) return say('eventHappened', lang, { text: firstSentence(c.events.find((x) => x.id === eventId)?.text[lang] ?? eventId) });
@@ -179,7 +193,7 @@ export function describeEntry(e: LogEntry, content: Content, lang: Lang): LogLin
   return { day: e.day, clock: formatClock(e.clockMin), text: d.text, tone: d.tone ?? 'neutral', kind: e.kind, cause: e.cause, ...(e.pillar ? { pillar: e.pillar } : {}), ...(e.odds ? { odds: e.odds } : {}) };
 }
 
-const NOISE_ROOTS = new Set(['voices', 'engine', 'fatigue', 'consumption', 'charge', 'defect', 'choice']);
+const NOISE_ROOTS = new Set(['voices', 'engine', 'fatigue', 'consumption', 'charge', 'defect', 'choice', 'wear']);
 
 /** Entries the captain did not witness or that only duplicate another line. Debrief still uses them. */
 export function isNoise(e: LogEntry): boolean {
@@ -187,6 +201,7 @@ export function isNoise(e: LogEntry): boolean {
   if (NOISE_ROOTS.has(root)) return true;
   if ((root === 'checkin' || root === 'briefing') && verb === 'skip') return true;
   if (root === 'plan' && verb === 'mode') return true;
+  if (root === 'repair' && e.cause.split(':').length === 3) return true; // the payment; its outcome line follows
   if (root === 'night' && verb === 'sleep') return true;
   // Logged at 08:00 but decided for the whole day: showing it would spoil the front before any signal.
   if (root === 'roll' && verb === 'front') return true;
