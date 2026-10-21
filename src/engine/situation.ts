@@ -1,14 +1,11 @@
 import { evaluateChance, rollChance } from './chance';
 import { EngineError } from './errors';
 import { buildConditionContext } from './expr';
-import { visibleWeather, previewPlan } from './preview';
 import type { RngResult } from './rng';
 import { dirToDeg } from './sailing';
-import { requirePoint, requireTemplate } from './state';
-import type { Balance, BerthType, ChanceSpec, Content, DayPlan, Dir8, GameState, MapPoint, Situation, WindSide } from './types';
+import { requireTemplate } from './state';
+import type { Balance, BerthType, ChanceSpec, Content, DayWeather, Dir8, GameState, MapPoint, Situation, WindSide } from './types';
 import { realWind } from './weather';
-
-type SituationContext = Record<string, string | number | boolean>;
 
 /** Which side of the moored boat the wind comes from. `windFromDeg` is where it blows FROM; `headingDeg` is the bow heading. */
 export function windSide(windFromDeg: number, headingDeg: number, windKn: number, b: Balance): WindSide {
@@ -42,18 +39,19 @@ function build(
   };
 }
 
-/** What the plan promises at the destination. Pure: no RNG. Null on a stay day. */
-export function forecastSituation(state: GameState, content: Content, plan: DayPlan): Situation | null {
-  if (plan.legs.length === 0 || !state.weather) return null;
-  const preview = previewPlan(state, content, plan);
-  if (preview.arrivalMin === null) return null;
-  const point = requirePoint(content, preview.destinationId);
+/**
+ * The forecast at `point` on arrival at `arrivalMin`, seen through `weather` (the captain's visible weather).
+ * Pure: no RNG. `previewPlan` calls it; `forecastSituation` (preview.ts) wraps it for a plan.
+ */
+export function forecastAt(
+  state: GameState, content: Content, weather: DayWeather, point: MapPoint, berth: BerthType | undefined, arrivalMin: number,
+): Situation {
   const b = content.balance;
-  const wind = realWind(visibleWeather(state.weather), 1, preview.arrivalMin / 60, requireTemplate(content, state.weatherTemplateId), b);
+  const wind = realWind(weather, 1, arrivalMin / 60, requireTemplate(content, state.weatherTemplateId), b);
   const odds = point.marineroChance > 0
-    ? evaluateChance(marineroSpec(point, b), { ...buildConditionContext(state, content), hour: preview.arrivalMin / 60 })
+    ? evaluateChance(marineroSpec(point, b), { ...buildConditionContext(state, content), hour: arrivalMin / 60 })
     : null;
-  return build(point, plan.berth, wind, b, odds !== null && odds.value >= 0.5, odds, 'forecast');
+  return build(point, berth, wind, b, odds !== null && odds.value >= 0.5, odds, 'forecast');
 }
 
 /**
@@ -69,14 +67,4 @@ export function arrivalSituation(state: GameState, content: Content, point: MapP
   return { value: build(point, berth, wind, b, r.value.hit, r.value.odds, 'fact'), next: r.next };
 }
 
-/** Condition-language view of a situation; neutral values when there is none. */
-export function situationContext(s: Situation | null): SituationContext {
-  return {
-    'wind.side': s?.windSide ?? 'none',
-    'wind.kn': s?.windKn ?? 0,
-    'wind.dir': s?.windDir ?? '',
-    'place.marinero': s?.marinero ?? false,
-    'place.tight': s?.tight ?? false,
-    'place.berth': s?.berth ?? '',
-  };
-}
+export { situationContext, type SituationContext } from './situation-context';

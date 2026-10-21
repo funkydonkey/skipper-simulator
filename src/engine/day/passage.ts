@@ -1,12 +1,12 @@
 import { assertNoPendingEvent, assertPhase, EngineError } from '../errors';
 import { queueEvent } from '../events';
 import { appendLog } from '../log';
-import { maneuverForKind, validateOrder } from '../maneuver';
+import { maneuverFor, validateOrder } from '../maneuver';
 import { applyOutcome } from '../resources';
 import { advanceClock, otherEnd, requireBoat, requirePoint, requireRoute, round1, round2 } from '../state';
 import { addWear, brokenFlags } from '../systems';
 import { restHours } from '../time';
-import { MANEUVER_KINDS, type Activity, type Balance, type Boat, type Content, type DayPlan, type EventPhase, type GameState, type ManeuverKind } from '../types';
+import { MANEUVER_KINDS, type Activity, type Balance, type BerthType, type Boat, type Content, type DayPlan, type EventPhase, type GameState, type ManeuverKind } from '../types';
 import { arrive, runManeuver } from './arrival';
 import { runLeg, startEngine } from './legs';
 
@@ -22,10 +22,13 @@ function invalid(msg: string): never {
   throw new EngineError('INVALID_INPUT', msg);
 }
 
-function validateOrders(content: Content, plan: DayPlan): void {
+/** The berth's own kind gets the berth's maneuver; other kinds (departure, fallback anchoring) their default. */
+const BERTH_KIND: Record<BerthType, ManeuverKind> = { stern_to: 'mooring', side_to: 'mooring', anchor: 'anchoring', anchor_ashore: 'anchoring' };
+
+function validateOrders(content: Content, plan: DayPlan, berth: BerthType | undefined): void {
   for (const [kind, order] of Object.entries(plan.maneuverOrders ?? {}) as [ManeuverKind, string[]][]) {
     if (!(MANEUVER_KINDS as readonly string[]).includes(kind)) invalid(`Unknown maneuver kind "${kind}"`);
-    const m = maneuverForKind(content, kind);
+    const m = maneuverFor(content, kind, berth !== undefined && BERTH_KIND[berth] === kind ? berth : undefined);
     const problem = m ? validateOrder(m, order) : null;
     if (problem) invalid(problem);
   }
@@ -52,10 +55,11 @@ export function validatePlan(state: GameState, content: Content, plan: DayPlan):
     }
     at = next;
   });
-  if (plan.berth !== undefined && plan.legs.length > 0 && !requirePoint(content, at).berths.some((x) => x.type === plan.berth)) {
+  const dest = requirePoint(content, at);
+  if (plan.berth !== undefined && plan.legs.length > 0 && !dest.berths.some((x) => x.type === plan.berth)) {
     invalid(`${at} has no "${plan.berth}" berth`);
   }
-  validateOrders(content, plan);
+  validateOrders(content, plan, plan.legs.length > 0 ? plan.berth ?? dest.berths[0]!.type : undefined);
 }
 
 function logPlanDecisions(state: GameState, content: Content, plan: DayPlan): GameState {
@@ -114,7 +118,8 @@ function settleDay(state: GameState, content: Content, boat: Boat, plan: DayPlan
 function sail(state: GameState, content: Content, boat: Boat, plan: DayPlan): { state: GameState; summary: DaySummary } {
   const b = content.balance;
   const origin = requirePoint(content, state.locationId);
-  let s = startEngine({ ...state, clockMin: Math.max(state.clockMin, Math.round(plan.departureHour * 60)) }, content, boat);
+  // Departure and anchor_up run without a situation: the origin's wind side is not modelled.
+  let s = startEngine({ ...state, situation: null, clockMin: Math.max(state.clockMin, Math.round(plan.departureHour * 60)) }, content, boat);
   const departureHour = s.clockMin / 60;
   s = runManeuver(s, content, origin.kind === 'bay' ? 'anchor_up' : 'departure', plan.maneuverOrders);
   s = advanceClock(s, b.time.departureMin);
@@ -131,7 +136,7 @@ function sail(state: GameState, content: Content, boat: Boat, plan: DayPlan): { 
     };
   }, { state: s, at: s.locationId, summary: start });
   const swim = swimStops({ ...sailed.state, locationId: sailed.at }, boat, plan.swimStops, b);
-  const arrival = arrive(swim.state, content, boat, plan.maneuverOrders);
+  const arrival = arrive(swim.state, content, boat, plan.maneuverOrders, plan.berth);
   return { state: arrival.state, summary: { ...sailed.summary, mooring: arrival.mooring, swum: swim.swum } };
 }
 

@@ -93,7 +93,7 @@ describe('odds builders reproduce the Stage 2 formulas', () => {
       for (const windKn of [0, 10, 17.9, 18, 30]) {
         for (const night of [false, true]) {
           for (const briefed of [false, true]) {
-            const ctx = { 'place.seabed': seabed, wind: windKn, night, 'briefing.anchor': briefed };
+            const ctx = { 'place.seabed': seabed, 'place.berth': 'anchor', wind: windKn, night, 'briefing.anchor': briefed };
             const got = evaluateChance(anchorFailSpec(b), ctx).value;
             expect(got).toBeCloseTo(oldAnchorFail(seabed, windKn, briefed, night, b), PRECISION);
           }
@@ -101,11 +101,11 @@ describe('odds builders reproduce the Stage 2 formulas', () => {
       }
     }
     const worst = { ...b, time: { ...b.time, nightAnchorPenalty: 0.5 } };
-    expect(evaluateChance(anchorFailSpec(worst), { 'place.seabed': 'rock', wind: 30, night: true }).value).toBe(0.95);
+    expect(evaluateChance(anchorFailSpec(worst), { 'place.seabed': 'rock', 'place.berth': 'anchor', wind: 30, night: true }).value).toBe(0.95);
   });
 
   it('anchorFailSpec labels each source', () => {
-    const odds = evaluateChance(anchorFailSpec(b), { 'place.seabed': 'rock', wind: 30, night: true, 'briefing.anchor': true });
+    const odds = evaluateChance(anchorFailSpec(b), { 'place.seabed': 'rock', 'place.berth': 'anchor', wind: 30, night: true, 'briefing.anchor': true });
     expect(odds.parts.map((p) => p.source)).toEqual(['base', 'seabed', 'wind', 'night', 'briefing']);
   });
 
@@ -180,7 +180,7 @@ describe('event check odds', () => {
 });
 
 describe('roll logging', () => {
-  const ROLL_CAUSE = /^roll:(check:\w+:\w+|injury:maneuver:\w+:\w+|sail_break:\w+|injury:reef:\w+|anchor:[1-9]|marina:\w+|front:\d+|failure:\w+:\w+)$/;
+  const ROLL_CAUSE = /^roll:(check:\w+:\w+|injury:maneuver:\w+:\w+|sail_break:\w+|injury:reef:\w+|anchor:[1-9]|marina:\w+|marinero:\w+|front:\d+|failure:\w+:\w+)$/;
   const weeks = [1, 2, 3, 4, 5].flatMap((seed) => [runWeek(content, seed, newbie).state, runWeek(content, seed, expert).state]);
 
   it('every roll entry has a known cause, odds that sum to its value, and a hit flag', () => {

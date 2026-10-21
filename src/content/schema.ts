@@ -157,10 +157,10 @@ export const GameEventSchema: z.ZodType<GameEvent> = z.object({
 }).strict();
 
 export const ManeuverSchema: z.ZodType<Maneuver> = z.object({
-  id: Id, kind: z.enum(MANEUVER_KINDS), title: Text,
-  steps: z.array(z.object({ id: Id, text: Text }).strict()).min(2),
+  id: Id, kind: z.enum(MANEUVER_KINDS), berth: z.enum(BERTH_TYPES).optional(), title: Text,
+  steps: z.array(z.object({ id: Id, text: Text, when: z.string().min(1).optional() }).strict()).min(2),
   errors: z.array(z.object({
-    id: Id, wrongIf: z.object({ first: Id, then: Id }).strict(), effect: EffectSchema,
+    id: Id, when: z.string().min(1).optional(), wrongIf: z.object({ first: Id, then: Id }).strict(), effect: EffectSchema,
     injuryChance: Prob, mitigatedBy: z.string().min(1).optional(), xp: NonNeg.optional(), text: Text,
   }).strict()),
   injuryMods: z.array(ChanceModSchema).optional(),
@@ -203,6 +203,7 @@ export const BalanceSchema: z.ZodType<Balance> = z.object({
   checkin: z.object({ budgetMin: Pos, costMin: fullRecord(CHECKPOINTS, NonNeg) }).strict(),
   briefing: z.object({ slots: Int.positive(), maxDialogues: Int.min(0) }).strict(),
   situation: z.object({ calmKn: NonNeg }).strict(),
+  berths: z.object({ sideToPriceFactor: Pos, ashoreTimeHours: NonNeg, ashoreAnchorFailMul: z.number().min(-1) }).strict(),
   weather: z.object({ frontAddKn: Pair, frontShiftSteps: Int, barometerDropHpa: NonNeg, afternoonFromHour: Hour, jitter: WeatherJitterSchema }).strict(),
   schedule: z.object({ days: Int.positive(), returnDeadlineHour: Hour, lateFeeEur: NonNeg }).strict(),
   rescue: z.object({ jumpStartEur: NonNeg, jumpStartDelayMin: NonNeg, moodPenalty: NonNeg, towEur: NonNeg, towHours: NonNeg, towMoodPenalty: NonNeg }).strict(),

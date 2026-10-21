@@ -86,7 +86,8 @@ export interface LogEntry {
   cause: string;
   pillar?: Pillar;
   delta?: Partial<Record<keyof Resources, number>>;
-  data?: Record<string, string | number | boolean>;
+  /** `string[]` only for ordered ids, e.g. the reconciled steps of an `order:*` entry. */
+  data?: Record<string, string | number | boolean | string[]>;
   /** Chance of a `roll` entry, with its per-source breakdown. */
   odds?: ChanceValue;
 }
@@ -294,9 +295,16 @@ export interface GameEvent {
   debrief: LocalizedText;
 }
 
-export interface ManeuverStep { id: string; text: LocalizedText }
+export interface ManeuverStep {
+  id: string;
+  text: LocalizedText;
+  /** Condition (situation keys such as `wind.side`): the step exists only when true. Absent = always. */
+  when?: string;
+}
 export interface ManeuverError {
   id: string;
+  /** Condition: the error is judged only when true. Absent = always. */
+  when?: string;
   /** Error fires if step `first` is placed before step `then`. */
   wrongIf: { first: string; then: string };
   effect: Effect;
@@ -310,6 +318,8 @@ export interface ManeuverError {
 export interface Maneuver {
   id: string;
   kind: ManeuverKind;
+  /** Picks this maneuver over the kind's default (the one without `berth`) at that berth. */
+  berth?: BerthType;
   title: LocalizedText;
   /** Listed in the CORRECT order. UI shuffles. */
   steps: ManeuverStep[];
@@ -383,6 +393,7 @@ export interface Balance {
   checkin: { budgetMin: number; costMin: Record<CheckpointId, number> };
   briefing: { slots: number; maxDialogues: number };
   situation: { calmKn: number };
+  berths: { sideToPriceFactor: number; ashoreTimeHours: number; ashoreAnchorFailMul: number };
   weather: { frontAddKn: [number, number]; frontShiftSteps: number; barometerDropHpa: number; afternoonFromHour: number; jitter: WeatherJitter };
   schedule: { days: number; returnDeadlineHour: number; lateFeeEur: number };
   rescue: { jumpStartEur: number; jumpStartDelayMin: number; moodPenalty: number; towEur: number; towHours: number; towMoodPenalty: number };
@@ -526,7 +537,7 @@ export interface Situation {
   berth: BerthType; windSide: WindSide; windKn: number; windDir: Dir8;
   /** Fact (arrival) or most likely (forecast). */
   marinero: boolean;
-  /** Odds behind `marinero`; null when the point has no marinero. */
+  /** Odds behind `marinero`, filled on both forecast and fact; null when the point has no marinero. */
   marineroOdds: ChanceValue | null;
   seabed: Seabed; tight: boolean; source: 'forecast' | 'fact';
 }

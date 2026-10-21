@@ -36,7 +36,7 @@ export function sailBreakSpec(breakChance: number, b: Balance): ChanceSpec {
   return { base: breakChance, mods: riskMods(b) };
 }
 
-/** Per attempt. Context: `place.seabed`, `wind` (kLocal 1), `night`, `briefing.anchor`. */
+/** Per attempt. Context: `place.seabed`, `place.berth`, `wind` (kLocal 1), `night`, `briefing.anchor`. */
 export function anchorFailSpec(b: Balance): ChanceSpec {
   const t = b.time;
   const [lo, hi] = t.anchorFailChance;
@@ -50,6 +50,8 @@ export function anchorFailSpec(b: Balance): ChanceSpec {
       { if: `wind >= ${t.anchorWindPenaltyKn}`, add: t.anchorWindPenalty, label: 'wind' },
       { if: 'night', add: t.nightAnchorPenalty, label: 'night' },
       { if: 'briefing.anchor', add: -t.anchorBriefedReduction, label: 'briefing' },
+      // Stern lines ashore hold the boat: the anchor drags less.
+      { if: "place.berth == 'anchor_ashore'", mul: b.berths.ashoreAnchorFailMul, label: 'seabed' },
     ],
     max: 0.95,
   };

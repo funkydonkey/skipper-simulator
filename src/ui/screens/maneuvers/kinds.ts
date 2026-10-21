@@ -1,4 +1,4 @@
-import { correctOrder, maneuverForKind, otherEnd, requirePoint, requireRoute, type Content, type DayPlan, type GameState, type Maneuver, type ManeuverKind } from '../../../engine';
+import { correctOrder, maneuverFor, otherEnd, requirePoint, requireRoute, type Content, type DayPlan, type GameState, type Maneuver, type ManeuverKind } from '../../../engine';
 
 export interface ManeuverSpec { kind: ManeuverKind; maneuver: Maneuver; fallback: boolean }
 
@@ -14,7 +14,7 @@ export function maneuversFor(game: GameState, content: Content, plan: DayPlan): 
     if (dest.placesGoneHour !== null) kinds.push(['anchoring', true]);
   }
   return kinds.flatMap(([kind, fallback]) => {
-    const maneuver = maneuverForKind(content, kind);
+    const maneuver = maneuverFor(content, kind);
     return maneuver ? [{ kind, maneuver, fallback }] : [];
   });
 }

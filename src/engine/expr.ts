@@ -2,7 +2,7 @@ import { EngineError } from './errors';
 import { requireTemplate } from './state';
 import { systemContext } from './systems';
 import type { Content, GameState } from './types';
-import { situationContext } from './situation';
+import { situationContext } from './situation-context';
 import { realWind } from './weather';
 
 export type CondValue = number | boolean | string;

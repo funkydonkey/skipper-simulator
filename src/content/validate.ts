@@ -1,5 +1,5 @@
 import { pointBerthProblem } from '../engine/berths';
-import { MANEUVER_KINDS, type Content, type Effect } from '../engine/types';
+import { MANEUVER_KINDS, type BerthType, type Content, type Effect, type ManeuverKind } from '../engine/types';
 import type { ContentError } from './parse';
 
 type Add = (path: string, message: string) => void;
@@ -48,11 +48,22 @@ function checkWeatherAndBriefing(c: Content, add: Add): void {
   if (c.briefing.length < c.balance.briefing.slots) add('briefing', `need at least ${c.balance.briefing.slots} topics`);
 }
 
+/** The kind a berth's maneuver belongs to. */
+const BERTH_KIND: Record<BerthType, ManeuverKind> = { stern_to: 'mooring', side_to: 'mooring', anchor: 'anchoring', anchor_ashore: 'anchoring' };
+
 function checkManeuvers(c: Content, add: Add): void {
   for (const kind of MANEUVER_KINDS) {
-    if (!c.maneuvers.some((m) => m.kind === kind)) add('maneuvers', `no maneuver of kind "${kind}"`);
+    const defaults = c.maneuvers.filter((m) => m.kind === kind && m.berth === undefined).length;
+    if (defaults !== 1) add('maneuvers', `kind "${kind}" needs exactly one default maneuver (without berth), found ${defaults}`);
   }
+  const seen = new Set<string>();
   c.maneuvers.forEach((m, i) => {
+    if (m.berth !== undefined) {
+      if (BERTH_KIND[m.berth] !== m.kind) add(`maneuvers[${i}].berth`, `berth "${m.berth}" does not fit kind "${m.kind}"`);
+      const key = `${m.kind}:${m.berth}`;
+      if (seen.has(key)) add(`maneuvers[${i}].berth`, `second ${m.kind} maneuver for berth "${m.berth}"`);
+      seen.add(key);
+    }
     uniqueIds(`maneuvers[${i}].steps`, m.steps, add);
     const steps = new Set(m.steps.map((s) => s.id));
     m.errors.forEach((e, j) => {

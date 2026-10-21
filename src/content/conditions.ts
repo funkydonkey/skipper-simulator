@@ -61,7 +61,9 @@ export function validateConditions(c: Content): ContentError[] {
     d.repairs.forEach((r, j) => { if (r.requires) check(r.requires, `systems[${i}].repairs[${j}].requires`); });
   });
   c.maneuvers.forEach((m, i) => {
+    m.steps.forEach((st, j) => { if (st.when) check(st.when, `maneuvers[${i}].steps[${j}].when`); });
     m.errors.forEach((e, j) => {
+      if (e.when) check(e.when, `maneuvers[${i}].errors[${j}].when`);
       if (e.mitigatedBy && !known.has(e.mitigatedBy)) {
         errors.push({ file: 'cross', path: `maneuvers[${i}].errors[${j}].mitigatedBy`, message: `Unknown identifier "${e.mitigatedBy}"` });
       }

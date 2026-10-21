@@ -53,6 +53,7 @@
   "checkin": { "budgetMin": 72, "costMin": { "anchor": 15, "impeller": 20, "gas": 10, "toilets": 15, "sails": 25, "electrics": 20, "damage_photos": 15 } },
   "briefing": { "slots": 4, "maxDialogues": 2 },
   "situation": { "calmKn": 4 },
+  "berths": { "sideToPriceFactor": 1.5, "ashoreTimeHours": 0.5, "ashoreAnchorFailMul": -0.5 },
   "weather": { "frontAddKn": [8, 12], "frontShiftSteps": 2, "barometerDropHpa": 5, "afternoonFromHour": 13, "jitter": { "dirSteps": 1, "kn": 2 } },
   "schedule": { "days": 6, "returnDeadlineHour": 17, "lateFeeEur": 400 },
   "rescue": { "jumpStartEur": 120, "jumpStartDelayMin": 180, "moodPenalty": 5, "towEur": 250, "towHours": 2, "towMoodPenalty": 10 },
