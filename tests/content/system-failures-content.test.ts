@@ -23,6 +23,10 @@ describe('system failures content', () => {
     }
   });
 
+  it('a torn genoa breaks the rig whichever option is chosen', () => {
+    for (const o of eventOf('genoa_seam_rip')!.options) expect(o.effects?.break, o.id).toBe('rig');
+  });
+
   it('migrated events no longer read defect flags', () => {
     for (const id of MIGRATED) {
       expect(eventOf(id)!.trigger.conditions.filter((c) => c.includes('defect.')), id).toEqual([]);

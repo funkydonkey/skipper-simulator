@@ -601,7 +601,8 @@
         },
         "effects": {
           "fuel": -6,
-          "time_hours": 0.5
+          "time_hours": 0.5,
+          "break": "rig"
         }
       }
     ],
