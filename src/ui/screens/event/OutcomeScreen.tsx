@@ -4,7 +4,7 @@ import { SceneArt } from '../../components/SceneArt';
 import { ScreenFrame } from '../../components/ScreenFrame';
 import { COMMON } from '../../i18n/common';
 import { useAct, useGame, useSession, useT } from '../../session/SessionContext';
-import { signed } from '../../view/format';
+import { formatDuration, signed } from '../../view/format';
 import { describeEntry, isLogbookOnly, isNoise } from '../../view/logbook';
 import { RESOURCE_NAMES } from '../../view/strings';
 import { sumDeltas, timeSpentHours } from './deltas';
@@ -38,7 +38,7 @@ export function OutcomeScreen() {
               {deltas.map(([k, v]) => <li key={k} data-sign={v > 0 ? 'plus' : 'minus'}>{RESOURCE_NAMES[k][lang]} <span className="mono">{signed(v)}</span></li>)}
             </ul>
           )}
-          {hours > 0 && <p className="mono">{t('timeSpent', { h: hours })}</p>}
+          {hours > 0 && <p className="mono">{t('timeSpent', { time: formatDuration(hours, lang) })}</p>}
         </div>
       </div>
     </ScreenFrame>

@@ -6,5 +6,5 @@ export const EVENT = dict({
   outcomeTitle: { ru: 'Последствия', en: 'What came of it' },
   changes: { ru: 'Изменения', en: 'Changes' },
   noChanges: { ru: 'Ресурсы не изменились.', en: 'No change to resources.' },
-  timeSpent: { ru: 'Ушло времени: {h} ч', en: 'Time spent: {h} h' },
+  timeSpent: { ru: 'Ушло времени: {time}', en: 'Time spent: {time}' },
 });

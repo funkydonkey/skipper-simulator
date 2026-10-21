@@ -1,13 +1,12 @@
 import { formatClock, type BerthType, type PlanPreview } from '../../../engine';
 import { ChanceBadge } from '../../components/ChanceBadge';
 import { useGame, useT } from '../../session/SessionContext';
-import { formatHour } from '../../view/format';
+import { formatDuration, formatHour } from '../../view/format';
 import { pointName } from '../../view/map';
 import { BERTH_NAMES, SEABED_NAMES } from '../../view/strings';
 import styles from './Planning.module.css';
 import { PLANNING } from './strings';
 
-const round1 = (n: number): number => Math.round(n * 10) / 10;
 
 interface PreviewPanelProps { preview: PlanPreview; berth?: BerthType | undefined; onBerth: (berth: BerthType) => void }
 
@@ -32,10 +31,10 @@ export function PreviewPanel({ preview, berth, onBerth }: PreviewPanelProps) {
           <ul className={styles.legPreviews}>
             {preview.legs.map((l, i) => (
               <li key={`${l.routeId}-${i}`}>
-                {t('legPreview', { to: pointName(content, l.to, lang), wind: l.windKn, speed: l.speedKn, hours: round1(l.hours) })}
+                {t('legPreview', { to: pointName(content, l.to, lang), wind: l.windKn, speed: l.speedKn, time: formatDuration(l.hours, lang) })}
                 {l.localEffectKnown && <em> {t('localKnown')}</em>}
                 {l.breakChance.value > 0 && <div className={styles.odds}>{t('sailRisk')} <ChanceBadge odds={l.breakChance} voices={game.voices} /></div>}
-                {l.tow && <p className={styles.warn}>{t('legTow', { eur: l.tow.eur, hours: l.tow.hours })}</p>}
+                {l.tow && <p className={styles.warn}>{t('legTow', { eur: l.tow.eur, time: formatDuration(l.tow.hours, lang) })}</p>}
                 {!l.tow && l.mode !== l.plannedMode && <p className={styles.warn}>{t(l.mode === 'sail' ? 'legNoMotor' : 'legNoSail')}</p>}
                 {l.overpowered && <p className={styles.warn}>{t('overpowered')}</p>}
                 {l.forcedReef && <p className={styles.warn}>{t('forcedReef')}</p>}
@@ -67,7 +66,7 @@ export function PreviewPanel({ preview, berth, onBerth }: PreviewPanelProps) {
         </>
       )}
       {warnings.map((w) => <p key={w} className={styles.warn}>{w}</p>)}
-      <p className={styles.muted}>{t('rest', { h: round1(preview.restHours) })}</p>
+      <p className={styles.muted}>{t('rest', { time: formatDuration(preview.restHours, lang) })}</p>
     </section>
   );
 }

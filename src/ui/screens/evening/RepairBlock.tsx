@@ -3,6 +3,7 @@ import { Button } from '../../components/Button';
 import { ChanceBadge } from '../../components/ChanceBadge';
 import { systemName } from '../../i18n/glossary';
 import { useAct, useGame, useT } from '../../session/SessionContext';
+import { formatDuration } from '../../view/format';
 import styles from './RepairBlock.module.css';
 import { REPAIR } from './strings';
 
@@ -22,7 +23,7 @@ export function RepairBlock() {
             <span className={styles.system}>{systemName(content, systemId, lang)}</span>
             <div className={styles.facts}>
               <span>{t('cost', { eur: option.costEur ?? 0 })}</span>
-              <span>{t('time', { h: option.timeHours ?? 0 })}</span>
+              <span>{formatDuration(option.timeHours ?? 0, lang)}</span>
               {odds && <ChanceBadge odds={odds} voices={game.voices} />}
             </div>
             <Button variant="secondary" disabled={!available} onClick={() => act({ type: 'repair', systemId, repairId: option.id })}>
