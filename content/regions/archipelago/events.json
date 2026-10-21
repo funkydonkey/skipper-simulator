@@ -63,7 +63,6 @@
           "en": "Put up with it until the marina"
         },
         "effects": {
-          "mood_per_day": -8,
           "break": "heads"
         }
       }
@@ -541,7 +540,6 @@
           "en": "Seal the head until the marina"
         },
         "effects": {
-          "mood_per_day": -5,
           "break": "heads"
         }
       }

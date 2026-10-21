@@ -66,6 +66,13 @@ describe('system failures content', () => {
     expect(keep.effects).toEqual({ break: 'electrical', mood: -3 });
   });
 
+  it('putting up with a broken head costs only the heads dailyEffect, not a second mood_per_day (R30)', () => {
+    const heads = content.systems.find((d) => d.id === 'heads')!;
+    expect(heads.brokenEffect.dailyEffect).toEqual({ mood: -8 });
+    expect(eventOf('toilet_clog')!.options.find((o) => o.id === 'endure')!.effects).toEqual({ break: 'heads' });
+    expect(eventOf('toilet_misuse')!.options.find((o) => o.id === 'close_it')!.effects).toEqual({ break: 'heads' });
+  });
+
   it('Calypso water tank is 300 L', () => {
     expect(content.boats.find((b) => b.id === 'calypso_38')!.waterTankL).toBe(300);
   });
