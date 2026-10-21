@@ -1,3 +1,4 @@
+import { pointBerthProblem } from '../engine/berths';
 import { MANEUVER_KINDS, type Content, type Effect } from '../engine/types';
 import type { ContentError } from './parse';
 
@@ -14,6 +15,10 @@ function uniqueIds(name: string, items: ReadonlyArray<{ id: string }>, add: Add)
 function checkMap(c: Content, add: Add): void {
   const bases = c.map.filter((p) => p.kind === 'base');
   if (bases.length !== 1) add('map', `exactly one base point required, found ${bases.length}`);
+  c.map.forEach((p, i) => {
+    const problem = pointBerthProblem(p);
+    if (problem) add(`map[${i}].berths`, problem);
+  });
   const ids = new Set(c.map.map((p) => p.id));
   c.routes.forEach((r, i) => {
     if (!ids.has(r.from)) add(`routes[${i}].from`, `unknown point "${r.from}"`);

@@ -52,6 +52,9 @@ export function validatePlan(state: GameState, content: Content, plan: DayPlan):
     }
     at = next;
   });
+  if (plan.berth !== undefined && plan.legs.length > 0 && !requirePoint(content, at).berths.some((x) => x.type === plan.berth)) {
+    invalid(`${at} has no "${plan.berth}" berth`);
+  }
   validateOrders(content, plan);
 }
 

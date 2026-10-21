@@ -173,9 +173,9 @@ describe('level changes land in the evening', () => {
 });
 
 describe('newGame', () => {
-  it('is version 3 with zeroed voiceXp', () => {
+  it('is version 4 with zeroed voiceXp', () => {
     const g = newGame(base, { seed: 1, lang: 'en' });
-    expect(g.version).toBe(3);
+    expect(g.version).toBe(4);
     expect(g.voiceXp).toEqual({ sea_sense: 0, caution: 0, order: 0, mechanic: 0, diplomat: 0, economist: 0 });
   });
 });

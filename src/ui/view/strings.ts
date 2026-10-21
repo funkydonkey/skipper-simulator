@@ -152,6 +152,7 @@ export const CHANCE_PARTS = dict({
   drama: { ru: 'драма', en: 'drama' },
   checkin: { ru: 'приёмка', en: 'check-in' },
   worn: { ru: 'износ', en: 'wear' },
+  marinero: { ru: 'маринеро', en: 'marinero' },
   unknown: { ru: 'прочее', en: 'other' },
 });
 

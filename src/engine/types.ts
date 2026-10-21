@@ -179,6 +179,13 @@ export interface PointServices {
   beach: boolean;
 }
 
+export type BerthType = 'stern_to' | 'side_to' | 'anchor' | 'anchor_ashore';
+export const BERTH_TYPES = ['stern_to', 'side_to', 'anchor', 'anchor_ashore'] as const;
+/** Bow heading when moored. */
+export interface Berth { type: BerthType; headingDeg: number }
+export type WindSide = 'bow' | 'stern' | 'port' | 'starboard' | 'none';
+export const WIND_SIDES = ['bow', 'stern', 'port', 'starboard', 'none'] as const;
+
 export interface MapPoint {
   id: string;
   name: LocalizedText;
@@ -193,6 +200,12 @@ export interface MapPoint {
   /** Hour after which berths run out (refusal chance applies). null = never. */
   placesGoneHour: number | null;
   services: PointServices;
+  /** Ways to moor here; bays offer anchor types, marinas/quays/base offer stern_to/side_to. */
+  berths: Berth[];
+  /** Chance a marinero meets the boat (0..1); 0 for bays. */
+  marineroChance: number;
+  /** A tight berth: little room to manoeuvre. */
+  tight?: boolean;
 }
 
 /** Routes are bidirectional. */
@@ -369,6 +382,7 @@ export interface Balance {
   checks: { base: number; perLevel: number; min: number; max: number };
   checkin: { budgetMin: number; costMin: Record<CheckpointId, number> };
   briefing: { slots: number; maxDialogues: number };
+  situation: { calmKn: number };
   weather: { frontAddKn: [number, number]; frontShiftSteps: number; barometerDropHpa: number; afternoonFromHour: number; jitter: WeatherJitter };
   schedule: { days: number; returnDeadlineHour: number; lateFeeEur: number };
   rescue: { jumpStartEur: number; jumpStartDelayMin: number; moodPenalty: number; towEur: number; towHours: number; towMoodPenalty: number };
@@ -451,6 +465,8 @@ export interface DayPlan {
   autopilot: boolean;
   /** Step-id order chosen by the player, per maneuver kind. Absent = correct order. */
   maneuverOrders?: Partial<Record<ManeuverKind, string[]>>;
+  /** One of the destination's berths; absent = its first berth. */
+  berth?: BerthType;
 }
 
 export interface DayFacts {
@@ -469,7 +485,7 @@ export interface DayFacts {
 }
 
 export interface GameState {
-  version: 3;
+  version: 4;
   seed: number;
   rng: number;
   lang: Lang;
@@ -502,9 +518,20 @@ export interface GameState {
   startBalanceEur: number;
   /** Set by `performCheckin` when a defect with a system was found; kept after `resolveDefects` for the record. */
   checkin: { found: string[]; fixed: string[]; minutesLeft: number } | null;
+  /** The berth situation after arrival; null before arrival and after `endDay`. */
+  situation: Situation | null;
 }
 
-export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn', 'thruster', 'broken', 'wear'] as const;
+export interface Situation {
+  berth: BerthType; windSide: WindSide; windKn: number; windDir: Dir8;
+  /** Fact (arrival) or most likely (forecast). */
+  marinero: boolean;
+  /** Odds behind `marinero`; null when the point has no marinero. */
+  marineroOdds: ChanceValue | null;
+  seabed: Seabed; tight: boolean; source: 'forecast' | 'fact';
+}
+
+export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn', 'thruster', 'broken', 'wear', 'marinero'] as const;
 export type ChanceLabel = (typeof CHANCE_LABELS)[number];
 /**
  * add: value += add * scale. mul: always a delta factor, value *= (1 + mul * scale); write deltas such as (weight - 1).

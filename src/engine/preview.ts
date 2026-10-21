@@ -119,11 +119,16 @@ function arrivalOdds(ctx: Ctx, dest: MapPoint, clockMin: number, marinaLate: boo
   return { marinaRefusal: null, anchorFail: evaluateChance(anchorFailSpec(b), { ...ctx.cond, 'place.seabed': dest.seabed, wind: wind.windKn, night }) };
 }
 
+/** Today's weather as the captain sees it: a front counts only when its signals are visible. */
+export function visibleWeather(w: DayWeather): DayWeather {
+  return { ...w, front: w.front && w.signalsVisible };
+}
+
 /** What the captain can foresee for a plan. Pure: no RNG, no state change. */
 export function previewPlan(state: GameState, content: Content, plan: DayPlan): PlanPreview {
   if (!state.weather) throw new EngineError('WRONG_PHASE', 'No weather for today: call startDay first');
   const b = content.balance;
-  const weather = { ...state.weather, front: state.weather.front && state.weather.signalsVisible };
+  const weather = visibleWeather(state.weather);
   const seesLocal = state.voices.sea_sense >= b.voices.seaSenseSignalLevel;
   const ctx: Ctx = { state, content, weather, seesLocal, cond: buildConditionContext(state, content), flags: brokenFlags(state, content) };
   if (plan.legs.length === 0) {

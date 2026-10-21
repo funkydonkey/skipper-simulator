@@ -100,7 +100,7 @@ export function endDay(state: GameState, content: Content, choice: EveningChoice
   s = applyLevelUps(s, b);
   s = night(s, content, boat, point, facts, meal.cooked);
   const day = s.day + 1;
-  return { ...s, day, phase: day > b.schedule.days ? 'return' : 'morning', clockMin: b.start.hour * 60, weather: null, dayFacts: null };
+  return { ...s, day, phase: day > b.schedule.days ? 'return' : 'morning', clockMin: b.start.hour * 60, weather: null, dayFacts: null, situation: null };
 }
 
 export function finishWeek(state: GameState, content: Content): GameState {

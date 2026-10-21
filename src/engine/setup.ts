@@ -32,13 +32,13 @@ export function newGame(content: Content, opts: NewGameOptions): GameState {
   const crewSize = opts.crewSize ?? b.start.crewSize;
   if (!Number.isInteger(crewSize) || crewSize < 1) throw new EngineError('INVALID_INPUT', `crewSize must be a positive integer, got ${crewSize}`);
   return {
-    version: 3, seed: opts.seed, rng: opts.seed >>> 0, lang: opts.lang, phase: 'captain', day: 0,
+    version: 4, seed: opts.seed, rng: opts.seed >>> 0, lang: opts.lang, phase: 'captain', day: 0,
     clockMin: b.start.hour * 60, weatherTemplateId: template.id, locationId: base.id, boatId: null,
     voices: initialVoicesZero(),
     voiceXp: { sea_sense: 0, caution: 0, order: 0, mechanic: 0, diplomat: 0, economist: 0 },
     resources: { waterL: 0, fuelL: 0, serviceBankPct: b.start.serviceBankPct, starterBankPct: b.start.starterBankPct, gasPct: b.start.gasPct, moneyEur: b.start.moneyEur, mood: b.start.mood, fatigue: b.start.fatigue },
     flags: {}, damages: [], systems: {}, crew: makeCrew(content, crewSize), expectations: [], moodPerDay: 0, injuries: 0,
-    log: [], firedEvents: [], eventQueue: [], weather: null, dayFacts: null, returnedOnTime: null, defects: [], checkin: null, startBalanceEur: 0,
+    log: [], firedEvents: [], eventQueue: [], weather: null, dayFacts: null, returnedOnTime: null, defects: [], checkin: null, startBalanceEur: 0, situation: null,
   };
 }
 

@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { pointBerthProblem } from '../engine/berths';
 import {
-  CHANCE_LABELS, CHECKPOINTS, DIRS, MANEUVER_KINDS, PILLARS, TRAINABLE_VOICES, VOICES,
+  BERTH_TYPES, CHANCE_LABELS, CHECKPOINTS, DIRS, MANEUVER_KINDS, PILLARS, TRAINABLE_VOICES, VOICES,
   type Balance, type Boat, type ChanceInput, type ChanceMod, type BriefingTopic, type CrewArchetype, type DebriefRule, type Dialogue, type Effect,
   type EventOption, type GameEvent, type Maneuver, type MapPoint, type Region, type SystemDef, type Route, type WeatherTemplate,
 } from '../engine/types';
@@ -97,7 +98,12 @@ export const MapPointSchema: z.ZodType<MapPoint> = z.object({
   seabed: z.enum(SEABEDS), shelter: fullRecord(DIRS, Prob),
   priceEur: NonNeg, placesGoneHour: Hour.nullable(),
   services: z.object({ water: z.boolean(), fuel: z.boolean(), shorePower: z.boolean(), gas: z.boolean(), taverna: z.boolean(), beach: z.boolean() }).strict(),
-}).strict();
+  berths: z.array(z.object({ type: z.enum(BERTH_TYPES), headingDeg: z.number().min(0).max(360) }).strict()).min(1),
+  marineroChance: Prob, tight: z.boolean().optional(),
+}).strict().superRefine((p, ctx) => {
+  const problem = pointBerthProblem(p);
+  if (problem) ctx.addIssue({ code: 'custom', path: ['berths'], message: problem });
+});
 
 export const RouteSchema: z.ZodType<Route> = z.object({
   id: Id, from: Id, to: Id, distanceNm: Pos, kLocal: Pos, features: z.array(z.enum(FEATURES)),
@@ -196,6 +202,7 @@ export const BalanceSchema: z.ZodType<Balance> = z.object({
   checks: z.object({ base: Prob, perLevel: NonNeg, min: Prob, max: Prob }).strict(),
   checkin: z.object({ budgetMin: Pos, costMin: fullRecord(CHECKPOINTS, NonNeg) }).strict(),
   briefing: z.object({ slots: Int.positive(), maxDialogues: Int.min(0) }).strict(),
+  situation: z.object({ calmKn: NonNeg }).strict(),
   weather: z.object({ frontAddKn: Pair, frontShiftSteps: Int, barometerDropHpa: NonNeg, afternoonFromHour: Hour, jitter: WeatherJitterSchema }).strict(),
   schedule: z.object({ days: Int.positive(), returnDeadlineHour: Hour, lateFeeEur: NonNeg }).strict(),
   rescue: z.object({ jumpStartEur: NonNeg, jumpStartDelayMin: NonNeg, moodPenalty: NonNeg, towEur: NonNeg, towHours: NonNeg, towMoodPenalty: NonNeg }).strict(),
