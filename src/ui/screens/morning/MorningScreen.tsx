@@ -31,8 +31,8 @@ export function MorningScreen() {
     >
       {game.day === b.schedule.days && <p className={styles.warning}>{t('lastDay', { time: formatHour(b.schedule.returnDeadlineHour) })}</p>}
       <Expectations />
-      <label className={styles.check}>
-        <input type="checkbox" checked={keenSense || barometer} disabled={keenSense} onChange={(e) => setBarometer(e.target.checked)} />
+      <label className={styles.check} data-locked={keenSense || undefined}>
+        <input type="checkbox" checked={keenSense || barometer} readOnly={keenSense} aria-readonly={keenSense || undefined} onChange={(e) => !keenSense && setBarometer(e.target.checked)} />
         {t('barometer')}
       </label>
       {keenSense && <VoiceLine voice="sea_sense" text={t('seaSense')} />}

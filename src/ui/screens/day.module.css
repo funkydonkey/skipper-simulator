@@ -14,3 +14,6 @@
 .levelUp { color: var(--ok); font-weight: 700; }
 .kept { color: var(--ok); }
 .broken { color: var(--bad); }
+/* A locked box (keen sea sense) reads as done, not as unavailable: full colour, default cursor. */
+.check[data-locked] { cursor: default; }
+.check[data-locked] input { accent-color: var(--ok); cursor: default; }

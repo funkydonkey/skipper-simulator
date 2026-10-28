@@ -5,7 +5,7 @@ export const MORNING = dict({
   expecting: { ru: 'Экипаж ждёт', en: 'The crew expects' },
   nothingExpected: { ru: 'Экипаж ничего особенного не ждёт.', en: 'The crew expects nothing in particular.' },
   barometer: { ru: 'Посмотреть на барометр и небо', en: 'Check the barometer and the sky' },
-  seaSense: { ru: 'Я и так чувствую погоду. Но лишний взгляд на барометр не повредит.', en: 'I can feel the weather anyway. Still, a glance at the barometer never hurts.' },
+  seaSense: { ru: 'Я и так чувствую погоду. Барометр лишь подтвердит то, что я уже читаю по небу.', en: 'I can feel the weather already. The barometer would only confirm what I read in the sky.' },
   say: { ru: 'Что сказать экипажу за завтраком', en: 'What to tell the crew over breakfast' },
   sayNothing: { ru: 'Ничего не обещать', en: 'Promise nothing' },
   heard: { ru: 'Экипаж услышал: «{heard}»', en: 'The crew heard: "{heard}"' },
