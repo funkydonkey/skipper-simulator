@@ -26,6 +26,7 @@ export function knownIdentifiers(c: Content): Set<string> {
     ...[...damages].map((d) => `damage.${d}`),
     ...c.crew.flatMap((a) => a.wishes.map((w) => `wish.${w}`)),
     ...effects.flatMap((e) => (e.flag ? [`flag.${e.flag}`] : [])),
+    ...c.maneuvers.flatMap((m) => m.steps.map((st) => `step.${st.id}`)),
   ]);
 }
 

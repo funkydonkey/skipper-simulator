@@ -137,6 +137,12 @@ describe('XP sources', () => {
     expect(xp(s, 'order')).toBe(6);
   });
 
+  it('the order entry names the steps that came too late', () => {
+    const order = (s: ReturnType<typeof makeState>) => s.log.find((e) => e.cause.startsWith('order:'))!.data;
+    expect(order(runManeuver(makeState(), base, 'departure', { departure: wrongOrder }))!.late).toEqual(['neutral', 'command_helm']);
+    expect(order(runManeuver(makeState(), base, 'departure', { departure: correct }))!.late).toEqual([]);
+  });
+
   it('error.xp overrides the default error xp', () => {
     const m = { ...base.maneuvers[0]!, errors: base.maneuvers[0]!.errors.map((e) => ({ ...e, xp: 1 })) };
     const s = runManeuver(makeState(), { ...base, maneuvers: [m, ...base.maneuvers.slice(1)] }, 'departure', { departure: wrongOrder });

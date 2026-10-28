@@ -1667,7 +1667,16 @@
         "!briefing.cleats",
         "!at_bay"
       ],
-      "chance": 0.4
+      "chance": {
+        "base": 0.4,
+        "mods": [
+          {
+            "if": "step.cleat_stern",
+            "mul": -0.6,
+            "label": "order"
+          }
+        ]
+      }
     },
     "scene": "marina_berth",
     "text": {
@@ -1675,6 +1684,15 @@
       "en": "The stern line sits on the cleat with a single turn. Wind pulls the boat, and the line creeps."
     },
     "voices": [
+      {
+        "voice": "order",
+        "min_level": 1,
+        "when": "step.cleat_stern",
+        "text": {
+          "ru": "Команду «на утку» дали вовремя, а как закладывать, на брифинге не показали.",
+          "en": "The order to cleat came in time, but the briefing never showed how to make fast."
+        }
+      },
       {
         "voice": "order",
         "min_level": 1,
@@ -1729,7 +1747,16 @@
         "!briefing.fenders",
         "at_marina || at_quay"
       ],
-      "chance": 0.35
+      "chance": {
+        "base": 0.35,
+        "mods": [
+          {
+            "if": "step.fenders_ready || step.fenders_side",
+            "mul": -0.6,
+            "label": "order"
+          }
+        ]
+      }
     },
     "scene": "marina_berth",
     "text": {
@@ -1737,6 +1764,15 @@
       "en": "The fenders dangle at the waterline; the quay is half a metre higher."
     },
     "voices": [
+      {
+        "voice": "order",
+        "min_level": 1,
+        "when": "step.fenders_ready || step.fenders_side",
+        "text": {
+          "ru": "Команду про кранцы дали вовремя, а как их вешать, на брифинге не объясняли.",
+          "en": "The fender order came in time, but nobody briefed the crew on how to hang them."
+        }
+      },
       {
         "voice": "order",
         "min_level": 2,
@@ -1791,7 +1827,16 @@
         "at_bay",
         "!briefing.anchor"
       ],
-      "chance": 0.4
+      "chance": {
+        "base": 0.4,
+        "mods": [
+          {
+            "if": "step.brief_bow",
+            "mul": -0.6,
+            "label": "order"
+          }
+        ]
+      }
     },
     "scene": "bow_anchor",
     "text": {
@@ -1799,6 +1844,15 @@
       "en": "Up front they dropped all the chain at once. It lies in a heap right on top of the anchor."
     },
     "voices": [
+      {
+        "voice": "order",
+        "min_level": 1,
+        "when": "step.brief_bow",
+        "text": {
+          "ru": "Команду на бак дали, но сколько цепи и как её травить, на брифинге не разбирали.",
+          "en": "The bow got its order, but the briefing never covered how much chain to pay out, or how."
+        }
+      },
       {
         "voice": "caution",
         "min_level": 2,

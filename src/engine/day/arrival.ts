@@ -36,9 +36,11 @@ export function runManeuver(state: GameState, content: Content, kind: ManeuverKi
   const ctx = buildConditionContext(state, content);
   const r = evaluateManeuver(state.rng, m, orders?.[kind] ?? correctOrder(m, ctx), ctx, b);
   const wrong = r.value.errors.length > 0;
+  // Steps an error found too late; the rest were done in time (`step.<id>` in conditions).
+  const late = [...new Set(r.value.errors.flatMap((id) => m.errors.find((e) => e.id === id)?.wrongIf.then ?? []))];
   let s = appendLog(
     { ...state, rng: r.next },
-    { kind: 'decision', cause: `order:${wrong ? 'wrong' : 'ok'}:${m.id}`, pillar: 'safety', data: { steps: r.value.steps } },
+    { kind: 'decision', cause: `order:${wrong ? 'wrong' : 'ok'}:${m.id}`, pillar: 'safety', data: { steps: r.value.steps, late } },
   );
   s = r.value.rolls.reduce((acc, roll) => appendLog(acc, { kind: 'roll', cause: roll.cause, pillar: 'safety', odds: roll.odds, data: { hit: roll.hit } }), s);
   s = applyOutcomes(s, boat, r.value.outcomes, b);

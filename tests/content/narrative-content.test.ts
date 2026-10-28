@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { loadContentDir } from '../../src/content/load-node';
 import { eventTexts } from '../../src/engine/events';
+import { evaluateChance } from '../../src/engine/chance';
+import { evaluateAll, type CondContext } from '../../src/engine/expr';
 import { eventNote, findLinks } from '../../src/engine/debrief';
 import { audibleLines } from '../../src/engine/voices';
 import { PILLARS, VOICES, type VoiceId } from '../../src/engine/types';
@@ -77,5 +79,27 @@ describe('check-in blame in defect events (QA 2026-10-27)', () => {
       { day: 2, clockMin: 700, kind: 'event' as const, cause: 'event:impeller_overheat' },
     ];
     expect(findLinks(log, content!.debrief, 5).map((l) => l.ruleId)).toEqual(['impeller_sailed_on']);
+  });
+});
+
+describe('a maneuver step done in time softens the event it touches and the voices explain it (QA 2026-10-27)', () => {
+  const CASES = [
+    ['fenders_wrong_height', { at_marina: true, at_quay: false }, ['fenders_ready', 'fenders_side']],
+    ['line_not_cleated', { at_bay: false }, ['cleat_stern']],
+    ['anchor_chain_pile', { at_bay: true }, ['brief_bow']],
+  ] as const;
+  const levels = Object.fromEntries(VOICES.map((v) => [v, 4])) as Record<VoiceId, number>;
+
+  it.each(CASES)('%s', (id, ctx, steps) => {
+    const ev = content!.events.find((e) => e.id === id)!;
+    const odds = (c: CondContext) => evaluateChance(ev.trigger.chance, c).value;
+    const said = (c: CondContext) => audibleLines(ev.voices, levels, c).map((l) => l.text.ru).join(' ');
+    for (const st of steps) {
+      const done = { ...ctx, [`step.${st}`]: true };
+      expect(evaluateAll(ev.trigger.conditions, done), st).toBe(true);
+      expect(odds(done), st).toBeLessThan(odds(ctx) * 0.5);
+      expect(said(done), st).toMatch(/вовремя|дали/);
+      expect(said(ctx), st).not.toMatch(/вовремя|дали, но/);
+    }
   });
 });
