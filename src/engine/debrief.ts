@@ -1,9 +1,10 @@
 import { budgetGrade, weekSpend } from './budget';
 import { renderLocalized } from './crew';
+import { buildConditionContext, evaluateCondition, type CondContext } from './expr';
 import { causeMatches } from './log';
 import { requireBoat } from './state';
 import { voiceReport, type VoiceReport } from './voice-report';
-import type { Balance, Boat, Content, DebriefRule, GameState, Grade, LocalizedText, LogEntry, Pillar } from './types';
+import type { Balance, Boat, Content, DebriefRule, GameEvent, GameState, Grade, LocalizedText, LogEntry, Pillar } from './types';
 
 export interface DebriefLink { ruleId: string; pillar: Pillar; text: LocalizedText; decision: LogEntry; consequence: LogEntry; signal: LogEntry | null }
 export interface WeekScales { safety: Grade; crew: Grade; boat: Grade; schedule: Grade; budget: Grade }
@@ -83,16 +84,23 @@ export function findLinks(log: readonly LogEntry[], rules: readonly DebriefRule[
   return sorted.reduce((acc, r) => pick(acc, r, false), firstPass).links;
 }
 
+/** The event's debrief note: the first variant whose condition holds, else the default. */
+export function eventNote(ev: GameEvent, ctx: CondContext): LocalizedText {
+  return ev.debrief_variants?.find((v) => evaluateCondition(v.when, ctx))?.text ?? ev.debrief;
+}
+
 export function buildDebrief(state: GameState, content: Content, maxItems = 5): Debrief {
   const graded = gradeWeek(state, requireBoat(content, state), content.balance);
   const links = findLinks(state.log, content.debrief, maxItems);
   const covered = (eventId: string): boolean =>
     links.some((l) => causeMatches(l.consequence.cause, `event:${eventId}`) || causeMatches(l.consequence.cause, `injury:event:${eventId}`));
+  const ctx = buildConditionContext(state, content);
   // Repeatable events (once: false) appear in firedEvents each time they fire: one note each, first occurrence first.
   const eventNotes = [...new Set(state.firedEvents)]
     .filter((id) => !covered(id))
     .flatMap((id) => {
-      const note = content.events.find((e) => e.id === id)?.debrief;
+      const ev = content.events.find((e) => e.id === id);
+      const note = ev && eventNote(ev, ctx);
       const day = state.log.find((e) => e.kind === 'event' && e.cause === `event:${id}`)?.day ?? state.day;
       return note ? [renderLocalized(note, state, content, `${id}:${day}`)] : [];
     })

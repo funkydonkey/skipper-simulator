@@ -296,6 +296,8 @@ export interface GameEvent {
   voices: VoiceLine[];
   options: EventOption[];
   debrief: LocalizedText;
+  /** The first variant whose `when` holds at the debrief replaces `debrief` (e.g. checked vs skipped at check-in). */
+  debrief_variants?: { when: string; text: LocalizedText }[];
 }
 
 export interface ManeuverStep {

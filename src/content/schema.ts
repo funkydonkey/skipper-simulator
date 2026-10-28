@@ -154,6 +154,7 @@ export const GameEventSchema: z.ZodType<GameEvent> = z.object({
   voices: z.array(z.object({ voice: z.enum(VOICES), min_level: Int.min(0), text: Text, when: z.string().min(1).optional() }).strict()),
   options: z.array(OptionSchema).min(2),
   debrief: Text,
+  debrief_variants: z.array(z.object({ when: z.string().min(1), text: Text }).strict()).optional(),
 }).strict();
 
 export const ManeuverSchema: z.ZodType<Maneuver> = z.object({

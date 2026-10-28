@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { loadContentDir } from '../../src/content/load-node';
 import { eventTexts } from '../../src/engine/events';
-import { PILLARS } from '../../src/engine/types';
+import { eventNote, findLinks } from '../../src/engine/debrief';
+import { audibleLines } from '../../src/engine/voices';
+import { PILLARS, VOICES, type VoiceId } from '../../src/engine/types';
 
 const CAUSE_ROOTS = ['voices', 'boat', 'checkin', 'defect', 'briefing', 'dialogue', 'barometer', 'signal', 'plan', 'order', 'leg', 'weather', 'engine', 'zero', 'consumption', 'sail', 'injury', 'maneuver', 'anchor', 'marina', 'activity', 'rest', 'fatigue', 'event', 'choice', 'promise', 'charge', 'refill', 'mood_per_day', 'night', 'return', 'deposit'];
 
@@ -47,5 +49,33 @@ describe('narrative content', () => {
         expect(CAUSE_ROOTS, `${r.id}: ${pattern}`).toContain(pattern.split(':')[0]);
       }
     }
+  });
+});
+
+describe('check-in blame in defect events (QA 2026-10-27)', () => {
+  const CASES = [['impeller_overheat', 'impeller'], ['gas_smell', 'gas'], ['toilet_clog', 'toilets'], ['genoa_seam_rip', 'sails'], ['alternator_fault', 'electrics']] as const;
+  const ctx = (flags: Record<string, boolean>) => ({ ...flags, 'voice.mechanic': 3 });
+  const blames = /не провер|не осмотр|надо было смотреть|not checked|not inspected|should have been checked/i;
+
+  it.each(CASES)('%s blames a skipped check only when %s was skipped', (id, cp) => {
+    const ev = content!.events.find((e) => e.id === id)!;
+    const notes = (flags: Record<string, boolean>) => {
+      const voices = audibleLines(ev.voices, { ...Object.fromEntries(VOICES.map((v) => [v, 4])) } as Record<VoiceId, number>, ctx(flags));
+      return [eventNote(ev, ctx(flags)), ...voices.map((l) => l.text)].flatMap((t) => [t.ru, t.en]).join(' | ');
+    };
+    expect(notes({})).toMatch(blames);
+    const sailedOn = notes({ [`checkin.${cp}`]: true, [`checkin.${cp}.sailed_on`]: true });
+    expect(sailedOn).not.toMatch(blames);
+    expect(eventNote(ev, ctx({ [`checkin.${cp}`]: true, [`checkin.${cp}.sailed_on`]: true }))).not.toEqual(eventNote(ev, ctx({ [`checkin.${cp}`]: true })));
+    expect(notes({ [`checkin.${cp}`]: true })).not.toMatch(blames);
+  });
+
+  it('the debrief links sailing on with a found defect to its failure, not to a skipped check', () => {
+    const log = [
+      { day: 0, clockMin: 0, kind: 'decision' as const, cause: 'checkin:check:impeller' },
+      { day: 0, clockMin: 0, kind: 'decision' as const, cause: 'checkin:sail_on:worn_impeller' },
+      { day: 2, clockMin: 700, kind: 'event' as const, cause: 'event:impeller_overheat' },
+    ];
+    expect(findLinks(log, content!.debrief, 5).map((l) => l.ruleId)).toEqual(['impeller_sailed_on']);
   });
 });
