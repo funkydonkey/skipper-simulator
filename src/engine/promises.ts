@@ -66,6 +66,8 @@ export function sayDialogue(state: GameState, content: Content, dialogueId: stri
   if (!d.contexts.includes(context)) throw new EngineError('INVALID_INPUT', `Dialogue ${d.id} cannot be said during ${context}`);
   const s = appendLog(state, { kind: 'decision', cause: `dialogue:${d.id}`, pillar: 'promises', data: { strength: d.strength } });
   const e = createExpectation(d, context, state.day);
-  const alreadyOpen = e !== null && s.expectations.some((x) => x.id === e.id && x.status === 'open');
-  return e && !alreadyOpen ? { ...s, expectations: [...s.expectations, e] } : s;
+  if (!e) return s;
+  // Said again for the same day: the newer words replace the open expectation, so it is judged once.
+  const same = (x: Expectation): boolean => x.status === 'open' && x.dialogueId === e.dialogueId && x.dueDay === e.dueDay;
+  return { ...s, expectations: [...s.expectations.filter((x) => !same(x)), e] };
 }

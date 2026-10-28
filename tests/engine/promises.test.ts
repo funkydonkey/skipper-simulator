@@ -68,4 +68,14 @@ describe('promises', () => {
     expect(twice.expectations).toHaveLength(1);
     expect(twice.log.filter((e) => e.cause === 'dialogue:promise_taverna')).toHaveLength(2);
   });
+
+  it('repeating a line for the same day (briefing, then that morning) replaces the expectation, not doubles it', () => {
+    const briefed = sayDialogue(makeState({ day: 0 }), content, 'early_try', 'briefing');
+    const morning = sayDialogue({ ...briefed, day: 1 }, content, 'early_try', 'morning');
+    expect(morning.expectations).toEqual([expect.objectContaining({ id: 'early_try@1', dueDay: 1, status: 'open' })]);
+    const judged = resolveDueExpectations(morning.expectations, facts({ day: 1, departureHour: 9 }), 0, 1, b);
+    expect(judged.outcomes).toHaveLength(1);
+    const kept = { ...morning, expectations: judged.expectations };
+    expect(sayDialogue({ ...kept, day: 1 }, content, 'early_try', 'evening').expectations).toHaveLength(2);
+  });
 });
