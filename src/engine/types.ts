@@ -536,6 +536,8 @@ export interface GameState {
   checkin: { found: string[]; fixed: string[]; minutesLeft: number } | null;
   /** The berth situation after arrival; null before arrival and after `endDay`. */
   situation: Situation | null;
+  /** Last night was at anchor off a marina or quay that turned the boat away; cleared by a night anywhere else. */
+  anchoredOff: boolean;
 }
 
 export interface Situation {

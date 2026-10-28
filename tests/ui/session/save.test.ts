@@ -15,6 +15,14 @@ describe('save slot', () => {
     expect(r).toEqual({ kind: 'ok', savedAt: NOW.toISOString(), game });
   });
 
+  it('reads a v4 slot written before anchoredOff as a berth night', () => {
+    const storage = memoryStorage();
+    const { anchoredOff: _gone, ...older } = gameAt('morning');
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: NOW.toISOString(), game: older }));
+    const r = readSave(storage, content);
+    expect(r.kind === 'ok' && r.game.anchoredOff).toBe(false);
+  });
+
   it('reports none, corrupt JSON, dangling references', () => {
     const storage = memoryStorage();
     expect(readSave(storage, content).kind).toBe('none');

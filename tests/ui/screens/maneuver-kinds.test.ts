@@ -19,6 +19,11 @@ describe('maneuver kinds', () => {
     ]);
   });
 
+  it('anchored off a marina that turned the boat away: anchor up, as the engine runs it', () => {
+    const game = { ...gameAt('planning'), locationId: 'kastri_marina', anchoredOff: true };
+    expect(maneuversFor(game, content, plan('r_cala_azzurra_kastri_marina'), null)[0]!.kind).toBe('anchor_up');
+  });
+
   it('shuffles deterministically and never starts in the correct order', () => {
     for (const m of content.maneuvers) {
       for (const seed of [1, 2, 3, 42, 99]) {

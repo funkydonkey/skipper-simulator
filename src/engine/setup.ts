@@ -31,7 +31,7 @@ export function newGame(content: Content, opts: NewGameOptions): GameState {
     voiceXp: { sea_sense: 0, caution: 0, order: 0, mechanic: 0, diplomat: 0, economist: 0 },
     resources: { waterL: 0, fuelL: 0, serviceBankPct: b.start.serviceBankPct, starterBankPct: b.start.starterBankPct, gasPct: b.start.gasPct, moneyEur: b.start.moneyEur, mood: b.start.mood, fatigue: b.start.fatigue },
     flags: {}, damages: [], systems: {}, crew: makeCrew(content, crewSize, opts.seed), expectations: [], moodPerDay: 0, injuries: 0,
-    log: [], firedEvents: [], eventQueue: [], weather: null, dayFacts: null, returnedOnTime: null, defects: [], checkin: null, startBalanceEur: 0, situation: null,
+    log: [], firedEvents: [], eventQueue: [], weather: null, dayFacts: null, returnedOnTime: null, defects: [], checkin: null, startBalanceEur: 0, situation: null, anchoredOff: false,
   };
 }
 

@@ -43,6 +43,7 @@ export function makeState(overrides: Partial<GameState> = {}): GameState {
     startBalanceEur: 1500,
     checkin: null,
     situation: null,
+    anchoredOff: false,
   };
   return { ...base, ...overrides };
 }

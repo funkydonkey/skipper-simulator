@@ -78,6 +78,31 @@ describe('planDay', () => {
     expect(s.dayFacts).toMatchObject({ departureHour: null, arrivalPointKind: null, activities: ['swim'] });
   });
 
+  it('after a night anchored off a marina: staying put is a night at anchor, leaving weighs anchor', () => {
+    const off = makeState({ locationId: 'marina_b', anchoredOff: true });
+    const stay = planDay(off, quiet, plan({ legs: [] }));
+    expect(stay.dayFacts!.mooring).toBe('anchor');
+    const night = causes(endDay(stay, quiet, { dinner: 'cook' }));
+    expect(night).not.toContain('charge:shore');
+    expect(night).not.toContain('refill:water');
+    const leave = causes(planDay(off, quiet, plan({ legs: [sail('r_marina_b_base')] })));
+    expect(leave).toContain('order:ok:anchor_up_test');
+    expect(leave).not.toContain('order:ok:dep_test');
+  });
+
+  it('endDay remembers a night anchored off a marina that turned the boat away, until it berths', () => {
+    const broke = makeState({ locationId: 'bay_a', resources: { ...makeState().resources, moneyEur: 10 } });
+    const refused = planDay(broke, quiet, plan({ legs: [sail('r_bay_a_marina_b')] }));
+    expect(causes(refused)).toContain('marina:no_money');
+    const next = endDay(refused, quiet, { dinner: 'cook' });
+    expect(next.anchoredOff).toBe(true);
+    const planning = { ...next, phase: 'planning' as const, weather: makeState().weather };
+    expect(endDay(planDay(planning, quiet, plan({ legs: [] })), quiet, { dinner: 'cook' }).anchoredOff).toBe(true);
+    const berthed = endDay(planDay({ ...planning, anchoredOff: false }, quiet, plan({ legs: [] })), quiet, { dinner: 'cook' });
+    expect(berthed.anchoredOff).toBe(false);
+    expect(endDay(planDay(makeState(), quiet, plan()), quiet, { dinner: 'cook' }).anchoredOff).toBe(false);
+  });
+
   it('swim stops starting at or after sunset are skipped and do not count as swimming', () => {
     const dusk = planDay(makeState({ clockMin: 19.5 * 60 }), content, plan({ legs: [], swimStops: 2 }));
     expect(causes(dusk).filter((c) => c === 'activity:swim')).toHaveLength(1);

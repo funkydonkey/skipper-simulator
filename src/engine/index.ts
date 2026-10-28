@@ -4,7 +4,7 @@ export { EngineError, type EngineErrorCode } from './errors';
 export { resolveDefects } from './defects';
 export { newGame, assignVoices, boatOffers, chooseBoat, performCheckin, performBriefing, type NewGameOptions } from './setup';
 export { startDay, type MorningChoice } from './day/morning';
-export { planDay, validatePlan } from './day/passage';
+export { planDay, validatePlan, departureKind } from './day/passage';
 export { endDay, finishWeek, tavernaOpen, tavernaBill, type EveningChoice } from './day/evening';
 export { presentEvent, eventText, eventTexts, resolvePendingEvent, optionAvailable, type EventView } from './events';
 export { buildDebrief, type Debrief, type DebriefLink, type WeekScales } from './debrief';

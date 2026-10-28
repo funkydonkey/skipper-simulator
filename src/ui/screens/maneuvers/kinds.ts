@@ -1,5 +1,5 @@
 import {
-  berthForKind, forecastStepPool, maneuverFor, otherEnd, requirePoint, requireRoute, situationCondContext, situationHint,
+  berthForKind, departureKind, forecastStepPool, maneuverFor, otherEnd, requirePoint, requireRoute, situationCondContext, situationHint,
   type Content, type DayPlan, type GameState, type Maneuver, type ManeuverKind, type ManeuverStep, type Situation,
 } from '../../../engine';
 
@@ -22,7 +22,7 @@ export function maneuversFor(game: GameState, content: Content, plan: DayPlan, s
   const origin = requirePoint(content, game.locationId);
   const destId = plan.legs.reduce((at, l) => otherEnd(requireRoute(content, l.routeId), at) ?? at, game.locationId);
   const dest = requirePoint(content, destId);
-  const kinds: Array<[ManeuverKind, boolean]> = [[origin.kind === 'bay' ? 'anchor_up' : 'departure', false]];
+  const kinds: Array<[ManeuverKind, boolean]> = [[departureKind(game, origin), false]];
   if (dest.kind === 'bay') kinds.push(['anchoring', false]);
   else {
     kinds.push(['mooring', false]);
