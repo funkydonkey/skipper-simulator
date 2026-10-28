@@ -76,6 +76,7 @@ describe('time budget', () => {
     expect(formatClock(17 * 60 + 45)).toBe('17:45');
     expect(formatClock(119.7)).toBe('02:00');
     expect(formatClock(26 * 60 + 8)).toBe('02:08 +1');
+    expect(formatClock(51 * 60 + 36)).toBe('03:36 +2');
     expect(formatClock(23 * 60 + 59.6)).toBe('00:00 +1');
   });
 });

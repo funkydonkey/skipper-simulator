@@ -1,9 +1,10 @@
 import { rollChance } from './chance';
 import type { CondContext } from './expr';
+import { appendLog } from './log';
 import { anchorFailSpec, marinaRefusalSpec } from './odds';
 import { nextRange, type RngResult } from './rng';
 import { clamp } from './state';
-import type { Balance, ChanceValue } from './types';
+import type { Balance, ChanceValue, GameState } from './types';
 
 /** `hit` = the anchor dragged on that attempt. */
 export interface AnchorRoll { hit: boolean; odds: ChanceValue }
@@ -46,11 +47,18 @@ export function restHours(clockMin: number, b: Balance): number {
 const MIN_PER_HOUR = 60;
 const HOURS_PER_DAY = 24;
 
-/** `HH:MM`, or `HH:MM +1` past midnight. */
+/** `HH:MM`, or `HH:MM +N` N days later. */
 export function formatClock(clockMin: number): string {
   const total = Math.round(clockMin);
   const h = Math.floor(total / MIN_PER_HOUR);
   const m = total % MIN_PER_HOUR;
-  const nextDay = h >= HOURS_PER_DAY ? ' +1' : '';
-  return `${String(h % HOURS_PER_DAY).padStart(2, '0')}:${String(m).padStart(2, '0')}${nextDay}`;
+  const days = Math.floor(h / HOURS_PER_DAY);
+  return `${String(h % HOURS_PER_DAY).padStart(2, '0')}:${String(m).padStart(2, '0')}${days > 0 ? ` +${days}` : ''}`;
+}
+
+/** The day ends by the next morning's start: time past it is dropped and logged as `night:clock_capped`. */
+export function capClock(state: GameState, b: Balance): GameState {
+  const morning = (HOURS_PER_DAY + b.start.hour) * MIN_PER_HOUR;
+  if (state.clockMin <= morning) return state;
+  return appendLog({ ...state, clockMin: morning }, { kind: 'info', cause: 'night:clock_capped', pillar: 'time', data: { lostMin: state.clockMin - morning } });
 }

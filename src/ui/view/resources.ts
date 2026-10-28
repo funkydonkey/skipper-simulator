@@ -1,7 +1,8 @@
 import { resourceReadout, type Content, type GameState, type Lang, type Resources } from '../../engine';
 import { COMMON } from '../i18n/common';
-import { fmt } from '../i18n/t';
-import { RESOURCE_NAMES, UNITS } from './strings';
+import { fmt, makeT } from '../i18n/t';
+import { DAMAGE_NAMES, label, systemName } from '../i18n/glossary';
+import { RESOURCE_NAMES, UNITS, VIEW } from './strings';
 
 export type ResourceKey = keyof Resources;
 export type Level = 'ok' | 'low' | 'critical';
@@ -39,4 +40,18 @@ export function resourceRows(game: GameState, content: Content, lang: Lang): Res
     { key: 'mood', label: name('mood'), value: `${Math.round(r.mood)}/${PCT}`, share: r.mood / PCT, level: levelFor(r.mood / PCT) },
     { key: 'fatigue', label: name('fatigue'), value: `${Math.round(r.fatigue)}/${PCT}`, share: r.fatigue / PCT, level: levelFor(r.fatigue / PCT, true) },
   ];
+}
+
+const lowerFirst = (s: string): string => s.charAt(0).toLowerCase() + s.slice(1);
+
+/** One line for the panel: hull damage plus broken and worn systems, so "no damage" is never said over a broken system. */
+export function damageSummary(game: GameState, content: Content, lang: Lang): string {
+  const t = makeT(VIEW, lang);
+  const named = (pick: (s: GameState['systems'][string]) => boolean): string =>
+    Object.entries(game.systems).filter(([, s]) => pick(s)).map(([id]) => lowerFirst(systemName(content, id, lang))).join(', ');
+  const damages = game.damages.map((d) => label(DAMAGE_NAMES, d, lang)).join(', ');
+  const broken = named((s) => Boolean(s.broken));
+  const worn = named((s) => !s.broken && s.state === 'worn');
+  const parts = [damages && t('damages', { list: damages }), broken && t('brokenSystems', { list: broken }), worn && t('wornSystems', { list: worn })].filter(Boolean);
+  return parts.length > 0 ? parts.join('. ') : t('noDamage');
 }

@@ -1,7 +1,7 @@
 import { formatClock, type BerthType, type PlanPreview } from '../../../engine';
 import { ChanceBadge } from '../../components/ChanceBadge';
 import { useGame, useT } from '../../session/SessionContext';
-import { formatDuration, formatHour } from '../../view/format';
+import { formatDuration, formatHour, money } from '../../view/format';
 import { pointName } from '../../view/map';
 import { BERTH_NAMES, SEABED_NAMES } from '../../view/strings';
 import styles from './Planning.module.css';
@@ -17,6 +17,7 @@ export function PreviewPanel({ preview, berth, onBerth }: PreviewPanelProps) {
   const lastDay = game.day === b.schedule.days;
   const warnings: string[] = [];
   if (preview.arrivalAfterSunset) warnings.push(t('afterSunset'));
+  if (preview.arrivalTooLate) warnings.push(t('arrivalTooLate', { time: formatHour(b.time.latestArrivalHour % 24) }));
   if (!preview.marinaAffordable) warnings.push(t('marinaNoMoney'));
   if (preview.marinaLate) warnings.push(t('marinaLate'));
   if (lastDay && content.map.find((p) => p.id === preview.destinationId)?.kind !== 'base') warnings.push(t('mustReturn'));
@@ -25,7 +26,12 @@ export function PreviewPanel({ preview, berth, onBerth }: PreviewPanelProps) {
   return (
     <section className={styles.preview} aria-live="polite">
       <h2>{t('preview')}</h2>
-      {preview.departureMin === null || preview.arrivalMin === null ? <p>{t('stayRest')}</p> : (
+      {preview.departureMin === null || preview.arrivalMin === null ? (
+        <>
+          <p>{t('stayRest')}</p>
+          {preview.stayFeeEur !== null && <p>{t('stayFee', { eur: money(preview.stayFeeEur, lang) })}</p>}
+        </>
+      ) : (
         <>
           <p className={styles.times}>{t('times', { dep: formatClock(preview.departureMin), arr: formatClock(preview.arrivalMin) })}</p>
           <ul className={styles.legPreviews}>
@@ -34,7 +40,7 @@ export function PreviewPanel({ preview, berth, onBerth }: PreviewPanelProps) {
                 {t('legPreview', { to: pointName(content, l.to, lang), wind: l.windKn, speed: l.speedKn, time: formatDuration(l.hours, lang) })}
                 {l.localEffectKnown && <em> {t('localKnown')}</em>}
                 {l.breakChance.value > 0 && <div className={styles.odds}>{t('sailRisk')} <ChanceBadge odds={l.breakChance} voices={game.voices} /></div>}
-                {l.tow && <p className={styles.warn}>{t('legTow', { eur: l.tow.eur, time: formatDuration(l.tow.hours, lang) })}</p>}
+                {l.tow && <p className={styles.warn}>{t('legTow', { eur: money(l.tow.eur, lang), time: formatDuration(l.tow.hours, lang) })}</p>}
                 {!l.tow && l.mode !== l.plannedMode && <p className={styles.warn}>{t(l.mode === 'sail' ? 'legNoMotor' : 'legNoSail')}</p>}
                 {l.overpowered && <p className={styles.warn}>{t('overpowered')}</p>}
                 {l.forcedReef && <p className={styles.warn}>{t('forcedReef')}</p>}
@@ -45,7 +51,7 @@ export function PreviewPanel({ preview, berth, onBerth }: PreviewPanelProps) {
             <div role="radiogroup" aria-label={t('berthTitle')} className={styles.berths}>
               {preview.berths.map((type) => {
                 const fee = preview.berthFees[type];
-                const feeText = fee === undefined ? null : type === 'side_to' ? t('berthFeeFactor', { eur: fee, factor: lang === 'ru' ? String(b.berths.sideToPriceFactor).replace('.', ',') : b.berths.sideToPriceFactor }) : t('berthFee', { eur: fee });
+                const feeText = fee === undefined ? null : type === 'side_to' ? t('berthFeeFactor', { eur: money(fee, lang), factor: lang === 'ru' ? String(b.berths.sideToPriceFactor).replace('.', ',') : b.berths.sideToPriceFactor }) : t('berthFee', { eur: money(fee, lang) });
                 return (
                   <label key={type}>
                     <input type="radio" name="berth" checked={type === (berth ?? preview.berths[0])} onChange={() => onBerth(type)} />

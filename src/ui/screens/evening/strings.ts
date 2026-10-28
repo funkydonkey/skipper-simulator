@@ -20,6 +20,9 @@ export const EVENING = dict({
   heard: { ru: 'Экипаж услышал: «{heard}»', en: 'The crew heard: "{heard}"' },
   learned: { ru: 'Чему научил день', en: 'What today taught you' },
   sleep: { ru: 'Отбой', en: 'Lights out' },
+  promisesToday: { ru: 'Обещания сегодня', en: "Today's promises" },
+  kept: { ru: 'выполнено, настроение {mood}', en: 'kept, mood {mood}' },
+  broken: { ru: 'сорвано, настроение {mood}', en: 'broken, mood {mood}' },
 });
 
 export const REPAIR = dict({

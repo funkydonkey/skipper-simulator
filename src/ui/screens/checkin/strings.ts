@@ -5,6 +5,8 @@ export const CHECKIN = dict({
   subtitle: { ru: 'Базовый менеджер торопится. Что проверите сами? Непроверенное останется сюрпризом.', en: 'The base manager is in a hurry. What will you check yourself? Whatever you skip stays a surprise.' },
   budget: { ru: 'Время на приёмку: {used} из {total} мин', en: 'Check-in time: {used} of {total} min' },
   cost: { ru: '{n} мин', en: '{n} min' },
+  repairTime: { ru: 'Найденное на базе чинят из этого же времени — оставьте запас: самый быстрый ремонт занимает {n} мин.', en: 'Base repairs of what you find come out of this same time, so leave some spare: the quickest fix takes {n} min.' },
+  repairTimeAny: { ru: 'Найденное на базе чинят из этого же времени — оставьте запас.', en: 'Base repairs of what you find come out of this same time, so leave some spare.' },
   finish: { ru: 'Закончить приёмку', en: 'Finish check-in' },
   cutaway: { ru: 'Разрез яхты с точками проверки', en: 'Yacht cutaway with checkpoints' },
 });

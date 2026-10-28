@@ -7,6 +7,8 @@ export const VIEW = dict({
   resources: { ru: 'Ресурсы', en: 'Resources' },
   damages: { ru: 'Повреждения: {list}', en: 'Damage: {list}' },
   noDamage: { ru: 'Повреждений нет', en: 'No damage' },
+  brokenSystems: { ru: 'Сломано: {list}', en: 'Broken: {list}' },
+  wornSystems: { ru: 'Изношено: {list}', en: 'Worn: {list}' },
   at: { ru: '{place} · {clock}', en: '{place} · {clock}' },
 });
 
@@ -89,6 +91,7 @@ export const LOG = dict({
   rest: { ru: 'Отдых на стоянке, настроение {mood}', en: 'Rest at the anchorage, mood {mood}' },
   nightRolly: { ru: 'Ночь в болтанке', en: 'A rolly night' },
   nightArrival: { ru: 'Пришли в темноте', en: 'Arrived after dark' },
+  nightClockCapped: { ru: 'Ночь кончилась раньше дел: наступило утро', en: 'The night ran out before the work did: it is morning' },
   sailOverpowered: { ru: 'Слишком много парусов: крен, экипаж укачало', en: 'Overpowered: heeling hard, the crew got seasick' },
   systemDaily: { ru: 'Неисправно: {system}', en: 'Out of order: {system}' },
   systemAnchor: { ru: '{system} сломано: якорь вручную', en: '{system} broken: anchoring by hand' },
@@ -155,6 +158,7 @@ export const CHANCE_PARTS = dict({
   checkin: { ru: 'приёмка', en: 'check-in' },
   worn: { ru: 'износ', en: 'wear' },
   marinero: { ru: 'маринеро', en: 'marinero' },
+  order: { ru: 'порядок команд', en: 'order of commands' },
   berth: { ru: 'кормовой на берег', en: 'stern line ashore' },
   unknown: { ru: 'прочее', en: 'other' },
 });

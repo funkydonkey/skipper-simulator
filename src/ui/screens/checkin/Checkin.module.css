@@ -1,5 +1,6 @@
 .budget { font-family: var(--font-hand); font-size: var(--text-xl); margin: 0; }
 .meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin: var(--space-2) 0 var(--space-4); }
+.note { color: var(--fg-soft); margin: 0 0 var(--space-4); }
 .meter span { display: block; height: 100%; background: var(--warn); transition: width var(--duration); }
 .cutaway { width: 100%; max-width: 720px; display: block; margin-bottom: var(--space-4); }
 .hull { fill: var(--panel); stroke: var(--fg); stroke-width: 2; }

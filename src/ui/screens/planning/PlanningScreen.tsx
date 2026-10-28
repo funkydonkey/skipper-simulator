@@ -47,7 +47,7 @@ export function PlanningScreen() {
       side={<><ForecastPanel /><ResourcePanel /><SystemsPanel systems={game.systems} content={content} lang={lang} /></>}
       actions={draft.legs.length === 0
         ? <Button onClick={() => act({ type: 'draft_plan', plan: toDayPlan(draft) })}>{t('stay')}</Button>
-        : <Button disabled={!canSail} onClick={() => act({ type: 'draft_plan', plan: toDayPlan(draft) })}>{t('toManeuvers')}</Button>}
+        : <Button disabled={!canSail || estimate.preview?.arrivalTooLate === true} onClick={() => act({ type: 'draft_plan', plan: toDayPlan(draft) })}>{t('toManeuvers')}</Button>}
     >
       <div className={styles.layout}>
         <ChartMap

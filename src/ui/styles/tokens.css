@@ -51,6 +51,8 @@
   --shadow: 0 2px 8px rgb(42 38 32 / 0.15);
   --duration: 240ms;
   --logbook-toggle-w: 8.5rem;
+  /* Toggle height plus its offset from the viewport bottom: the page keeps this much clear under the last content. */
+  --logbook-toggle-h: 5rem;
   --chart-max-h: min(70vh, 720px);
 }
 

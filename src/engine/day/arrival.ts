@@ -1,4 +1,4 @@
-import { berthFee } from '../berths';
+import { berthFee, stayFee } from '../berths';
 import { canAfford } from '../budget';
 import { EngineError } from '../errors';
 import { buildConditionContext } from '../expr';
@@ -36,9 +36,11 @@ export function runManeuver(state: GameState, content: Content, kind: ManeuverKi
   const ctx = buildConditionContext(state, content);
   const r = evaluateManeuver(state.rng, m, orders?.[kind] ?? correctOrder(m, ctx), ctx, b);
   const wrong = r.value.errors.length > 0;
+  // Steps an error found too late; the rest were done in time (`step.<id>` in conditions).
+  const late = [...new Set(r.value.errors.flatMap((id) => m.errors.find((e) => e.id === id)?.wrongIf.then ?? []))];
   let s = appendLog(
     { ...state, rng: r.next },
-    { kind: 'decision', cause: `order:${wrong ? 'wrong' : 'ok'}:${m.id}`, pillar: 'safety', data: { steps: r.value.steps } },
+    { kind: 'decision', cause: `order:${wrong ? 'wrong' : 'ok'}:${m.id}`, pillar: 'safety', data: { steps: r.value.steps, late } },
   );
   s = r.value.rolls.reduce((acc, roll) => appendLog(acc, { kind: 'roll', cause: roll.cause, pillar: 'safety', odds: roll.odds, data: { hit: roll.hit } }), s);
   s = applyOutcomes(s, boat, r.value.outcomes, b);
@@ -79,7 +81,7 @@ function anchorHere(state: GameState, content: Content, boat: Boat, point: MapPo
   );
   s = appendLog(s, { kind: 'info', cause: `anchor:attempts:${r.value.attempts}`, pillar: 'time' });
   s = advanceClock(s, r.value.minutes * cautionTimeFactor(s.voices.caution, b));
-  s = addWear(runManeuver(s, content, 'anchoring', orders), content, 'anchoring', 1);
+  s = addWear(runManeuver({ ...s, lastBerth: null }, content, 'anchoring', orders), content, 'anchoring', 1);
   if (berth === 'anchor_ashore') s = applyOutcome(s, boat, { cause: 'anchor:ashore', pillar: 'time', effect: { time_hours: b.berths.ashoreTimeHours } });
   if (!r.value.held) s = applyOutcome(s, boat, { cause: 'anchor:dragging', pillar: 'time', effect: { fatigue: b.fatigue.rollyNightPenalty } });
   return { state: s, mooring: 'anchor' };
@@ -88,6 +90,22 @@ function anchorHere(state: GameState, content: Content, boat: Boat, point: MapPo
 function nightArrival(state: GameState, boat: Boat, b: Balance): GameState {
   if (state.clockMin < b.time.sunsetHour * 60) return state;
   return applyOutcome(state, boat, { cause: 'night:arrival', pillar: 'time', effect: { fatigue: b.fatigue.nightArrival, mood: -b.mood.nightArrival } });
+}
+
+/**
+ * Another night where the boat already lies. A paid berth charges again for the berth it arrived at; short of money,
+ * the boat leaves it and lies at anchor off. A night anchored off stays one.
+ */
+export function stayHere(state: GameState, content: Content, boat: Boat): ArrivalResult {
+  const b = content.balance;
+  const point = requirePoint(content, state.locationId);
+  if (point.kind === 'bay' || state.anchoredOff) return { state, mooring: 'anchor' };
+  const fee = stayFee(state, point, b);
+  if (!fee) return { state, mooring: 'berth' };
+  if (!canAfford(state, fee.eur)) {
+    return { state: applyOutcome({ ...state, lastBerth: null }, boat, { cause: 'marina:no_money', pillar: 'boat', effect: { mood: -b.mood.marinaRefused } }), mooring: 'anchor' };
+  }
+  return { state: applyOutcome(state, boat, { cause: 'marina:fee', pillar: 'boat', effect: { money: -fee.eur }, saved: fee.savedEur }), mooring: 'berth' };
 }
 
 /** `berth` is the plan's berth (validated by validatePlan); the point's first berth when absent. */
@@ -109,7 +127,7 @@ export function arrive(state: GameState, content: Content, boat: Boat, orders?: 
     s = applyOutcome(s, boat, { cause: 'marina:refused', pillar: 'time', effect: { mood: -b.mood.marinaRefused } });
     return anchorHere(s, content, boat, point, 'anchor', orders);
   }
-  s = settleSituation(s, content, point, berth);
+  s = settleSituation({ ...s, lastBerth: berth }, content, point, berth);
   s = advanceClock(s, b.time.marinaMooringMin * cautionTimeFactor(s.voices.caution, b));
   s = runManeuver(s, content, 'mooring', orders);
   if (fee) {

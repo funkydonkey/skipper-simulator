@@ -165,6 +165,12 @@ export const forecastFollower: Strategy = {
   },
 };
 
+/** What a player does when the planner rejects a day as too long (TOO_LATE): leave at first light. */
+function leaveEarlyIfTooLate(s: GameState, c: Content, plan: DayPlan): DayPlan {
+  if (plan.legs.length === 0 || !previewPlan(s, c, plan).arrivalTooLate) return plan;
+  return { ...plan, departureHour: Math.max(c.balance.time.earliestDepartureHour, Math.ceil(s.clockMin / 30) / 2) };
+}
+
 export const newbie: Strategy = {
   name: 'newbie',
   voices: { sea_sense: 0, caution: 0, order: 0, mechanic: 4, diplomat: 4, economist: 4 },
@@ -177,7 +183,7 @@ export const newbie: Strategy = {
     const legs = todaysLegs(NEWBIE_ITINERARY, s, c).map((routeId): LegPlan => ({
       routeId, mode: expectedWind(s, c, routeId, false) >= SAIL_MIN_WIND_KN ? 'sail' : 'motor', reefs: 0, genoa: 'full', course: 'direct',
     }));
-    return { departureHour: 10.5, legs, swimStops: 2, shower: 'loose', autopilot: true, maneuverOrders: reversedOrders(c) };
+    return leaveEarlyIfTooLate(s, c, { departureHour: 10.5, legs, swimStops: 2, shower: 'loose', autopilot: true, maneuverOrders: reversedOrders(c) });
   },
   chooseOption: (s, c, ev) => available(s, c, ev)[0]!.id,
   evening: (s, c) => ({ dinner: hasTaverna(s, c) ? 'taverna' : 'cook', dialogueId: 'promise_taverna' }),

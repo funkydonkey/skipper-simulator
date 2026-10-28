@@ -48,4 +48,24 @@ describe('EveningScreen', () => {
     expect(screen.queryByText(/\+1 Порядок/)).not.toBeInTheDocument();
     expect(screen.getByText('⬆ Механик 1 → 2')).toBeInTheDocument();
   });
+
+  const promise = (game: GameState, id: string, hour: number) => ({
+    id: `${id}@${game.day - 1}`, dialogueId: id, spec: { kind: 'depart_by' as const, hour }, strength: 0.6, createdDay: game.day - 1, dueDay: game.day, status: 'open' as const,
+  });
+
+  it('shows today\'s promises as kept or broken with their mood change, out of the open list', () => {
+    const base = gameAt('evening');
+    const game: GameState = { ...base, dayFacts: { ...base.dayFacts!, departureHour: 9 }, expectations: [promise(base, 'ten_bonus', 10), promise(base, 'early_try', 8)] };
+    renderShell(game);
+    const today = screen.getByRole('region', { name: 'Обещания сегодня' });
+    expect(today).toHaveTextContent(/✓\s*«Выходим в 10» — выполнено, настроение \+\d/);
+    expect(today).toHaveTextContent(/✗\s*«Выходим в 8» — сорвано, настроение −\d/);
+    expect(screen.queryByText('Экипаж ждёт')).not.toBeInTheDocument();
+  });
+
+  it('offers nothing to say about tomorrow on the last evening', () => {
+    renderShell({ ...gameAt('evening'), day: 6 });
+    expect(screen.queryByText('Что сказать на завтра')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ничего не обещать')).not.toBeInTheDocument();
+  });
 });

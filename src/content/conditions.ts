@@ -20,12 +20,13 @@ export function knownIdentifiers(c: Content): Set<string> {
     ...BOAT_KEYS,
     ...c.systems.flatMap((s) => ['state', 'broken', 'wear'].map((k) => `system.${s.id}.${k}`)),
     ...VOICES.map((v) => `voice.${v}`),
-    ...CHECKPOINTS.map((cp) => `checkin.${cp}`),
+    ...CHECKPOINTS.flatMap((cp) => [`checkin.${cp}`, `checkin.${cp}.sailed_on`]),
     ...c.briefing.map((t) => `briefing.${t.id}`),
     ...c.boats.flatMap((b) => b.defectPool.flatMap((d) => [`defect.${d.id}`, `defect.${d.id}.found`])),
     ...[...damages].map((d) => `damage.${d}`),
     ...c.crew.flatMap((a) => a.wishes.map((w) => `wish.${w}`)),
     ...effects.flatMap((e) => (e.flag ? [`flag.${e.flag}`] : [])),
+    ...c.maneuvers.flatMap((m) => m.steps.map((st) => `step.${st.id}`)),
   ]);
 }
 
@@ -50,6 +51,7 @@ export function validateConditions(c: Content): ContentError[] {
     const chance = ev.trigger.chance;
     if (typeof chance !== 'number') checkMods(chance.mods, `events[${i}].trigger.chance.mods`);
     ev.voices.forEach((l, j) => { if (l.when) check(l.when, `events[${i}].voices[${j}].when`); });
+    (ev.debrief_variants ?? []).forEach((d, j) => check(d.when, `events[${i}].debrief_variants[${j}].when`));
     ev.options.forEach((o, j) => (o.requires ?? []).forEach((src, k) => check(src, `events[${i}].options[${j}].requires[${k}]`)));
   });
   c.systems.forEach((d, i) => {

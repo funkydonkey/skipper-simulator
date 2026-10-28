@@ -64,7 +64,9 @@ export function resolveDefects(state: GameState, content: Content, fixIds: reado
     s = appendLog(s, { kind: 'effect', cause: `checkin:fix:${d.id}`, pillar: 'boat', delta: { moneyEur: -d.fixEur } });
   }
   for (const id of checkin.found) {
-    if (!fixIds.includes(id) && boat.defectPool.find((d) => d.id === id)?.system) s = appendLog(s, { kind: 'decision', cause: `checkin:sail_on:${id}`, pillar: 'boat' });
+    const d = boat.defectPool.find((x) => x.id === id);
+    if (fixIds.includes(id) || !d?.system) continue;
+    s = appendLog({ ...s, flags: { ...s.flags, [`checkin.${d.checkpoint}.sailed_on`]: true } }, { kind: 'decision', cause: `checkin:sail_on:${id}`, pillar: 'boat' });
   }
   return {
     ...advanceClock(s, minutes),

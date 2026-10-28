@@ -32,6 +32,7 @@ function readIdentifiers(c: Content): Set<string> {
       }
     }
     ev.voices.forEach((l) => { if (l.when) expr(l.when); });
+    (ev.debrief_variants ?? []).forEach((d) => expr(d.when));
     ev.options.forEach((o) => (o.requires ?? []).forEach(expr));
   }
   for (const def of c.systems) {

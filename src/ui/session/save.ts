@@ -73,6 +73,10 @@ const SlotSchema = z.object({
     weather: DayWeatherSchema.nullable(), dayFacts: DayFactsSchema.nullable(), returnedOnTime: z.boolean().nullable(),
     defects: z.array(z.string()), startBalanceEur: num,
     situation: SituationSchema.nullable(),
+    // Added within save v4: a slot written before it reads as a berth night.
+    anchoredOff: z.boolean().default(false),
+    // Added within save v4: a slot written before it charges the point's default berth for another night.
+    lastBerth: z.enum(BERTH_TYPES).nullable().default(null),
     checkin: z.object({ found: z.array(z.string()), fixed: z.array(z.string()), minutesLeft: num }).strict().nullable(),
   }).passthrough().refine((g) => g.phase !== 'defects' || g.checkin !== null, { message: 'phase defects needs a check-in', path: ['checkin'] }),
 });

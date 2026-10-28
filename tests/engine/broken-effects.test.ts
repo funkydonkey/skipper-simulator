@@ -151,7 +151,8 @@ describe('night and evening effects', () => {
     const base = evening(makeState());
     const s = endDay({ ...base, systems: { ...base.systems, gas: { state: 'ok', wear: 0, broken: true } } }, content, { dinner: 'cook' });
     const ref = endDay(base, content, { dinner: 'cook' });
-    expect(causes(s)).toEqual(expect.arrayContaining(['zero:gas', 'system:no_cook']));
+    expect(causes(s)).toContain('system:no_cook');
+    expect(causes(s)).not.toContain('zero:gas');
     expect(s.resources.gasPct).toBe(100);
     expect(ref.resources.mood - s.resources.mood).toBeCloseTo(content.balance.gas.noHotFoodMoodPenalty, 5);
     expect(causes(ref)).not.toContain('system:no_cook');

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { endDay } from '../../../src/engine/day/evening';
 import { planDay, validatePlan } from '../../../src/engine/day/passage';
+import { previewPlan } from '../../../src/engine/preview';
+import { berthFee } from '../../../src/engine/berths';
 import type { DayPlan, LegPlan } from '../../../src/engine/types';
 import { makeContent } from '../../fixtures/content';
 import { deepFreeze } from '../../fixtures/freeze';
@@ -78,6 +80,69 @@ describe('planDay', () => {
     expect(s.dayFacts).toMatchObject({ departureHour: null, arrivalPointKind: null, activities: ['swim'] });
   });
 
+  it('after a night anchored off a marina: staying put is a night at anchor, leaving weighs anchor', () => {
+    const off = makeState({ locationId: 'marina_b', anchoredOff: true });
+    const stay = planDay(off, quiet, plan({ legs: [] }));
+    expect(stay.dayFacts!.mooring).toBe('anchor');
+    const night = causes(endDay(stay, quiet, { dinner: 'cook' }));
+    expect(night).not.toContain('charge:shore');
+    expect(night).not.toContain('refill:water');
+    const leave = causes(planDay(off, quiet, plan({ legs: [sail('r_marina_b_base')] })));
+    expect(leave).toContain('order:ok:anchor_up_test');
+    expect(leave).not.toContain('order:ok:dep_test');
+  });
+
+  it('another night at a paid berth charges its fee again; short of money, the boat anchors off', () => {
+    const marina = content.map.find((p) => p.id === 'marina_b')!;
+    const fee = berthFee(marina, marina.berths[0]!.type, 2, content.balance)!;
+    const stay = planDay(makeState({ locationId: 'marina_b' }), quiet, plan({ legs: [] }));
+    expect(stay.resources.moneyEur).toBe(1500 - fee.eur);
+    expect(stay.log.find((e) => e.cause === 'marina:fee')).toMatchObject({ pillar: 'boat', delta: { moneyEur: -fee.eur } });
+    expect(causes(stay)).toContain('voice:economist:saved');
+    expect(stay.dayFacts!.mooring).toBe('berth');
+    expect(planDay(makeState(), quiet, plan({ legs: [] })).resources.moneyEur).toBe(1500);
+    expect(causes(planDay(makeState({ locationId: 'marina_b', anchoredOff: true }), quiet, plan({ legs: [] })))).not.toContain('marina:fee');
+    const broke = planDay(makeState({ locationId: 'marina_b', resources: { ...makeState().resources, moneyEur: 10 } }), quiet, plan({ legs: [] }));
+    expect(causes(broke)).toContain('marina:no_money');
+    expect(broke.resources.moneyEur).toBe(10);
+    expect(broke.dayFacts!.mooring).toBe('anchor');
+    expect(causes(endDay(broke, quiet, { dinner: 'cook' }))).not.toContain('charge:shore');
+  });
+
+  it('another night charges the berth the boat arrived at, not the point\'s default', () => {
+    const withSideTo = { ...quiet, map: quiet.map.map((p) => (p.id === 'marina_b' ? { ...p, berths: [...p.berths, { type: 'side_to' as const, headingDeg: 0 }], placesGoneHour: null } : p)) };
+    const marina = withSideTo.map.find((p) => p.id === 'marina_b')!;
+    const sideTo = berthFee(marina, 'side_to', 2, content.balance)!;
+    const arrived = planDay(makeState({ locationId: 'bay_a' }), withSideTo, plan({ legs: [sail('r_bay_a_marina_b')], berth: 'side_to' }));
+    expect(arrived.dayFacts!.mooring).toBe('berth');
+    expect(arrived.lastBerth).toBe('side_to');
+    const next = { ...endDay(arrived, withSideTo, { dinner: 'cook' }), phase: 'planning' as const, weather: makeState().weather };
+    expect(next.lastBerth).toBe('side_to');
+    const stay = planDay(next, withSideTo, plan({ legs: [] }));
+    expect(stay.log.find((e) => e.cause === 'marina:fee' && e.day === next.day)).toMatchObject({ delta: { moneyEur: -sideTo.eur } });
+    expect(planDay(makeState({ locationId: 'base' }), quiet, plan()).lastBerth).toBeNull();
+  });
+
+  it('endDay remembers a night anchored off a marina that turned the boat away, until it berths', () => {
+    const broke = makeState({ locationId: 'bay_a', resources: { ...makeState().resources, moneyEur: 10 } });
+    const refused = planDay(broke, quiet, plan({ legs: [sail('r_bay_a_marina_b')] }));
+    expect(causes(refused)).toContain('marina:no_money');
+    const next = endDay(refused, quiet, { dinner: 'cook' });
+    expect(next.anchoredOff).toBe(true);
+    const planning = { ...next, phase: 'planning' as const, weather: makeState().weather };
+    expect(endDay(planDay(planning, quiet, plan({ legs: [] })), quiet, { dinner: 'cook' }).anchoredOff).toBe(true);
+    const berthed = endDay(planDay({ ...planning, anchoredOff: false, resources: makeState().resources }, quiet, plan({ legs: [] })), quiet, { dinner: 'cook' });
+    expect(berthed.anchoredOff).toBe(false);
+    expect(endDay(planDay(makeState(), quiet, plan()), quiet, { dinner: 'cook' }).anchoredOff).toBe(false);
+  });
+
+  it('a stay day without money for the berth anchors off, logs it, and the next morning remembers it', () => {
+    const broke = planDay(makeState({ locationId: 'marina_b', resources: { ...makeState().resources, moneyEur: 10 } }), quiet, plan({ legs: [] }));
+    expect(causes(broke)).toContain('marina:no_money');
+    const next = endDay(broke, quiet, { dinner: 'cook' });
+    expect(next.anchoredOff).toBe(true);
+  });
+
   it('swim stops starting at or after sunset are skipped and do not count as swimming', () => {
     const dusk = planDay(makeState({ clockMin: 19.5 * 60 }), content, plan({ legs: [], swimStops: 2 }));
     expect(causes(dusk).filter((c) => c === 'activity:swim')).toHaveLength(1);
@@ -129,6 +194,18 @@ describe('planDay', () => {
       .toThrow(/past sunset/);
     expect(() => validatePlan(late, content, { departureHour: 9, legs: [], swimStops: 0, shower: 'normal', autopilot: false }))
       .not.toThrow();
+  });
+
+  it('rejects a plan the preview expects to arrive after time.latestArrivalHour, with its own error code', () => {
+    const t = content.balance.time;
+    const long = plan({ departureHour: 19, legs: [sail('r_base_bay_a'), sail('r_bay_a_marina_b'), sail('r_marina_b_base')] });
+    const s = makeState();
+    expect(previewPlan(s, content, long).arrivalMin!).toBeGreaterThan(t.latestArrivalHour * 60);
+    expect(previewPlan(s, content, long).arrivalTooLate).toBe(true);
+    expect(() => validatePlan(s, content, long)).toThrow(expect.objectContaining({ code: 'TOO_LATE' }));
+    expect(() => planDay(s, content, long)).toThrow(/latestArrivalHour/);
+    expect(previewPlan(s, content, plan()).arrivalTooLate).toBe(false);
+    expect(() => validatePlan(s, content, plan())).not.toThrow();
   });
 
   it('rejects maneuver orders for an unknown maneuver kind', () => {

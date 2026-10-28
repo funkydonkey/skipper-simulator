@@ -108,7 +108,7 @@ describe('ManeuversScreen', () => {
   it('shows the forecast situation card with the marinero chance', () => {
     startAt(toNisi);
     expect(screen.getByText('Прогноз — на месте может отличаться')).toBeInTheDocument();
-    expect(screen.getByText('маринеро:')).toBeInTheDocument();
+    expect(screen.getByText('шанс встречи:')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '30%' })).toBeInTheDocument();
   });
 
@@ -178,7 +178,7 @@ describe('OrderPicker: as last time', () => {
     const { user, container } = renderWithSession(<Stateful lastOrder={last} />, gameAt('planning'));
     await user.click(screen.getByRole('button', { name: 'Как в прошлый раз' }));
     expect([...container.querySelectorAll('ol button[data-step]')].map((b) => b.getAttribute('data-step'))).toEqual(last);
-    expect(screen.getByText('Подставил 5 из 7 шагов — обстановка другая')).toBeInTheDocument();
+    expect(screen.getByText('Подставлено 5 из 7 шагов: обстановка изменилась')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Как в прошлый раз' })).toBeNull();
   });
 
@@ -195,7 +195,7 @@ describe('OrderPicker: as last time', () => {
     const last = [...pool].reverse();
     const { user } = renderWithSession(<Stateful lastOrder={last} />, gameAt('planning'));
     await user.click(screen.getByRole('button', { name: 'Как в прошлый раз' }));
-    expect(screen.queryByText(/Подставил/)).toBeNull();
+    expect(screen.queryByText(/Подставлено/)).toBeNull();
   });
 
   it('hidden when nothing overlaps or the order is started', () => {
@@ -209,6 +209,6 @@ describe('OrderPicker: as last time', () => {
   it('English note', async () => {
     const { user } = renderWithSession(<Stateful lastOrder={['brief_roles']} />, { ...gameAt('planning'), lang: 'en' }, 'en');
     await user.click(screen.getByRole('button', { name: 'Same as last time' }));
-    expect(screen.getByText('Filled 1 of 7 steps — the situation changed')).toBeInTheDocument();
+    expect(screen.getByText('Filled in 1 of 7 steps: the situation changed')).toBeInTheDocument();
   });
 });

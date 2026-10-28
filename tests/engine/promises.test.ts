@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createExpectation, crewSensitivity, expectationMoodDelta, judgeExpectation, resolveDueExpectations, sayDialogue } from '../../src/engine/promises';
+import { createExpectation, crewSensitivity, duePromises, expectationMoodDelta, judgeExpectation, resolveDueExpectations, sayDialogue } from '../../src/engine/promises';
 import { deepFreeze } from '../fixtures/freeze';
 import type { DayFacts } from '../../src/engine/types';
 import { makeContent } from '../fixtures/content';
@@ -67,5 +67,27 @@ describe('promises', () => {
     const twice = sayDialogue(once, content, 'promise_taverna', 'evening');
     expect(twice.expectations).toHaveLength(1);
     expect(twice.log.filter((e) => e.cause === 'dialogue:promise_taverna')).toHaveLength(2);
+  });
+
+  it('repeating a line for the same day (briefing, then that morning) replaces the expectation, not doubles it', () => {
+    const briefed = sayDialogue(makeState({ day: 0 }), content, 'early_try', 'briefing');
+    const morning = sayDialogue({ ...briefed, day: 1 }, content, 'early_try', 'morning');
+    expect(morning.expectations).toEqual([expect.objectContaining({ id: 'early_try@1', dueDay: 1, status: 'open' })]);
+    const judged = resolveDueExpectations(morning.expectations, facts({ day: 1, departureHour: 9 }), 0, 1, b);
+    expect(judged.outcomes).toHaveLength(1);
+    const kept = { ...morning, expectations: judged.expectations };
+    expect(sayDialogue({ ...kept, day: 1 }, content, 'early_try', 'evening').expectations).toHaveLength(2);
+  });
+
+  it('duePromises judges today\'s open expectations as "Lights out" will, with the chosen dinner', () => {
+    const said = sayDialogue(sayDialogue(makeState({ day: 2 }), content, 'promise_taverna', 'evening'), content, 'ten_bonus', 'evening');
+    const s = deepFreeze({ ...said, day: 3, dayFacts: facts({ day: 3, departureHour: 9 }) });
+    const cook = duePromises(s, content, 'cook');
+    expect(cook.map((p) => [p.expectation.dialogueId, p.status])).toEqual([['promise_taverna', 'broken'], ['ten_bonus', 'kept']]);
+    const judged = resolveDueExpectations(s.expectations, s.dayFacts!, s.voices.diplomat, crewSensitivity(s, content), b);
+    expect(cook.map((p) => p.mood)).toEqual(judged.outcomes.map((o) => o.effect.mood));
+    expect(duePromises(s, content, 'taverna').map((p) => p.status)).toEqual(['kept', 'kept']);
+    expect(duePromises({ ...s, day: 2, dayFacts: facts({ day: 2 }) }, content, 'cook')).toEqual([]);
+    expect(duePromises({ ...s, dayFacts: null }, content, 'cook')).toEqual([]);
   });
 });

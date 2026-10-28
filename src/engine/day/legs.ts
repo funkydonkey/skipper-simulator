@@ -94,7 +94,7 @@ export function runLeg(state: GameState, content: Content, boat: Boat, leg: LegP
     reefs: leg.reefs, genoa: leg.genoa, course: leg.course, distanceNm: route.distanceNm,
     hullSpeedKn: boat.hullSpeedKn, motorKn: boat.motorKn,
   }, b);
-  s = appendLog(s, { kind: 'info', cause: `leg:${route.id}`, pillar: 'time', data: { mode, windKn: wind.windKn, speedKn: res.speedKn, hours: tow ? b.rescue.towHours : res.hours, pos: res.pos } });
+  s = appendLog(s, { kind: 'info', cause: `leg:${route.id}`, pillar: 'time', data: { mode, from, to, windKn: wind.windKn, speedKn: res.speedKn, hours: tow ? b.rescue.towHours : res.hours, pos: res.pos } });
   if (wind.frontActive && !s.log.some((e) => e.day === state.day && e.cause === 'weather:front')) {
     s = appendLog(s, { kind: 'info', cause: 'weather:front', pillar: 'weather', data: { windKn: wind.windKn } });
   }

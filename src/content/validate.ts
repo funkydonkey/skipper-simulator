@@ -111,6 +111,7 @@ function checkCrewNames(c: Content, add: Add): void {
     ev.voices.forEach((v, j) => both(`events[${i}].voices[${j}].text`, v.text));
     ev.options.forEach((o, j) => both(`events[${i}].options[${j}].text`, o.text));
     if (ev.debrief) both(`events[${i}].debrief`, ev.debrief);
+    (ev.debrief_variants ?? []).forEach((d, j) => both(`events[${i}].debrief_variants[${j}].text`, d.text));
   });
 }
 

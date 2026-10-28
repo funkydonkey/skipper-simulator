@@ -121,14 +121,14 @@ describe('runManeuver order log', () => {
   it('the order:ok entry carries the reconciled steps', () => {
     const s = runManeuver(makeState(), makeContent(), 'departure');
     const e = s.log.find((x) => x.cause === 'order:ok:dep_test')!;
-    expect(e.data).toEqual({ steps: ['neutral', 'command_helm', 'release_lines', 'engage_gear'] });
+    expect(e.data).toEqual({ steps: ['neutral', 'command_helm', 'release_lines', 'engage_gear'], late: [] });
   });
   it('mooring follows state.situation: berth picks the maneuver, wind side the steps', () => {
     const c: Content = { ...makeContent(), maneuvers: [...makeContent().maneuvers, sideTo(abc())] };
     const port = runManeuver(makeState({ situation: situation('port', { berth: 'side_to' }) }), c, 'mooring', { mooring: ['b', 'a'] });
-    expect(port.log.find((x) => x.cause === 'order:wrong:mooring_side_to_fx')!.data).toEqual({ steps: ['b', 'a', 'c'] });
+    expect(port.log.find((x) => x.cause === 'order:wrong:mooring_side_to_fx')!.data).toMatchObject({ steps: ['b', 'a', 'c'] });
     const bow = runManeuver(makeState({ situation: situation('bow', { berth: 'side_to' }) }), c, 'mooring');
-    expect(bow.log.find((x) => x.cause === 'order:ok:mooring_side_to_fx')!.data).toEqual({ steps: ['a', 'b'] });
+    expect(bow.log.find((x) => x.cause === 'order:ok:mooring_side_to_fx')!.data).toEqual({ steps: ['a', 'b'], late: [] });
   });
 });
 
@@ -253,7 +253,7 @@ describe('arrival by berth (bundled world)', () => {
       departureHour: 9, swimStops: 0, shower: 'normal', autopilot: false,
       legs: [{ routeId: 'r_cala_azzurra_nisi_quay', mode: 'motor', reefs: 0, genoa: 'full', course: 'direct' }],
     });
-    expect(s.log.find((e) => e.cause === 'order:ok:dep_abc')!.data).toEqual({ steps: ['a', 'b'] });
+    expect(s.log.find((e) => e.cause === 'order:ok:dep_abc')!.data).toEqual({ steps: ['a', 'b'], late: [] });
   });
 
   it('the preview shows the forecast situation, the destination berths and the side-to price', () => {

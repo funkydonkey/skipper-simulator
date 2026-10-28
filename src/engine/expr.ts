@@ -9,7 +9,7 @@ export type CondValue = number | boolean | string;
 export type CondContext = Readonly<Record<string, CondValue>>;
 
 /** Dotted identifiers with these prefixes default to false when absent from context. */
-export const FLAG_PREFIXES = ['checkin.', 'briefing.', 'flag.', 'defect.', 'damage.', 'wish.'] as const;
+export const FLAG_PREFIXES = ['checkin.', 'briefing.', 'flag.', 'defect.', 'damage.', 'wish.', 'step.'] as const;
 export const CONTEXT_KEYS = [
   'day', 'hour', 'water', 'water_pct', 'fuel', 'fuel_pct', 'service_bank', 'starter_bank', 'gas', 'money',
   'mood', 'fatigue', 'injuries', 'wind', 'gust', 'front', 'location_kind', 'at_base', 'at_marina', 'at_bay', 'at_quay',
@@ -175,7 +175,8 @@ export function buildConditionContext(state: GameState, content: Content): CondC
   const r = state.resources;
   const w = state.weather;
   const wind = w ? realWind(w, 1, state.clockMin / 60, requireTemplate(content, state.weatherTemplateId), content.balance) : null;
-  const anchoredOutside = state.dayFacts?.mooring === 'anchor';
+  // Before the day is planned dayFacts is null: last night's mooring is what `anchoredOff` remembers.
+  const anchoredOutside = state.dayFacts ? state.dayFacts.mooring === 'anchor' : state.anchoredOff;
   const ctx: Record<string, CondValue> = {
     day: state.day,
     hour: state.clockMin / 60,
@@ -198,7 +199,7 @@ export function buildConditionContext(state: GameState, content: Content): CondC
     at_marina: (point?.kind === 'marina' || point?.kind === 'base') && !anchoredOutside,
     moored_berth: state.dayFacts?.mooring === 'berth',
     at_bay: point?.kind === 'bay',
-    at_quay: point?.kind === 'quay',
+    at_quay: point?.kind === 'quay' && !anchoredOutside,
     night: state.clockMin >= content.balance.time.sunsetHour * 60,
     'place.seabed': point?.seabed ?? '',
     // The marina refusal roll sets this per call.
@@ -222,5 +223,19 @@ export function buildConditionContext(state: GameState, content: Content): CondC
     for (const wish of a?.wishes ?? []) ctx[`wish.${wish}`] = true;
   }
   for (const [v, lvl] of Object.entries(state.voices)) ctx[`voice.${v}`] = lvl;
+  for (const step of stepsInTime(state)) ctx[`step.${step}`] = true;
   return ctx;
+}
+
+const asList = (v: unknown): string[] => (Array.isArray(v) ? v : []);
+
+/** Steps of today's latest maneuver that no error found too late. */
+function stepsInTime(state: GameState): string[] {
+  for (let i = state.log.length - 1; i >= 0 && state.log[i]!.day >= state.day; i--) {
+    const e = state.log[i]!;
+    if (e.day !== state.day || e.kind !== 'decision' || !e.cause.startsWith('order:')) continue;
+    const late = asList(e.data?.late);
+    return asList(e.data?.steps).filter((st) => !late.includes(st));
+  }
+  return [];
 }

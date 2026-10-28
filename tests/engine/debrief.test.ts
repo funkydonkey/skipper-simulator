@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDebrief, depositLoss, findLinks, gradeWeek } from '../../src/engine/debrief';
+import { buildDebrief, depositLoss, eventNote, findLinks, gradeWeek } from '../../src/engine/debrief';
 import { appendLog } from '../../src/engine/log';
 import type { DebriefRule, GameState, LogEntry } from '../../src/engine/types';
 import { makeContent } from '../fixtures/content';
@@ -148,5 +148,14 @@ describe('debrief', () => {
     const d = buildDebrief(state, c);
     expect(d.links.map((l) => l.ruleId)).toEqual(['inj']);
     expect(d.eventNotes).toEqual([]);
+  });
+
+  it('an event note follows the first debrief variant whose condition holds', () => {
+    const ev = { ...content.events[0]!, debrief: t('skipped'), debrief_variants: [{ when: 'checkin.toilets.sailed_on', text: t('sailed') }, { when: 'checkin.toilets', text: t('checked') }] };
+    expect(eventNote(ev, {})).toEqual(t('skipped'));
+    expect(eventNote(ev, { 'checkin.toilets': true })).toEqual(t('checked'));
+    expect(eventNote(ev, { 'checkin.toilets': true, 'checkin.toilets.sailed_on': true })).toEqual(t('sailed'));
+    const s = makeState({ firedEvents: ['toilet_clog'], flags: { 'checkin.toilets': true } });
+    expect(buildDebrief(s, { ...content, events: [ev] }).eventNotes).toEqual([t('checked')]);
   });
 });

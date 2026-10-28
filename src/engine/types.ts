@@ -296,6 +296,8 @@ export interface GameEvent {
   voices: VoiceLine[];
   options: EventOption[];
   debrief: LocalizedText;
+  /** The first variant whose `when` holds at the debrief replaces `debrief` (e.g. checked vs skipped at check-in). */
+  debrief_variants?: { when: string; text: LocalizedText }[];
 }
 
 export interface ManeuverStep {
@@ -389,6 +391,8 @@ export interface Balance {
     swimStopMin: number;
     sunsetHour: number;
     tavernaCloseHour: number;
+    /** A plan expected to arrive after this hour is rejected (TOO_LATE). */
+    latestArrivalHour: number;
     nightAnchorPenalty: number;
   };
   promises: { keptPerStrength: number; brokenPerStrength: number; diplomatSofteningPerLevel: number };
@@ -488,6 +492,7 @@ export interface DayPlan {
 export interface DayFacts {
   day: number;
   departureHour: number | null;
+  /** When the boat was in for the night, counting time lost to passage and arrival events; null on a stay day. */
   arrivalHour: number | null;
   arrivalPointKind: PointKind | null;
   mooring: 'anchor' | 'berth' | null;
@@ -536,6 +541,10 @@ export interface GameState {
   checkin: { found: string[]; fixed: string[]; minutesLeft: number } | null;
   /** The berth situation after arrival; null before arrival and after `endDay`. */
   situation: Situation | null;
+  /** Last night was at anchor off a marina or quay that turned the boat away; cleared by a night anywhere else. */
+  anchoredOff: boolean;
+  /** The berth the boat lies at since its last arrival (another night there is charged for it); null at anchor. */
+  lastBerth: BerthType | null;
 }
 
 export interface Situation {
@@ -547,7 +556,7 @@ export interface Situation {
   seabed: Seabed; tight: boolean; source: 'forecast' | 'fact';
 }
 
-export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn', 'thruster', 'broken', 'wear', 'marinero', 'berth'] as const;
+export const CHANCE_LABELS = ['base', 'difficulty', 'fatigue', 'mitigation', 'seabed', 'wind', 'night', 'briefing', 'late', 'drama', 'checkin', 'worn', 'thruster', 'broken', 'wear', 'marinero', 'berth', 'order'] as const;
 export type ChanceLabel = (typeof CHANCE_LABELS)[number];
 /**
  * add: value += add * scale. mul: always a delta factor, value *= (1 + mul * scale); write deltas such as (weight - 1).

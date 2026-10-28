@@ -66,6 +66,22 @@ export function sayDialogue(state: GameState, content: Content, dialogueId: stri
   if (!d.contexts.includes(context)) throw new EngineError('INVALID_INPUT', `Dialogue ${d.id} cannot be said during ${context}`);
   const s = appendLog(state, { kind: 'decision', cause: `dialogue:${d.id}`, pillar: 'promises', data: { strength: d.strength } });
   const e = createExpectation(d, context, state.day);
-  const alreadyOpen = e !== null && s.expectations.some((x) => x.id === e.id && x.status === 'open');
-  return e && !alreadyOpen ? { ...s, expectations: [...s.expectations, e] } : s;
+  if (!e) return s;
+  // Said again for the same day: the newer words replace the open expectation, so it is judged once.
+  const same = (x: Expectation): boolean => x.status === 'open' && x.dialogueId === e.dialogueId && x.dueDay === e.dueDay;
+  return { ...s, expectations: [...s.expectations.filter((x) => !same(x)), e] };
+}
+
+export interface DuePromise { expectation: Expectation; status: 'kept' | 'broken'; mood: number }
+
+/** Today's open expectations as "Lights out" will judge them, given the dinner the player has picked. */
+export function duePromises(state: GameState, content: Content, dinner: 'cook' | 'taverna'): DuePromise[] {
+  const f = state.dayFacts;
+  if (!f) return [];
+  const facts: DayFacts = dinner === 'taverna' ? { ...f, activities: [...f.activities, 'taverna'] } : f;
+  const sensitivity = crewSensitivity(state, content);
+  return state.expectations.filter((e) => e.status === 'open' && e.dueDay === facts.day).map((e) => {
+    const status = judgeExpectation(e, facts);
+    return { expectation: e, status, mood: expectationMoodDelta(e.strength, status, state.voices.diplomat, sensitivity, content.balance) };
+  });
 }

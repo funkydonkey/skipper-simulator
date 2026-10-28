@@ -46,6 +46,7 @@
     "swimStopMin": 60,
     "sunsetHour": 20,
     "tavernaCloseHour": 23,
+    "latestArrivalHour": 24,
     "nightAnchorPenalty": 0.1
   },
   "promises": { "keptPerStrength": 5, "brokenPerStrength": 15, "diplomatSofteningPerLevel": 0.1 },

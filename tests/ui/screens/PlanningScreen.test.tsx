@@ -56,6 +56,14 @@ describe('PlanningScreen', () => {
     expect(screen.getByText('Паруса не работают: этот переход под мотором.')).toBeInTheDocument();
   });
 
+  it('a stay day at a paid marina shows the fee for another night', () => {
+    const r = renderShell({ ...atBase(), locationId: 'kastri_marina' });
+    expect(screen.getByText(/^Ещё одна ночь здесь: [\d,]+ €\.$/)).toBeInTheDocument();
+    r.unmount();
+    renderShell(atBase());
+    expect(screen.queryByText(/Ещё одна ночь здесь/)).toBeNull();
+  });
+
   it('a stay day goes straight to the evening', async () => {
     const r = renderShell(atBase());
     await r.user.click(screen.getByRole('button', { name: 'Провести день здесь' }));
@@ -83,6 +91,16 @@ describe('PlanningScreen', () => {
     r.dispatch({ type: 'draft_plan', plan: { departureHour: 3, legs: [], swimStops: 0, shower: 'normal', autopilot: false } });
     expect(screen.getByRole('alert')).toHaveTextContent(/^Не получилось: такой выбор не подходит/);
     expect(screen.getByRole('alert')).not.toHaveTextContent(/[A-Za-z]/);
+    expect(r.currentScreen()).toBe('planning');
+  });
+
+  it('a plan arriving in the dead of night is rejected with its own localized reason', () => {
+    const calm = { ...atBase().weather!, forecastKn: 4, forecastGustKn: 7, front: false, frontAddKn: 0 };
+    const sail = (routeId: string) => ({ routeId, mode: 'sail' as const, reefs: 0 as const, genoa: 'full' as const, course: 'detour' as const });
+    const long = { departureHour: 19.5, swimStops: 0, shower: 'normal' as const, autopilot: false, legs: ['r_base_marina_blue_lagoon', 'r_vela_bay_blue_lagoon', 'r_vela_bay_kastri_marina'].map(sail) };
+    const r = renderShell({ ...atBase(), weather: calm });
+    r.dispatch({ type: 'draft_plan', plan: long });
+    expect(screen.getByRole('alert')).toHaveTextContent(/день слишком длинный/);
     expect(r.currentScreen()).toBe('planning');
   });
 

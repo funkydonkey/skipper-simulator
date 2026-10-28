@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { eventText, renderText, startDay, type LogEntry } from '../../../src/engine';
 import { runWeek } from '../../../src/sim/run';
 import { expert, newbie } from '../../../src/sim/strategies';
+import { pointName } from '../../../src/ui/view/map';
 import { dayLines, describeEntry, isLogbookOnly, isNoise, logbookDays } from '../../../src/ui/view/logbook';
 import { content, gameAt } from '../fixtures';
 
@@ -82,6 +83,12 @@ describe('logbook', () => {
     expect(describeEntry(roll('roll:mystery:1', true), content, 'ru', 1)).toBeNull();
     const certain = entry('roll:marina:base_marina', { kind: 'roll', odds: { value: 0, parts: [{ source: 'base', delta: 0 }] }, data: { hit: false } });
     expect(describeEntry(certain, content, 'ru', 1), 'a 0% marina roll is not a roll worth logging').toBeNull();
+  });
+
+  it('says when the night ran out and the clock was capped at the next morning', () => {
+    const capped = entry('night:clock_capped', { kind: 'info', pillar: 'time', data: { lostMin: 40 } });
+    expect(describeEntry(capped, content, 'ru', 1)).toMatchObject({ text: 'Ночь кончилась раньше дел: наступило утро', tone: 'bad' });
+    expect(describeEntry(capped, content, 'en', 1)!.text).toBe('The night ran out before the work did: it is morning');
   });
 
   it('describes the marinero roll: met or not, with the odds', () => {
@@ -242,5 +249,40 @@ describe('logbook boat systems', () => {
       expect(line.text).not.toContain('{');
       expect(describeEntry(entry('choice:named_ev:o', { day }), c, 'en', state.seed, state.crew)!.text).toContain(who);
     }
+  });
+
+  it('names the voice of a self-repair check', () => {
+    const e = entry('roll:check:repair:electrical:self', { kind: 'roll', odds: { value: 0.26, parts: [] }, data: { hit: false, success: false, chance: 0.26 } });
+    expect(describeEntry(e, content, 'ru', 1)!.text).toMatch(/Механик/);
+    expect(describeEntry(e, content, 'en', 1)!.text).toMatch(/Mechanic/);
+  });
+
+  it('keeps the first sentence of an event whole inside a quote', () => {
+    const base = content.events[0]!;
+    const ev = { ...base, id: 'quote_ev', text: { ru: 'Сосед стучит: «Музыка! Дети спят!» Потом уходит.', en: 'A neighbor knocks: "Music! Kids sleep!" Then leaves.' } };
+    const c = { ...content, events: [...content.events, ev] };
+    expect(describeEntry(entry('event:quote_ev', { kind: 'event' }), c, 'ru', 1)!.text).toContain('«Музыка! Дети спят!»');
+    expect(describeEntry(entry('event:quote_ev', { kind: 'event' }), c, 'en', 1)!.text).toContain('"Music! Kids sleep!"');
+    expect(describeEntry(entry('event:quote_ev', { kind: 'event' }), c, 'ru', 1)!.text).not.toContain('Потом');
+  });
+
+  it('shows a leg in the direction sailed', () => {
+    const r = content.routes[0]!;
+    const from = pointName(content, r.to, 'ru');
+    const to = pointName(content, r.from, 'ru');
+    const back = describeEntry(entry(`leg:${r.id}`, { kind: 'info', data: { mode: 'sail', from: r.to, to: r.from, windKn: 5, speedKn: 4, hours: 2 } }), content, 'ru', 1)!;
+    expect(back.text).toContain(`${from} — ${to}`);
+  });
+
+  it('rounds a mood delta for display', () => {
+    const line = describeEntry(entry('voice:diplomat:softened', { data: { mood: 7.6234 } }), content, 'ru', 1)!;
+    expect(line.text).toContain('+7,6'.replace(',', '.'));
+    expect(line.text).not.toContain('7.6234');
+  });
+
+  it('prints euro amounts with the language decimal mark', () => {
+    const line = describeEntry(entry('marina:fee', { delta: { moneyEur: -80.8 } }), content, 'ru', 1)!;
+    expect(line.text).toContain('80,8 €');
+    expect(describeEntry(entry('marina:fee', { delta: { moneyEur: -80.8 } }), content, 'en', 1)!.text).toContain('€80.8');
   });
 });

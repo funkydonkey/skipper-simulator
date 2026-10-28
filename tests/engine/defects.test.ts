@@ -101,6 +101,8 @@ describe('resolveDefects', () => {
     expect(causes).toContain('checkin:fix:worn_impeller');
     expect(causes).toContain('checkin:sail_on:toilet_valve');
     expect(causes).not.toContain('checkin:sail_on:worn_impeller');
+    expect(s.flags['checkin.toilets.sailed_on']).toBe(true);
+    expect(s.flags['checkin.impeller.sailed_on']).toBeUndefined();
   });
   it('sails on with an empty fix list', () => {
     const s = resolveDefects(found(), content, []);

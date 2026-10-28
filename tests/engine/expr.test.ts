@@ -49,6 +49,20 @@ describe('expr', () => {
     expect(conditionIdentifiers('day >= 3 && !briefing.toilet || front').sort()).toEqual(['briefing.toilet', 'day', 'front']);
   });
 
+  it('step.<id> holds for the steps of today\'s latest maneuver that were not too late', () => {
+    const content = makeContent();
+    const order = (day: number, cause: string, steps: string[], late?: string[]) => ({ day, clockMin: 600, kind: 'decision' as const, cause, data: late ? { steps, late } : { steps } as Record<string, string[]> });
+    const s = makeState({ day: 2, log: [order(1, 'order:ok:x', ['cleat_stern']), order(2, 'order:ok:dep', ['brief_roles']), order(2, 'order:wrong:moor', ['stern_lines_ashore', 'fenders_ready', 'pick_mooring'], ['fenders_ready'])] });
+    const c = buildConditionContext(s, content);
+    expect(c['step.stern_lines_ashore']).toBe(true);
+    expect(c['step.pick_mooring']).toBe(true);
+    expect(c['step.fenders_ready']).toBeUndefined();
+    expect(c['step.brief_roles']).toBeUndefined();
+    expect(c['step.cleat_stern']).toBeUndefined();
+    expect(evaluateCondition('!step.fenders_ready', c)).toBe(true);
+    expect(buildConditionContext(makeState({ day: 2, log: [order(2, 'order:ok:old', ['brief_bow'])] }), content)['step.brief_bow']).toBe(true);
+  });
+
   it('buildConditionContext exposes resources, flags, damages, wishes, voices, boat', () => {
     const content = makeContent();
     const state = makeState({ flags: { 'checkin.toilets': true }, damages: ['sail_torn'], resources: { ...makeState().resources, waterL: 75 } });
@@ -76,6 +90,11 @@ describe('expr', () => {
     const berthed = buildConditionContext(makeState({ locationId: 'marina_b', dayFacts: { ...facts, mooring: 'berth' } }), content);
     expect(berthed).toMatchObject({ at_marina: true, moored_berth: true });
     expect(buildConditionContext(makeState({ locationId: 'marina_b' }), content)).toMatchObject({ at_marina: true, moored_berth: false });
+    const morning = buildConditionContext(makeState({ locationId: 'marina_b', anchoredOff: true }), content);
+    expect(morning).toMatchObject({ at_marina: false });
+    const quay = { ...content, map: content.map.map((p) => (p.id === 'marina_b' ? { ...p, kind: 'quay' as const } : p)) };
+    expect(buildConditionContext(makeState({ locationId: 'marina_b' }), quay).at_quay).toBe(true);
+    expect(buildConditionContext(makeState({ locationId: 'marina_b', anchoredOff: true }), quay).at_quay).toBe(false);
     expect(CONTEXT_KEYS).toContain('moored_berth');
   });
 

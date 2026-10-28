@@ -70,7 +70,37 @@
     "debrief": {
       "ru": "Гальюны не проверены на приёмке и не было брифинга по их использованию.",
       "en": "Heads were not checked at check-in and the crew got no briefing on them."
-    }
+    },
+    "debrief_variants": [
+      {
+        "when": "checkin.toilets.sailed_on",
+        "text": {
+          "ru": "Неисправность гальюна нашли на приёмке, но пошли с ней — засор.",
+          "en": "The head fault was found at check-in, but the boat sailed with it, and the head clogged."
+        }
+      },
+      {
+        "when": "checkin.toilets && !briefing.toilet",
+        "text": {
+          "ru": "Гальюны на приёмке проверили, но брифинга по их использованию не было — засор.",
+          "en": "The heads were checked at check-in, but the crew got no briefing on them, and one clogged."
+        }
+      },
+      {
+        "when": "checkin.toilets",
+        "text": {
+          "ru": "Гальюны проверили, экипажу всё объяснили — засор всё равно случился.",
+          "en": "The heads were checked and the crew was briefed, yet one still clogged."
+        }
+      },
+      {
+        "when": "briefing.toilet",
+        "text": {
+          "ru": "Гальюны не проверили на приёмке — засор, хотя экипаж знал, как ими пользоваться.",
+          "en": "The heads were not checked at check-in, and one clogged even though the crew knew how to use them."
+        }
+      }
+    ]
   },
   {
     "id": "impeller_overheat",
@@ -82,8 +112,8 @@
     },
     "scene": "engine_bay",
     "text": {
-      "ru": "Сигнал перегрева. Из выхлопа валит пар, а воды почти нет.",
-      "en": "The overheat alarm shrieks. Steam pours from the exhaust, and the water is almost gone."
+      "ru": "На переходе сработал сигнал перегрева. Из выхлопа валил пар, а воды почти не было.",
+      "en": "On passage the overheat alarm shrieked. Steam poured from the exhaust, and the water was almost gone."
     },
     "voices": [
       {
@@ -92,6 +122,25 @@
         "text": {
           "ru": "Импеллер. Его надо было смотреть на приёмке.",
           "en": "The impeller. Should have been checked at check-in."
+        },
+        "when": "!checkin.impeller"
+      },
+      {
+        "voice": "mechanic",
+        "min_level": 1,
+        "when": "checkin.impeller.sailed_on",
+        "text": {
+          "ru": "Импеллер. Мы же видели на приёмке, что он изношен.",
+          "en": "The impeller. We saw it was worn at check-in."
+        }
+      },
+      {
+        "voice": "mechanic",
+        "min_level": 1,
+        "when": "checkin.impeller && !checkin.impeller.sailed_on",
+        "text": {
+          "ru": "Импеллер. На приёмке был живой — значит, что-то засосало в забор воды.",
+          "en": "The impeller. It was fine at check-in, so something got sucked into the water intake."
         }
       },
       {
@@ -115,8 +164,8 @@
       {
         "id": "keep_motoring",
         "text": {
-          "ru": "Идти дальше на моторе",
-          "en": "Keep motoring"
+          "ru": "Дойти на моторе как есть",
+          "en": "Carry on motoring as is"
         },
         "effects": {
           "damage": "impeller",
@@ -128,7 +177,7 @@
       {
         "id": "change_impeller",
         "text": {
-          "ru": "Встать и поменять импеллер",
+          "ru": "Остановиться и поменять импеллер",
           "en": "Stop and change the impeller"
         },
         "check": {
@@ -150,8 +199,8 @@
       {
         "id": "sail_on",
         "text": {
-          "ru": "Заглушить и идти под парусом",
-          "en": "Kill the engine and sail on"
+          "ru": "Заглушить и дойти под парусом",
+          "en": "Kill the engine and sail in"
         },
         "effects": {
           "time_hours": 1,
@@ -163,7 +212,23 @@
     "debrief": {
       "ru": "Импеллер не проверили на приёмке — двигатель перегрелся на переходе.",
       "en": "The impeller was not checked at check-in, so the engine overheated on passage."
-    }
+    },
+    "debrief_variants": [
+      {
+        "when": "checkin.impeller.sailed_on",
+        "text": {
+          "ru": "Изношенный импеллер нашли на приёмке, но пошли с ним — двигатель перегрелся на переходе.",
+          "en": "The worn impeller was found at check-in, but the boat sailed with it, and the engine overheated on passage."
+        }
+      },
+      {
+        "when": "checkin.impeller",
+        "text": {
+          "ru": "Импеллер на приёмке проверили, но двигатель всё же перегрелся на переходе — так бывает.",
+          "en": "The impeller was checked at check-in, yet the engine still overheated on passage. It happens."
+        }
+      }
+    ]
   },
   {
     "id": "warm_fridge",
@@ -475,7 +540,23 @@
     "debrief": {
       "ru": "Газ не проверен на приёмке: треснувший шланг нашёлся у открытого огня.",
       "en": "Gas was not checked at check-in: the cracked hose turned up next to an open flame."
-    }
+    },
+    "debrief_variants": [
+      {
+        "when": "checkin.gas.sailed_on",
+        "text": {
+          "ru": "Треснувший газовый шланг нашли на приёмке, но пошли с ним — утечка дала о себе знать у открытого огня.",
+          "en": "The cracked gas hose was found at check-in, but the boat sailed with it, and the leak showed up next to an open flame."
+        }
+      },
+      {
+        "when": "checkin.gas",
+        "text": {
+          "ru": "Газ на приёмке проверили, но утечка всё равно нашлась у открытого огня.",
+          "en": "The gas was checked at check-in, yet a leak still turned up next to an open flame."
+        }
+      }
+    ]
   },
   {
     "id": "toilet_misuse",
@@ -584,8 +665,8 @@
       {
         "id": "keep_sailing",
         "text": {
-          "ru": "Идти дальше под генуей",
-          "en": "Keep sailing on the genoa"
+          "ru": "Дойти под генуей как есть",
+          "en": "Carry on under the genoa as is"
         },
         "effects": {
           "damage": "sail_torn",
@@ -609,7 +690,23 @@
     "debrief": {
       "ru": "Паруса не осмотрели на приёмке — шов порвался под ветром.",
       "en": "The sails were not inspected at check-in, so the seam tore in the wind."
-    }
+    },
+    "debrief_variants": [
+      {
+        "when": "checkin.sails.sailed_on",
+        "text": {
+          "ru": "Неисправность парусов нашли на приёмке, но пошли с ней — шов порвался под ветром.",
+          "en": "A sail fault was found at check-in, but the boat sailed with it, and a seam tore in the wind."
+        }
+      },
+      {
+        "when": "checkin.sails",
+        "text": {
+          "ru": "Паруса на приёмке осмотрели, но шов всё равно порвался под ветром.",
+          "en": "The sails were inspected at check-in, yet a seam still tore in the wind."
+        }
+      }
+    ]
   },
   {
     "id": "anchor_shackle_loose",
@@ -777,7 +874,8 @@
     "trigger": {
       "phase": "morning",
       "conditions": [
-        "front"
+        "front",
+        "at_marina || at_quay"
       ],
       "chance": 0.6
     },
@@ -1078,7 +1176,7 @@
     },
     "scene": "marina_entrance",
     "text": {
-      "ru": "У входа в марину очередь из пяти лодок. Маринер машет: «Ждите!»",
+      "ru": "У входа в марину очередь из пяти лодок. Маринеро машет: «Ждите!»",
       "en": "A queue of five boats at the marina entrance. The marinero waves: \"Wait!\""
     },
     "voices": [
@@ -1086,7 +1184,7 @@
         "voice": "diplomat",
         "min_level": 2,
         "text": {
-          "ru": "Улыбнись и скажи, что вы на две ночи. Маринеры это любят.",
+          "ru": "Улыбнись и скажи, что вы на две ночи. Маринеро такое любит.",
           "en": "Smile and say you're staying two nights. Marineros love that."
         }
       },
@@ -1119,7 +1217,7 @@
       {
         "id": "argue",
         "text": {
-          "ru": "Спорить с маринером",
+          "ru": "Спорить с маринеро",
           "en": "Argue with the marinero"
         },
         "check": {
@@ -1264,7 +1362,8 @@
     "trigger": {
       "phase": "passage",
       "conditions": [
-        "day <= 3"
+        "day <= 3",
+        "hour >= 11 && hour < 15"
       ],
       "chance": 0.3
     },
@@ -1504,7 +1603,7 @@
     },
     "scene": "marina_berth",
     "text": {
-      "ru": "Маринер кричит «Давай-давай!», и {crew.any} бросает ему кормовой, хотя команды не было.",
+      "ru": "Маринеро кричит «Давай-давай!», и {crew.any} бросает ему кормовой, хотя команды не было.",
       "en": "The marinero yells \"Dai-dai!\" and {crew.any} tosses him the stern line, though no order was given."
     },
     "voices": [
@@ -1529,7 +1628,7 @@
       {
         "id": "shout_over",
         "text": {
-          "ru": "Перекричать маринера",
+          "ru": "Перекричать маринеро",
           "en": "Shout over the marinero"
         },
         "check": {
@@ -1557,7 +1656,7 @@
       }
     ],
     "debrief": {
-      "ru": "Не было брифинга «слушаем только капитана» — экипаж выполнял команды маринера.",
+      "ru": "Не было брифинга «слушаем только капитана» — экипаж выполнял команды маринеро.",
       "en": "No \"skipper's orders only\" briefing, so the crew followed the marinero's commands."
     }
   },
@@ -1570,7 +1669,16 @@
         "!briefing.cleats",
         "!at_bay"
       ],
-      "chance": 0.4
+      "chance": {
+        "base": 0.4,
+        "mods": [
+          {
+            "if": "step.cleat_stern",
+            "mul": -0.6,
+            "label": "order"
+          }
+        ]
+      }
     },
     "scene": "marina_berth",
     "text": {
@@ -1578,6 +1686,15 @@
       "en": "The stern line sits on the cleat with a single turn. Wind pulls the boat, and the line creeps."
     },
     "voices": [
+      {
+        "voice": "order",
+        "min_level": 1,
+        "when": "step.cleat_stern",
+        "text": {
+          "ru": "Команду «на утку» дали вовремя, а как закладывать, на брифинге не показали.",
+          "en": "The order to cleat came in time, but the briefing never showed how to make fast."
+        }
+      },
       {
         "voice": "order",
         "min_level": 1,
@@ -1632,7 +1749,16 @@
         "!briefing.fenders",
         "at_marina || at_quay"
       ],
-      "chance": 0.35
+      "chance": {
+        "base": 0.35,
+        "mods": [
+          {
+            "if": "step.fenders_ready || step.fenders_side",
+            "mul": -0.6,
+            "label": "order"
+          }
+        ]
+      }
     },
     "scene": "marina_berth",
     "text": {
@@ -1640,6 +1766,15 @@
       "en": "The fenders dangle at the waterline; the quay is half a metre higher."
     },
     "voices": [
+      {
+        "voice": "order",
+        "min_level": 1,
+        "when": "step.fenders_ready || step.fenders_side",
+        "text": {
+          "ru": "Команду про кранцы дали вовремя, а как их вешать, на брифинге не объясняли.",
+          "en": "The fender order came in time, but nobody briefed the crew on how to hang them."
+        }
+      },
       {
         "voice": "order",
         "min_level": 2,
@@ -1694,7 +1829,16 @@
         "at_bay",
         "!briefing.anchor"
       ],
-      "chance": 0.4
+      "chance": {
+        "base": 0.4,
+        "mods": [
+          {
+            "if": "step.brief_bow",
+            "mul": -0.6,
+            "label": "order"
+          }
+        ]
+      }
     },
     "scene": "bow_anchor",
     "text": {
@@ -1702,6 +1846,15 @@
       "en": "Up front they dropped all the chain at once. It lies in a heap right on top of the anchor."
     },
     "voices": [
+      {
+        "voice": "order",
+        "min_level": 1,
+        "when": "step.brief_bow",
+        "text": {
+          "ru": "Команду на бак дали, но сколько цепи и как её травить, на брифинге не разбирали.",
+          "en": "The bow got its order, but the briefing never covered how much chain to pay out, or how."
+        }
+      },
       {
         "voice": "caution",
         "min_level": 2,
@@ -2318,12 +2471,12 @@
     "scene": "marina_berth",
     "text": [
       {
-        "ru": "Сосед по пирсу стучит в борт: «Музыка! Дети спят!»",
-        "en": "The neighbour on the pier knocks on your hull: \"The music! The kids are asleep!\""
+        "ru": "Сосед по пирсу стучит в борт: «Музыка! Можно потише?»",
+        "en": "The neighbour on the pier knocks on your hull: \"The music! Could you keep it down?\""
       },
       {
-        "ru": "С соседней яхты просят потише: у них спят дети.",
-        "en": "From the next yacht they ask you to keep it down: their children are asleep."
+        "ru": "С соседней яхты просят потише: у них маленькие дети.",
+        "en": "From the next yacht they ask you to keep it down: they have small children."
       },
       {
         "ru": "Сосед выходит на палубу в халате и многозначительно смотрит на ваши колонки.",
@@ -2542,8 +2695,8 @@
       {
         "id": "keep_going",
         "text": {
-          "ru": "Идти дальше, разберёмся вечером",
-          "en": "Keep going, sort it out tonight"
+          "ru": "Не трогать, разберёмся вечером",
+          "en": "Leave it, sort it out tonight"
         },
         "effects": {
           "break": "electrical",
@@ -2572,7 +2725,23 @@
     "debrief": {
       "ru": "Электрику не проверили на приёмке — генератор перестал заряжать на переходе.",
       "en": "The electrics were not checked at check-in, so the alternator stopped charging on passage."
-    }
+    },
+    "debrief_variants": [
+      {
+        "when": "checkin.electrics.sailed_on",
+        "text": {
+          "ru": "Подсевшие аккумуляторы нашли на приёмке, но пошли с ними — на переходе генератор перестал заряжать.",
+          "en": "The tired batteries were found at check-in, but the boat sailed with them, and the alternator stopped charging on passage."
+        }
+      },
+      {
+        "when": "checkin.electrics",
+        "text": {
+          "ru": "Электрику на приёмке проверили, но генератор всё равно перестал заряжать на переходе.",
+          "en": "The electrics were checked at check-in, yet the alternator still stopped charging on passage."
+        }
+      }
+    ]
   },
   {
     "id": "thruster_trip",

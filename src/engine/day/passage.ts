@@ -6,9 +6,10 @@ import { maneuverFor, validateOrder } from '../maneuver';
 import { applyOutcome } from '../resources';
 import { advanceClock, otherEnd, requireBoat, requirePoint, requireRoute, round1, round2 } from '../state';
 import { addWear, brokenFlags } from '../systems';
-import { restHours } from '../time';
-import { MANEUVER_KINDS, type Activity, type Balance, type BerthType, type Boat, type Content, type DayPlan, type EventPhase, type GameState, type ManeuverKind } from '../types';
-import { arrive, runManeuver } from './arrival';
+import { capClock, restHours } from '../time';
+import { previewPlan } from '../preview';
+import { MANEUVER_KINDS, type Activity, type Balance, type BerthType, type Boat, type Content, type DayPlan, type EventPhase, type GameState, type ManeuverKind, type MapPoint } from '../types';
+import { arrive, runManeuver, stayHere } from './arrival';
 import { runLeg, startEngine } from './legs';
 
 const SHOWERS = ['strict', 'normal', 'loose'];
@@ -18,6 +19,11 @@ const COURSES = ['direct', 'detour'];
 const REEFS = [0, 1, 2];
 
 interface DaySummary { moving: boolean; departureHour: number | null; mooring: 'anchor' | 'berth'; motor: number; sail: number; legHours: number; swum: number; maxWind: number }
+
+/** A night at anchor (a bay, or off a marina that turned the boat away) is left by weighing anchor. */
+export function departureKind(state: Pick<GameState, 'anchoredOff'>, origin: MapPoint): 'anchor_up' | 'departure' {
+  return origin.kind === 'bay' || state.anchoredOff ? 'anchor_up' : 'departure';
+}
 
 function invalid(msg: string): never {
   throw new EngineError('INVALID_INPUT', msg);
@@ -58,6 +64,9 @@ export function validatePlan(state: GameState, content: Content, plan: DayPlan):
     invalid(`${at} has no "${plan.berth}" berth`);
   }
   validateOrders(content, plan, plan.legs.length > 0 ? plan.berth ?? dest.berths[0]!.type : undefined);
+  if (plan.legs.length > 0 && state.weather && previewPlan(state, content, plan).arrivalTooLate) {
+    throw new EngineError('TOO_LATE', `The plan arrives after time.latestArrivalHour (${t.latestArrivalHour})`);
+  }
 }
 
 function logPlanDecisions(state: GameState, content: Content, plan: DayPlan): GameState {
@@ -119,7 +128,7 @@ function sail(state: GameState, content: Content, boat: Boat, plan: DayPlan): { 
   // Departure and anchor_up run without a situation: the origin's wind side is not modelled.
   let s = startEngine({ ...state, situation: null, clockMin: Math.max(state.clockMin, Math.round(plan.departureHour * 60)) }, content, boat);
   const departureHour = s.clockMin / 60;
-  s = runManeuver(s, content, origin.kind === 'bay' ? 'anchor_up' : 'departure', plan.maneuverOrders);
+  s = runManeuver(s, content, departureKind(state, origin), plan.maneuverOrders);
   s = advanceClock(s, b.time.departureMin);
   // The departure is motored only when the engine works: a dead engine adds no motor time (charge, wear, motor-gated failures).
   const departureMotor = brokenFlags(state, content).noMotor ? 0 : b.time.departureMin / 60;
@@ -153,13 +162,13 @@ export function planDay(state: GameState, content: Content, plan: DayPlan): Game
   let summary: DaySummary;
   if (plan.legs.length > 0) {
     const r = sail(s, content, boat, plan);
-    s = r.state;
+    s = capClock(r.state, content.balance);
     summary = r.summary;
   } else {
     const swim = swimStops(s, boat, plan.swimStops, content.balance);
-    s = swim.state;
-    const here = requirePoint(content, s.locationId);
-    summary = { moving: false, departureHour: null, mooring: here.kind === 'bay' ? 'anchor' : 'berth', motor: 0, sail: 0, legHours: 0, swum: swim.swum, maxWind: 0 };
+    const stay = stayHere(swim.state, content, boat);
+    s = stay.state;
+    summary = { moving: false, departureHour: null, mooring: stay.mooring, motor: 0, sail: 0, legHours: 0, swum: swim.swum, maxWind: 0 };
   }
   s = settleDay(s, content, boat, plan, summary);
   // Passage events roll per leg inside `sail`; 3b's passage failures stay day-level.
