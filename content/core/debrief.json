@@ -46,7 +46,7 @@
   { "id": "taverna_promise", "pillar": "promises", "priority": 5, "decision": "dialogue:promise_taverna", "consequence": "promise:promise_taverna:broken",
     "text": { "ru": "Пообещали таверну, а встали в пустой бухте.", "en": "Promised a taverna, anchored in an empty bay." } },
   { "id": "captain_only", "pillar": "briefing", "priority": 5, "decision": "briefing:skip:captain_only", "consequence": "event:marinero_commands",
-    "text": { "ru": "Не договорились «слушаем только капитана» → экипаж работал на маринера.", "en": "No \"skipper's orders only\" rule → the crew worked for the marinero." } },
+    "text": { "ru": "Не договорились «слушаем только капитана» → экипаж работал на маринеро.", "en": "No \"skipper's orders only\" rule → the crew worked for the marinero." } },
   { "id": "autopilot_drain", "pillar": "boat", "priority": 4, "decision": "plan:autopilot:on", "consequence": "zero:service",
     "text": { "ru": "Автопилот весь день без зарядки → сервисный банк в ноль.", "en": "Autopilot all day with no charging → a flat service bank." } },
   { "id": "sails_unchecked", "pillar": "boat", "priority": 4, "decision": "checkin:skip:sails", "consequence": "event:genoa_seam_rip",

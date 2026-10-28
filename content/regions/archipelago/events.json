@@ -1176,7 +1176,7 @@
     },
     "scene": "marina_entrance",
     "text": {
-      "ru": "У входа в марину очередь из пяти лодок. Маринер машет: «Ждите!»",
+      "ru": "У входа в марину очередь из пяти лодок. Маринеро машет: «Ждите!»",
       "en": "A queue of five boats at the marina entrance. The marinero waves: \"Wait!\""
     },
     "voices": [
@@ -1184,7 +1184,7 @@
         "voice": "diplomat",
         "min_level": 2,
         "text": {
-          "ru": "Улыбнись и скажи, что вы на две ночи. Маринеры это любят.",
+          "ru": "Улыбнись и скажи, что вы на две ночи. Маринеро такое любит.",
           "en": "Smile and say you're staying two nights. Marineros love that."
         }
       },
@@ -1217,7 +1217,7 @@
       {
         "id": "argue",
         "text": {
-          "ru": "Спорить с маринером",
+          "ru": "Спорить с маринеро",
           "en": "Argue with the marinero"
         },
         "check": {
@@ -1603,7 +1603,7 @@
     },
     "scene": "marina_berth",
     "text": {
-      "ru": "Маринер кричит «Давай-давай!», и {crew.any} бросает ему кормовой, хотя команды не было.",
+      "ru": "Маринеро кричит «Давай-давай!», и {crew.any} бросает ему кормовой, хотя команды не было.",
       "en": "The marinero yells \"Dai-dai!\" and {crew.any} tosses him the stern line, though no order was given."
     },
     "voices": [
@@ -1628,7 +1628,7 @@
       {
         "id": "shout_over",
         "text": {
-          "ru": "Перекричать маринера",
+          "ru": "Перекричать маринеро",
           "en": "Shout over the marinero"
         },
         "check": {
@@ -1656,7 +1656,7 @@
       }
     ],
     "debrief": {
-      "ru": "Не было брифинга «слушаем только капитана» — экипаж выполнял команды маринера.",
+      "ru": "Не было брифинга «слушаем только капитана» — экипаж выполнял команды маринеро.",
       "en": "No \"skipper's orders only\" briefing, so the crew followed the marinero's commands."
     }
   },

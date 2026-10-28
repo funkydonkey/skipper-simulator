@@ -66,7 +66,7 @@ export function EveningScreen() {
           <h2>{t('promisesToday')}</h2>
           <ul className={styles.growthList}>
             {due.map((p) => (
-              <li key={p.expectation.id} className={p.status === 'kept' ? styles.kept : styles.broken}>
+              <li key={`${p.expectation.id}:${p.expectation.dueDay}`} className={p.status === 'kept' ? styles.kept : styles.broken}>
                 <span aria-hidden="true">{p.status === 'kept' ? '✓' : '✗'}</span> «{heardOf(p.expectation.dialogueId)}» — {t(p.status, { mood: signed(p.mood) })}
               </li>
             ))}

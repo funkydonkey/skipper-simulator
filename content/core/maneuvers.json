@@ -23,13 +23,13 @@
       { "id": "extra_fenders_neighbor", "when": "place.tight", "text": { "ru": "Кранцы на борт к соседу", "en": "Fenders out on the neighbour's side" } },
       { "id": "brief_roles", "text": { "ru": "Роли: корма, муринг, багор", "en": "Roles: stern lines, lazy line, boat hook" } },
       { "id": "windward_stern_first", "when": "wind.side == 'port' || wind.side == 'starboard'", "text": { "ru": "Наветренный кормовой — первым", "en": "Windward stern line first" } },
-      { "id": "stern_lines_ashore", "text": { "ru": "Подать кормовые маринеру", "en": "Pass stern lines to the marinero" } },
+      { "id": "stern_lines_ashore", "text": { "ru": "Подать кормовые маринеро", "en": "Pass stern lines to the marinero" } },
       { "id": "cleat_stern", "text": { "ru": "Заложить кормовые на утку", "en": "Make the stern lines fast" } },
       { "id": "pick_lazy_line_boathook", "when": "!place.marinero", "text": { "ru": "Поднять муринг отпорным крюком", "en": "Pick up the lazy line with the boathook" } },
       { "id": "pick_mooring", "text": { "ru": "Выбрать и натянуть муринг", "en": "Pick up and tension the lazy line" } }
     ],
     "errors": [
-      { "id": "lines_before_brief", "wrongIf": { "first": "stern_lines_ashore", "then": "brief_roles" }, "effect": { "mood": -5, "fatigue": 5 }, "injuryChance": 0.15, "mitigatedBy": "briefing.captain_only", "text": { "ru": "Экипаж слушал маринера, а не капитана", "en": "The crew followed the marinero, not the skipper" } },
+      { "id": "lines_before_brief", "wrongIf": { "first": "stern_lines_ashore", "then": "brief_roles" }, "effect": { "mood": -5, "fatigue": 5 }, "injuryChance": 0.15, "mitigatedBy": "briefing.captain_only", "text": { "ru": "Экипаж слушал маринеро, а не капитана", "en": "The crew followed the marinero, not the skipper" } },
       { "id": "mooring_before_cleat", "wrongIf": { "first": "pick_mooring", "then": "cleat_stern" }, "effect": { "fatigue": 8 }, "injuryChance": 0.25, "mitigatedBy": "briefing.cleats", "text": { "ru": "Кормовой поехал по утке и обжёг ладони", "en": "The stern line ran over the cleat and burned palms" } },
       { "id": "no_fenders_first", "wrongIf": { "first": "stern_lines_ashore", "then": "fenders_ready" }, "effect": { "damage": "hull_scratch", "mood": -6 }, "injuryChance": 0, "text": { "ru": "Борт прошёлся по соседу без кранцев", "en": "The hull rubbed the neighbour with no fenders" } },
       { "id": "tight_no_fenders", "when": "place.tight", "wrongIf": { "first": "stern_lines_ashore", "then": "extra_fenders_neighbor" }, "effect": { "damage": "hull_scratch", "mood": -5 }, "injuryChance": 0, "text": { "ru": "Навалились на соседа без кранцев", "en": "Hit the neighbour without fenders" } },

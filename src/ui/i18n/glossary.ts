@@ -18,7 +18,7 @@ export const VOICE_HINTS: Readonly<Record<VoiceId, LocalizedText>> = {
   caution: t('Призывает рифиться, ждать и проверять. Снижает риск, но тянет время.', 'Urges you to reef, wait and double-check. Lowers risk but costs time.'),
   order: t('Требует дисциплины команд и безопасности. Помогает на швартовках и якоре.', 'Demands clear commands and safety. Helps at moorings and anchoring.'),
   mechanic: t('Понимает электрику, воду и двигатель. Даёт точные цифры вместо «примерно».', 'Knows the electrics, water and engine. Gives exact numbers instead of rough guesses.'),
-  diplomat: t('Знает, как говорить с экипажем и маринерами. Смягчает сорванные ожидания.', 'Knows how to talk to the crew and marineros. Softens broken expectations.'),
+  diplomat: t('Знает, как говорить с экипажем и маринеро. Смягчает сорванные ожидания.', 'Knows how to talk to the crew and marineros. Softens broken expectations.'),
   economist: t('«Марина дорогая, бухта бесплатно». Ложный голос, иногда прав.', '"Marinas are pricey, bays are free." A false voice that is sometimes right.'),
   pride: t('«Не позорься перед экипажем». Ложный голос: толкает к риску.', '"Don\'t embarrass yourself in front of the crew." A false voice that pushes you to take risks.'),
   crew_voice: t('Желания гостей: пляж, таверна, ранний выход. Отражает настроение.', 'What the guests want: beach, taverna, an early start. Mirrors their mood.'),

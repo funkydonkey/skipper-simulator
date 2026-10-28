@@ -12,7 +12,7 @@ export function Expectations({ hide = [] }: { hide?: readonly string[] }) {
     <section className={styles.expect}>
       <h2>{t('expecting')}</h2>
       <ul>
-        {open.map((e) => <li key={e.id} className={styles.bubble}>«{content.dialogues.find((d) => d.id === e.dialogueId)?.heard[lang] ?? e.dialogueId}»</li>)}
+        {open.map((e) => <li key={`${e.id}:${e.dueDay}`} className={styles.bubble}>«{content.dialogues.find((d) => d.id === e.dialogueId)?.heard[lang] ?? e.dialogueId}»</li>)}
       </ul>
     </section>
   );

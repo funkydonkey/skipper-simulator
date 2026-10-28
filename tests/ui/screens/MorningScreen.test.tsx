@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { content, gameAt } from '../fixtures';
 import { renderShell } from '../render';
 
@@ -40,5 +40,15 @@ describe('MorningScreen', () => {
     const today = r.session().game!.log.filter((e) => e.day === 1).map((e) => e.cause);
     expect(today).toContain('barometer:open');
     expect(today).toContain('dialogue:early_try');
+  });
+
+  it('expectations with the same dialogue and creation day but different due days get unique React keys', () => {
+    const game = gameAt('morning');
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const base = { dialogueId: content.dialogues[0]!.id, spec: game.expectations[0]?.spec ?? ({} as never), strength: 1, createdDay: game.day, status: 'open' as const };
+    const two = [{ ...base, id: `${base.dialogueId}@${game.day}`, dueDay: game.day }, { ...base, id: `${base.dialogueId}@${game.day}`, dueDay: game.day + 1 }];
+    renderShell({ ...game, expectations: two });
+    expect(spy.mock.calls.flat().join(' ')).not.toMatch(/same key/);
+    spy.mockRestore();
   });
 });
