@@ -177,6 +177,7 @@ describe('PlanningScreen', () => {
       renderShell({ ...base, weather: { ...calm, signalsVisible: false } });
       expect(screen.queryByText('Фронта сегодня не ждём.')).not.toBeInTheDocument();
       expect(screen.getByText('На барометр сегодня не смотрели.')).toBeInTheDocument();
+      expect(screen.queryByText(/гПа/)).not.toBeInTheDocument();
     });
 
     it('names the weeks weather template in the forecast panel', () => {

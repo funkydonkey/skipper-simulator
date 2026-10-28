@@ -6,7 +6,6 @@ export const PLANNING = dict({
   forecast: { ru: 'Прогноз', en: 'Forecast' },
   forecastWind: { ru: 'Ветер {kn} уз, порывы {gust} уз, {dir}', en: 'Wind {kn} kn, gusts {gust} kn, {dir}' },
   weekTemplate: { ru: 'Неделя: {name}', en: 'Week: {name}' },
-  barometer: { ru: 'Барометр {hpa} гПа', en: 'Barometer {hpa} hPa' },
   trend: { ru: 'Барометр {hpa} гПа ({trend} за ночь)', en: 'Barometer {hpa} hPa ({trend} overnight)' },
   insightChance: { ru: 'Чутьё: шанс фронта {pct}%', en: 'Sea Sense: front chance {pct}%' },
   insightFrom: { ru: 'Чутьё: фронт после {time}', en: 'Sea Sense: front after {time}' },

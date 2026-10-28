@@ -11,12 +11,20 @@ export function shiftDir(dir: Dir8, steps: number): Dir8 {
   return DIRS[(((i + steps) % 8) + 8) % 8]!;
 }
 
-/** Always consumes 2 jitter draws, then 2 more so later rolls don't depend on whether a front happened. */
+/** The morning reading: the template's pressure, lowered by the front drop on a front day. */
+const reading = (hpa: number, front: boolean, b: Balance): number => hpa - (front ? b.weather.barometerDropHpa : 0);
+
+/**
+ * Always consumes 2 jitter draws, then 2 more so later rolls don't depend on whether a front happened.
+ * The trend is today's reading against yesterday's, so the numbers the player sees add up day to day.
+ */
 export function rollDayWeather(
-  rng: number, template: WeatherTemplate, day: number, b: Balance,
+  rng: number, template: WeatherTemplate, day: number, b: Balance, prevFront = false,
 ): RngResult<{ weather: DayWeather; frontOdds: ChanceValue }> {
   const d = template.days.find((x) => x.day === day);
   if (!d) throw new EngineError('CONTENT', `Weather template ${template.id} has no day ${day}`);
+  const prev = template.days.find((x) => x.day === day - 1);
+  const prevHpa = prev ? reading(prev.barometerHpa, prevFront, b) : d.barometerHpa;
   const j = template.jitter ?? b.weather.jitter;
   const dirJ = nextInt(rng, -j.dirSteps, j.dirSteps);
   const knJ = nextInt(dirJ.next, -j.kn, j.kn);
@@ -31,11 +39,11 @@ export function rollDayWeather(
     forecastKn,
     forecastGustKn,
     forecastDir,
-    barometerHpa: d.barometerHpa,
+    barometerHpa: reading(d.barometerHpa, hit, b),
     front: hit,
     frontAddKn: hit ? round1(add.value) : 0,
     frontDir: hit ? shiftDir(forecastDir, b.weather.frontShiftSteps) : forecastDir,
-    barometerTrendHpa: hit ? -b.weather.barometerDropHpa : 0,
+    barometerTrendHpa: round1(reading(d.barometerHpa, hit, b) - prevHpa),
     signalsVisible: false,
   };
   return { value: { weather, frontOdds: front.value.odds }, next: add.next };

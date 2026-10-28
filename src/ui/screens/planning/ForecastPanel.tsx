@@ -25,10 +25,7 @@ export function ForecastPanel() {
           {w.front ? <VoiceLine voice="sea_sense" text={t('frontSigns')} /> : <p className={styles.muted}>{t('noFront')}</p>}
         </>
       ) : (
-        <>
-          <p className="mono">{t('barometer', { hpa: w.barometerHpa })}</p>
-          <p className={styles.muted}>{t('noBarometer')}</p>
-        </>
+        <p className={styles.muted}>{t('noBarometer')}</p>
       )}
       {insight.frontChance !== null && <p className={styles.insight}>{t('insightChance', { pct: Math.round(insight.frontChance * 100) })}</p>}
       {insight.frontFromHour !== null && <p className={styles.insight}>{t('insightFrom', { time: formatHour(insight.frontFromHour) })}</p>}

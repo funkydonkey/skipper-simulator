@@ -27,7 +27,7 @@ export function MorningScreen() {
       title={t('title', { n: game.day })}
       subtitle={pointName(content, game.locationId, lang)}
       side={<ResourcePanel />}
-      actions={<Button onClick={() => act({ type: 'start_day', choice: { openBarometer: barometer, dialogueId: line } })}>{t('start')}</Button>}
+      actions={<Button onClick={() => act({ type: 'start_day', choice: { openBarometer: keenSense || barometer, dialogueId: line } })}>{t('start')}</Button>}
     >
       {game.day === b.schedule.days && <p className={styles.warning}>{t('lastDay', { time: formatHour(b.schedule.returnDeadlineHour) })}</p>}
       <Expectations />

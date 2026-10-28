@@ -45,6 +45,19 @@ describe('weather', () => {
     expect(fronts / 2000).toBeLessThan(0.54);
   });
 
+  it('the barometer reads against yesterday: template drift plus a front drop', () => {
+    const drift = { ...template, jitter: { dirSteps: 0, kn: 0 }, days: template.days.map((d) => ({ ...d, frontChance: 0, barometerHpa: 1020 - d.day * 2 })) };
+    const day1 = rollDayWeather(1, drift, 1, b).value.weather;
+    expect([day1.barometerHpa, day1.barometerTrendHpa]).toEqual([1018, 0]);
+    const day2 = rollDayWeather(1, drift, 2, b).value.weather;
+    expect([day2.barometerHpa, day2.barometerTrendHpa]).toEqual([1016, -2]);
+    const afterFront = rollDayWeather(1, drift, 2, b, true).value.weather;
+    expect(afterFront.barometerTrendHpa).toBe(-2 + b.weather.barometerDropHpa);
+    const stormy = { ...drift, days: drift.days.map((d) => ({ ...d, frontChance: 1 })) };
+    const frontDay = rollDayWeather(1, stormy, 2, b).value.weather;
+    expect([frontDay.barometerHpa, frontDay.barometerTrendHpa]).toEqual([1016 - b.weather.barometerDropHpa, -2 - b.weather.barometerDropHpa]);
+  });
+
   it('throws for a day missing from the template', () => {
     expect(() => rollDayWeather(1, template, 9, b)).toThrow(/no day 9/);
   });

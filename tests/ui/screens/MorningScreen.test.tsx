@@ -14,12 +14,16 @@ describe('MorningScreen', () => {
     }
   });
 
-  it('a keen sea sense reads the weather anyway: the barometer box is ticked and locked', () => {
+  it('a keen sea sense reads the weather anyway: the barometer box is ticked, locked and logged as read', async () => {
     const game = gameAt('morning');
-    renderShell({ ...game, voices: { ...game.voices, sea_sense: content.balance.voices.seaSenseSignalLevel } });
+    const r = renderShell({ ...game, voices: { ...game.voices, sea_sense: content.balance.voices.seaSenseSignalLevel } });
     const box = screen.getByLabelText('Посмотреть на барометр и небо');
     expect(box).toBeChecked();
     expect(box).toBeDisabled();
+    await r.user.click(screen.getByRole('button', { name: 'Начать день' }));
+    const today = r.session().game!.log.filter((e) => e.day === game.day).map((e) => e.cause);
+    expect(today).toContain('barometer:open');
+    expect(today).not.toContain('barometer:ignored');
   });
 
   it('starts the day with the barometer and a promise', async () => {

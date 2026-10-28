@@ -51,16 +51,24 @@ describe('sea sense', () => {
     expect(forecastInsight({ ...frontDay(4), weather: { ...frontDay(4).weather!, front: false } }, content).frontFromHour).toBeNull();
   });
 
-  it('logs front_seen when the voice, not the barometer, shows the front', () => {
-    const morning = (open: boolean) => {
+  it('logs front_seen whenever the voice is keen enough to read the front, barometer or not', () => {
+    const morning = (open: boolean, sense: number) => {
       for (let seed = 1; seed < 200; seed++) {
-        const s = startDay(makeState({ phase: 'morning', day: 3, rng: seed, eventQueue: [] }), content, { openBarometer: open });
+        const s = startDay(makeState({ phase: 'morning', day: 3, rng: seed, eventQueue: [], voices: withVoice('sea_sense', sense) }), content, { openBarometer: open });
         if (s.weather?.front) return s;
       }
       throw new Error('no front seed');
     };
-    expect(morning(false).log.some((e) => e.cause === 'voice:sea_sense:front_seen')).toBe(true);
-    expect(morning(true).log.some((e) => e.cause === 'voice:sea_sense:front_seen')).toBe(false);
+    const seen = (s: GameState) => s.log.some((e) => e.cause === 'voice:sea_sense:front_seen');
+    const keen = b.voices.seaSenseSignalLevel;
+    expect(seen(morning(false, keen))).toBe(true);
+    expect(seen(morning(true, keen))).toBe(true);
+    expect(seen(morning(true, keen - 1))).toBe(false);
+  });
+
+  it('logs barometer:open for the locked box a keen sense sends', () => {
+    const s = startDay(makeState({ phase: 'morning', day: 3, eventQueue: [], voices: withVoice('sea_sense', b.voices.seaSenseSignalLevel) }), content, { openBarometer: true });
+    expect(s.log.map((e) => e.cause)).toContain('barometer:open');
   });
 });
 
