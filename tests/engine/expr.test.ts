@@ -90,6 +90,11 @@ describe('expr', () => {
     const berthed = buildConditionContext(makeState({ locationId: 'marina_b', dayFacts: { ...facts, mooring: 'berth' } }), content);
     expect(berthed).toMatchObject({ at_marina: true, moored_berth: true });
     expect(buildConditionContext(makeState({ locationId: 'marina_b' }), content)).toMatchObject({ at_marina: true, moored_berth: false });
+    const morning = buildConditionContext(makeState({ locationId: 'marina_b', anchoredOff: true }), content);
+    expect(morning).toMatchObject({ at_marina: false });
+    const quay = { ...content, map: content.map.map((p) => (p.id === 'marina_b' ? { ...p, kind: 'quay' as const } : p)) };
+    expect(buildConditionContext(makeState({ locationId: 'marina_b' }), quay).at_quay).toBe(true);
+    expect(buildConditionContext(makeState({ locationId: 'marina_b', anchoredOff: true }), quay).at_quay).toBe(false);
     expect(CONTEXT_KEYS).toContain('moored_berth');
   });
 

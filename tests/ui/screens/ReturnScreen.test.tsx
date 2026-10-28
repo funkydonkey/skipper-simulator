@@ -13,8 +13,9 @@ describe('ReturnScreen', () => {
   });
 
   it('shows a late return and its fee', () => {
-    renderShell({ ...gameAt('return'), returnedOnTime: false });
+    renderShell({ ...gameAt('return'), returnedOnTime: false, damages: [] });
     expect(screen.getByText(/Опоздали.*400 €/)).toBeInTheDocument();
+    expect(screen.queryByText('Базовый менеджер доволен.')).toBeNull();
   });
 
   it('shows the real arrival time and the deposit the base keeps', () => {

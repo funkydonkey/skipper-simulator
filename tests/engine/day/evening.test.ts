@@ -97,6 +97,9 @@ describe('endDay', () => {
     expect(restMood(endDay(afternoon, c, { dinner: 'cook' }))).toBe(5 * content.balance.mood.restPerHour);
     expect(restMood(endDay(delayed, c, { dinner: 'cook' }))).toBe(2 * content.balance.mood.restPerHour);
     const lastDay = evening({ day: 6, clockMin: 14 * 60, locationId: 'base', dayFacts: facts({ day: 6 }) });
+    const stayed = endDay(evening({ day: 6, clockMin: 10 * 60, locationId: 'base', dayFacts: facts({ day: 6, arrivalHour: null, arrivalPointKind: 'base' }) }), c, { dinner: 'cook' });
+    expect(stayed.returnedOnTime).toBe(true);
+    expect(stayed.log.find((e) => e.cause === 'return:on_time')?.data).toBeUndefined();
     expect(endDay(lastDay, c, { dinner: 'cook' }).returnedOnTime).toBe(true);
     const lateDay = resolvePendingEvent({ ...lastDay, eventQueue: ['slow_passage'] }, c, 'call_base');
     const late = endDay(lateDay, c, { dinner: 'cook' });

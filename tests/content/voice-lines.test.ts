@@ -35,7 +35,7 @@ describe('voice content', () => {
   it('neighbor_complains has the specified trigger and options', () => {
     const e = content.events.find((x) => x.id === 'neighbor_complains')!;
     expect(e.pillar).toBe('promises');
-    expect(e.trigger).toEqual({ phase: 'evening', conditions: ["moored_berth", "hour >= 18"], chance: 0.3, once: false, cooldownDays: 2, maxPerWeek: 2 });
+    expect(e.trigger).toEqual({ phase: 'evening', conditions: ["moored_berth"], chance: 0.3, once: false, cooldownDays: 2, maxPerWeek: 2 });
     expect(e.options.map((o) => o.id)).toEqual(['apologize', 'talk_it_over', 'ignore']);
     expect(e.options[1]!.check).toEqual({ voice: 'diplomat', difficulty: 2 });
     expect(e.voices.map((v) => v.voice)).toEqual(expect.arrayContaining(['diplomat', 'pride']));

@@ -20,6 +20,7 @@ describe('save slot', () => {
     const { anchoredOff: _gone, ...older } = gameAt('morning');
     storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: NOW.toISOString(), game: older }));
     const r = readSave(storage, content);
+    expect(r.kind).toBe('ok');
     expect(r.kind === 'ok' && r.game.anchoredOff).toBe(false);
   });
 
@@ -28,6 +29,7 @@ describe('save slot', () => {
     const { lastBerth: _gone, ...older } = gameAt('morning');
     storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: NOW.toISOString(), game: older }));
     const r = readSave(storage, content);
+    expect(r.kind).toBe('ok');
     expect(r.kind === 'ok' && r.game.lastBerth).toBeNull();
   });
 

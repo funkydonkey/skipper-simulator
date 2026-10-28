@@ -175,7 +175,8 @@ export function buildConditionContext(state: GameState, content: Content): CondC
   const r = state.resources;
   const w = state.weather;
   const wind = w ? realWind(w, 1, state.clockMin / 60, requireTemplate(content, state.weatherTemplateId), content.balance) : null;
-  const anchoredOutside = state.dayFacts?.mooring === 'anchor';
+  // Before the day is planned dayFacts is null: last night's mooring is what `anchoredOff` remembers.
+  const anchoredOutside = state.dayFacts ? state.dayFacts.mooring === 'anchor' : state.anchoredOff;
   const ctx: Record<string, CondValue> = {
     day: state.day,
     hour: state.clockMin / 60,
@@ -198,7 +199,7 @@ export function buildConditionContext(state: GameState, content: Content): CondC
     at_marina: (point?.kind === 'marina' || point?.kind === 'base') && !anchoredOutside,
     moored_berth: state.dayFacts?.mooring === 'berth',
     at_bay: point?.kind === 'bay',
-    at_quay: point?.kind === 'quay',
+    at_quay: point?.kind === 'quay' && !anchoredOutside,
     night: state.clockMin >= content.balance.time.sunsetHour * 60,
     'place.seabed': point?.seabed ?? '',
     // The marina refusal roll sets this per call.

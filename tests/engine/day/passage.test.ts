@@ -136,6 +136,13 @@ describe('planDay', () => {
     expect(endDay(planDay(makeState(), quiet, plan()), quiet, { dinner: 'cook' }).anchoredOff).toBe(false);
   });
 
+  it('a stay day without money for the berth anchors off, logs it, and the next morning remembers it', () => {
+    const broke = planDay(makeState({ locationId: 'marina_b', resources: { ...makeState().resources, moneyEur: 10 } }), quiet, plan({ legs: [] }));
+    expect(causes(broke)).toContain('marina:no_money');
+    const next = endDay(broke, quiet, { dinner: 'cook' });
+    expect(next.anchoredOff).toBe(true);
+  });
+
   it('swim stops starting at or after sunset are skipped and do not count as swimming', () => {
     const dusk = planDay(makeState({ clockMin: 19.5 * 60 }), content, plan({ legs: [], swimStops: 2 }));
     expect(causes(dusk).filter((c) => c === 'activity:swim')).toHaveLength(1);

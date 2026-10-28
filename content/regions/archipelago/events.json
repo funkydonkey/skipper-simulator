@@ -2461,8 +2461,7 @@
     "trigger": {
       "phase": "evening",
       "conditions": [
-        "moored_berth",
-        "hour >= 18"
+        "moored_berth"
       ],
       "chance": 0.3,
       "once": false,
@@ -2472,12 +2471,12 @@
     "scene": "marina_berth",
     "text": [
       {
-        "ru": "Сосед по пирсу стучит в борт: «Музыка! Дети спят!»",
-        "en": "The neighbour on the pier knocks on your hull: \"The music! The kids are asleep!\""
+        "ru": "Сосед по пирсу стучит в борт: «Музыка! Можно потише?»",
+        "en": "The neighbour on the pier knocks on your hull: \"The music! Could you keep it down?\""
       },
       {
-        "ru": "С соседней яхты просят потише: у них спят дети.",
-        "en": "From the next yacht they ask you to keep it down: their children are asleep."
+        "ru": "С соседней яхты просят потише: у них маленькие дети.",
+        "en": "From the next yacht they ask you to keep it down: they have small children."
       },
       {
         "ru": "Сосед выходит на палубу в халате и многозначительно смотрит на ваши колонки.",

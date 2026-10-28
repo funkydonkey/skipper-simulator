@@ -21,7 +21,7 @@ export function ReturnScreen() {
       <p className={game.returnedOnTime ? styles.summary : styles.warning}>
         {game.returnedOnTime ? (typeof arrival === 'number' ? t('onTime', { time: formatHour(arrival) }) : t('onTimeNoClock', { time })) : t('late', { time, eur: lateFeeEur })}
       </p>
-      <p className={kept > 0 ? styles.warning : styles.summary}>{kept > 0 ? t('managerKept', { eur: money(kept, lang) }) : t('managerPleased')}</p>
+      {(kept > 0 || game.returnedOnTime) && <p className={kept > 0 ? styles.warning : styles.summary}>{kept > 0 ? t('managerKept', { eur: money(kept, lang) }) : t('managerPleased')}</p>}
       <h2>{t('damages')}</h2>
       {game.damages.length === 0 ? <p className={styles.muted}>{t('noDamage')}</p> : (
         <ul>{game.damages.map((d) => <li key={d}>{label(DAMAGE_NAMES, d, lang)}</li>)}</ul>
