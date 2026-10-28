@@ -71,3 +71,17 @@ export function sayDialogue(state: GameState, content: Content, dialogueId: stri
   const same = (x: Expectation): boolean => x.status === 'open' && x.dialogueId === e.dialogueId && x.dueDay === e.dueDay;
   return { ...s, expectations: [...s.expectations.filter((x) => !same(x)), e] };
 }
+
+export interface DuePromise { expectation: Expectation; status: 'kept' | 'broken'; mood: number }
+
+/** Today's open expectations as "Lights out" will judge them, given the dinner the player has picked. */
+export function duePromises(state: GameState, content: Content, dinner: 'cook' | 'taverna'): DuePromise[] {
+  const f = state.dayFacts;
+  if (!f) return [];
+  const facts: DayFacts = dinner === 'taverna' ? { ...f, activities: [...f.activities, 'taverna'] } : f;
+  const sensitivity = crewSensitivity(state, content);
+  return state.expectations.filter((e) => e.status === 'open' && e.dueDay === facts.day).map((e) => {
+    const status = judgeExpectation(e, facts);
+    return { expectation: e, status, mood: expectationMoodDelta(e.strength, status, state.voices.diplomat, sensitivity, content.balance) };
+  });
+}

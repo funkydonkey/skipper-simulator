@@ -12,3 +12,5 @@
 .growthTitle { font-size: var(--text-lg); margin: 0 0 var(--space-2); }
 .growthList { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); overflow-wrap: anywhere; }
 .levelUp { color: var(--ok); font-weight: 700; }
+.kept { color: var(--ok); }
+.broken { color: var(--bad); }

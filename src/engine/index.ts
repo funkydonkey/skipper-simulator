@@ -27,3 +27,4 @@ export { pendingLevelUps } from './xp';
 export { repairOptions, repairSystem, type RepairChoice } from './repair';
 export { brokenFlags, type BrokenFlags } from './systems';
 export { weekSpend } from './budget';
+export { duePromises, type DuePromise } from './promises';

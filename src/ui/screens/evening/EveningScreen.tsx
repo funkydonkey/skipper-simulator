@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { brokenFlags, formatClock, pendingLevelUps, requirePoint, tavernaBill, tavernaOpen } from '../../../engine';
+import { brokenFlags, duePromises, formatClock, pendingLevelUps, requirePoint, tavernaBill, tavernaOpen } from '../../../engine';
 import { Button } from '../../components/Button';
 import { ResourcePanel } from '../../components/ResourcePanel';
 import { ScreenFrame } from '../../components/ScreenFrame';
 import { SystemsPanel } from '../../components/SystemsPanel';
 import { useAct, useGame, useT } from '../../session/SessionContext';
 import { VOICE_NAMES } from '../../i18n/glossary';
-import { formatHour } from '../../view/format';
+import { formatHour, signed } from '../../view/format';
 import { dayGrowth, levelUpText } from '../../view/logbook';
 import styles from '../day.module.css';
 import { Expectations } from '../morning/Expectations';
@@ -48,6 +48,9 @@ export function EveningScreen() {
   const growth = dayGrowth(game.log, game.day, content, lang, { seed: game.seed, crew: game.crew });
   const levelUps = pendingLevelUps(game, b);
   const mooring = facts?.mooring === 'anchor' ? t('atAnchor') : t('atBerth');
+  const due = duePromises(game, content, dinner);
+  const lastEvening = game.day >= b.schedule.days;
+  const heardOf = (id: string): string => content.dialogues.find((d) => d.id === id)?.heard[lang] ?? id;
 
   return (
     <ScreenFrame
@@ -55,10 +58,22 @@ export function EveningScreen() {
       title={t('title', { n: game.day })}
       subtitle={t('subtitle', { place: point.name[lang], clock: formatClock(game.clockMin) })}
       side={<><ResourcePanel /><SystemsPanel systems={game.systems} content={content} lang={lang} /></>}
-      actions={<Button onClick={() => act({ type: 'end_day', choice: { dinner, dialogueId: line } })}>{t('sleep')}</Button>}
+      actions={<Button onClick={() => act({ type: 'end_day', choice: { dinner, dialogueId: lastEvening ? null : line } })}>{t('sleep')}</Button>}
     >
       <p className={styles.summary}>{summary}, {mooring}.</p>
-      <Expectations />
+      {due.length > 0 && (
+        <section className={styles.expect} aria-label={t('promisesToday')}>
+          <h2>{t('promisesToday')}</h2>
+          <ul className={styles.growthList}>
+            {due.map((p) => (
+              <li key={p.expectation.id} className={p.status === 'kept' ? styles.kept : styles.broken}>
+                <span aria-hidden="true">{p.status === 'kept' ? '✓' : '✗'}</span> «{heardOf(p.expectation.dialogueId)}» — {t(p.status, { mood: signed(p.mood) })}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <Expectations hide={due.map((p) => p.expectation.id)} />
       {(growth.length > 0 || levelUps.length > 0) && (
         <section className={styles.growth} aria-label={t('learned')}>
           <h2 className={styles.growthTitle}>{t('learned')}</h2>
@@ -85,14 +100,14 @@ export function EveningScreen() {
         </label>
         {tavernaReason && <p className={styles.muted}>{tavernaReason}</p>}
       </fieldset>
-      <fieldset className={styles.say}>
+      {!lastEvening && <fieldset className={styles.say}>
         <legend>{t('say')}</legend>
         <label><input type="radio" name="say" checked={line === null} onChange={() => setLine(null)} /> {t('sayNothing')}</label>
         {dialogues.map((d) => (
           <label key={d.id}><input type="radio" name="say" checked={line === d.id} onChange={() => setLine(d.id)} /> «{d.said[lang]}»</label>
         ))}
-      </fieldset>
-      {chosen && <p className={styles.bubble}>{t('heard', { heard: chosen.heard[lang] })}</p>}
+      </fieldset>}
+      {chosen && !lastEvening && <p className={styles.bubble}>{t('heard', { heard: chosen.heard[lang] })}</p>}
     </ScreenFrame>
   );
 }

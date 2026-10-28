@@ -2,11 +2,11 @@ import { useGame, useT } from '../../session/SessionContext';
 import styles from '../day.module.css';
 import { MORNING } from './strings';
 
-/** Open expectations as the crew heard them (ТЗ 4.7). */
-export function Expectations() {
+/** Open expectations as the crew heard them (ТЗ 4.7); `hide` drops ones shown elsewhere (judged today). */
+export function Expectations({ hide = [] }: { hide?: readonly string[] }) {
   const { game, content, lang } = useGame();
   const t = useT(MORNING);
-  const open = game.expectations.filter((e) => e.status === 'open');
+  const open = game.expectations.filter((e) => e.status === 'open' && !hide.includes(e.id));
   if (open.length === 0) return <p className={styles.muted}>{t('nothingExpected')}</p>;
   return (
     <section className={styles.expect}>
