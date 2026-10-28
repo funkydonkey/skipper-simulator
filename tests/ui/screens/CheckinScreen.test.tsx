@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { CHECKPOINT_NAMES } from '../../../src/ui/i18n/glossary';
-import { gameAt } from '../fixtures';
+import { content, gameAt } from '../fixtures';
 import { renderShell } from '../render';
 
 const point = (id: keyof typeof CHECKPOINT_NAMES) => screen.getByRole('button', { name: new RegExp(CHECKPOINT_NAMES[id].ru) });
@@ -16,6 +16,13 @@ describe('CheckinScreen', () => {
     expect(point('impeller')).toHaveAttribute('aria-pressed', 'true');
     await r.user.click(point('impeller'));
     expect(point('toilets')).toBeEnabled();
+  });
+
+  it('warns up front that repairs at base come out of the same time, with the quickest fix', () => {
+    const game = gameAt('checkin');
+    const quickest = Math.min(...content.boats.find((b) => b.id === game.boatId)!.defectPool.flatMap((d) => (d.system && d.fixMin ? [d.fixMin] : [])));
+    renderShell(game);
+    expect(screen.getByText(`Найденное на базе чинят из этого же времени — оставьте запас: самый быстрый ремонт занимает ${quickest} мин.`)).toBeInTheDocument();
   });
 
   it('finishes check-in and records the checked points', async () => {
