@@ -90,6 +90,22 @@ function nightArrival(state: GameState, boat: Boat, b: Balance): GameState {
   return applyOutcome(state, boat, { cause: 'night:arrival', pillar: 'time', effect: { fatigue: b.fatigue.nightArrival, mood: -b.mood.nightArrival } });
 }
 
+/**
+ * Another night where the boat already lies. A paid berth charges again (the point's default berth: the night's
+ * berth type is not kept); short of money, the boat leaves it and lies at anchor off. A night anchored off stays one.
+ */
+export function stayHere(state: GameState, content: Content, boat: Boat): ArrivalResult {
+  const b = content.balance;
+  const point = requirePoint(content, state.locationId);
+  if (point.kind === 'bay' || state.anchoredOff) return { state, mooring: 'anchor' };
+  const fee = berthFee(point, point.berths[0]!.type, state.voices.economist, b);
+  if (!fee) return { state, mooring: 'berth' };
+  if (!canAfford(state, fee.eur)) {
+    return { state: applyOutcome(state, boat, { cause: 'marina:no_money', pillar: 'boat', effect: { mood: -b.mood.marinaRefused } }), mooring: 'anchor' };
+  }
+  return { state: applyOutcome(state, boat, { cause: 'marina:fee', pillar: 'boat', effect: { money: -fee.eur }, saved: fee.savedEur }), mooring: 'berth' };
+}
+
 /** `berth` is the plan's berth (validated by validatePlan); the point's first berth when absent. */
 export function arrive(state: GameState, content: Content, boat: Boat, orders?: Orders, plannedBerth?: BerthType): ArrivalResult {
   const b = content.balance;

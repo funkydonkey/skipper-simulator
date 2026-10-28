@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { endDay } from '../../../src/engine/day/evening';
 import { planDay, validatePlan } from '../../../src/engine/day/passage';
 import { previewPlan } from '../../../src/engine/preview';
+import { berthFee } from '../../../src/engine/berths';
 import type { DayPlan, LegPlan } from '../../../src/engine/types';
 import { makeContent } from '../../fixtures/content';
 import { deepFreeze } from '../../fixtures/freeze';
@@ -91,6 +92,23 @@ describe('planDay', () => {
     expect(leave).not.toContain('order:ok:dep_test');
   });
 
+  it('another night at a paid berth charges its fee again; short of money, the boat anchors off', () => {
+    const marina = content.map.find((p) => p.id === 'marina_b')!;
+    const fee = berthFee(marina, marina.berths[0]!.type, 2, content.balance)!;
+    const stay = planDay(makeState({ locationId: 'marina_b' }), quiet, plan({ legs: [] }));
+    expect(stay.resources.moneyEur).toBe(1500 - fee.eur);
+    expect(stay.log.find((e) => e.cause === 'marina:fee')).toMatchObject({ pillar: 'boat', delta: { moneyEur: -fee.eur } });
+    expect(causes(stay)).toContain('voice:economist:saved');
+    expect(stay.dayFacts!.mooring).toBe('berth');
+    expect(planDay(makeState(), quiet, plan({ legs: [] })).resources.moneyEur).toBe(1500);
+    expect(causes(planDay(makeState({ locationId: 'marina_b', anchoredOff: true }), quiet, plan({ legs: [] })))).not.toContain('marina:fee');
+    const broke = planDay(makeState({ locationId: 'marina_b', resources: { ...makeState().resources, moneyEur: 10 } }), quiet, plan({ legs: [] }));
+    expect(causes(broke)).toContain('marina:no_money');
+    expect(broke.resources.moneyEur).toBe(10);
+    expect(broke.dayFacts!.mooring).toBe('anchor');
+    expect(causes(endDay(broke, quiet, { dinner: 'cook' }))).not.toContain('charge:shore');
+  });
+
   it('endDay remembers a night anchored off a marina that turned the boat away, until it berths', () => {
     const broke = makeState({ locationId: 'bay_a', resources: { ...makeState().resources, moneyEur: 10 } });
     const refused = planDay(broke, quiet, plan({ legs: [sail('r_bay_a_marina_b')] }));
@@ -99,7 +117,7 @@ describe('planDay', () => {
     expect(next.anchoredOff).toBe(true);
     const planning = { ...next, phase: 'planning' as const, weather: makeState().weather };
     expect(endDay(planDay(planning, quiet, plan({ legs: [] })), quiet, { dinner: 'cook' }).anchoredOff).toBe(true);
-    const berthed = endDay(planDay({ ...planning, anchoredOff: false }, quiet, plan({ legs: [] })), quiet, { dinner: 'cook' });
+    const berthed = endDay(planDay({ ...planning, anchoredOff: false, resources: makeState().resources }, quiet, plan({ legs: [] })), quiet, { dinner: 'cook' });
     expect(berthed.anchoredOff).toBe(false);
     expect(endDay(planDay(makeState(), quiet, plan()), quiet, { dinner: 'cook' }).anchoredOff).toBe(false);
   });

@@ -9,7 +9,7 @@ import { addWear, brokenFlags } from '../systems';
 import { capClock, restHours } from '../time';
 import { previewPlan } from '../preview';
 import { MANEUVER_KINDS, type Activity, type Balance, type BerthType, type Boat, type Content, type DayPlan, type EventPhase, type GameState, type ManeuverKind, type MapPoint } from '../types';
-import { arrive, runManeuver } from './arrival';
+import { arrive, runManeuver, stayHere } from './arrival';
 import { runLeg, startEngine } from './legs';
 
 const SHOWERS = ['strict', 'normal', 'loose'];
@@ -166,9 +166,9 @@ export function planDay(state: GameState, content: Content, plan: DayPlan): Game
     summary = r.summary;
   } else {
     const swim = swimStops(s, boat, plan.swimStops, content.balance);
-    s = swim.state;
-    const here = requirePoint(content, s.locationId);
-    summary = { moving: false, departureHour: null, mooring: departureKind(s, here) === 'anchor_up' ? 'anchor' : 'berth', motor: 0, sail: 0, legHours: 0, swum: swim.swum, maxWind: 0 };
+    const stay = stayHere(swim.state, content, boat);
+    s = stay.state;
+    summary = { moving: false, departureHour: null, mooring: stay.mooring, motor: 0, sail: 0, legHours: 0, swum: swim.swum, maxWind: 0 };
   }
   s = settleDay(s, content, boat, plan, summary);
   // Passage events roll per leg inside `sail`; 3b's passage failures stay day-level.
