@@ -7,6 +7,8 @@ export const VIEW = dict({
   resources: { ru: 'Ресурсы', en: 'Resources' },
   damages: { ru: 'Повреждения: {list}', en: 'Damage: {list}' },
   noDamage: { ru: 'Повреждений нет', en: 'No damage' },
+  brokenSystems: { ru: 'Сломано: {list}', en: 'Broken: {list}' },
+  wornSystems: { ru: 'Изношено: {list}', en: 'Worn: {list}' },
   at: { ru: '{place} · {clock}', en: '{place} · {clock}' },
 });
 

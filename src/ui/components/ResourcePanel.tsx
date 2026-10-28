@@ -1,9 +1,8 @@
 import { formatClock } from '../../engine';
 import { COMMON } from '../i18n/common';
-import { DAMAGE_NAMES, label } from '../i18n/glossary';
 import { useGame, useT } from '../session/SessionContext';
 import { pointName } from '../view/map';
-import { resourceRows } from '../view/resources';
+import { damageSummary, resourceRows } from '../view/resources';
 import { VIEW } from '../view/strings';
 import styles from './ResourcePanel.module.css';
 
@@ -12,10 +11,9 @@ export function ResourcePanel() {
   const t = useT(VIEW);
   const tc = useT(COMMON);
   const rows = resourceRows(game, content, lang);
-  const damages = game.damages.map((d) => label(DAMAGE_NAMES, d, lang)).join(', ');
   return (
     <section className={styles.panel} aria-label={t('resources')}>
-      <p className={styles.day}>{tc('dayOf', { n: game.day, total: content.balance.schedule.days })}</p>
+      <p className={styles.day}>{tc('dayOf', { n: Math.min(game.day, content.balance.schedule.days), total: content.balance.schedule.days })}</p>
       <p className={styles.where}>{t('at', { place: pointName(content, game.locationId, lang), clock: formatClock(game.clockMin) })}</p>
       <ul className={styles.list}>
         {rows.map((r) => (
@@ -30,7 +28,7 @@ export function ResourcePanel() {
           </li>
         ))}
       </ul>
-      <p className={styles.damage}>{damages ? t('damages', { list: damages }) : t('noDamage')}</p>
+      <p className={styles.damage}>{damageSummary(game, content, lang)}</p>
     </section>
   );
 }

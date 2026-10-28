@@ -1,6 +1,7 @@
 import { budgetGrade, weekSpend } from './budget';
 import { renderLocalized } from './crew';
 import { buildConditionContext, evaluateCondition, type CondContext } from './expr';
+import { finishWeek } from './day/evening';
 import { causeMatches } from './log';
 import { requireBoat } from './state';
 import { voiceReport, type VoiceReport } from './voice-report';
@@ -13,6 +14,10 @@ export interface Debrief { scales: WeekScales; depositLossEur: number; depositRe
 export function depositLoss(damages: readonly string[], b: Balance): number {
   return damages.reduce((sum, d) => sum + (b.deposit.damageCostEur[d] ?? b.deposit.defaultDamageEur), 0);
 }
+
+/** What the base would keep from the deposit if the boat were handed over now (damages, unrecorded defects, systems returned broken). */
+export const returnDepositLoss = (state: GameState, content: Content): number =>
+  gradeWeek(finishWeek(state, content), requireBoat(content, state), content.balance).depositLossEur;
 
 /** Charges logged at the return for systems handed back broken. */
 const brokenReturnLoss = (log: readonly LogEntry[]): number =>

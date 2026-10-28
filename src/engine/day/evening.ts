@@ -81,7 +81,7 @@ function rest(state: GameState, boat: Boat, b: Balance): GameState {
 function checkReturn(state: GameState, point: MapPoint, facts: DayFacts, b: Balance): GameState {
   if (state.day !== b.schedule.days) return state;
   const onTime = point.kind === 'base' && (facts.arrivalHour ?? 0) <= b.schedule.returnDeadlineHour;
-  return appendLog({ ...state, returnedOnTime: onTime }, { kind: 'info', cause: `return:${onTime ? 'on_time' : 'late'}`, pillar: 'time' });
+  return appendLog({ ...state, returnedOnTime: onTime }, { kind: 'info', cause: `return:${onTime ? 'on_time' : 'late'}`, pillar: 'time', data: { arrivalHour: facts.arrivalHour ?? 0 } });
 }
 
 export function endDay(state: GameState, content: Content, choice: EveningChoice): GameState {
