@@ -490,6 +490,7 @@ export interface DayPlan {
 export interface DayFacts {
   day: number;
   departureHour: number | null;
+  /** When the boat was in for the night, counting time lost to passage and arrival events; null on a stay day. */
   arrivalHour: number | null;
   arrivalPointKind: PointKind | null;
   mooring: 'anchor' | 'berth' | null;

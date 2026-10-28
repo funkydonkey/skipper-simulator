@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { endDay, finishWeek } from '../../../src/engine/day/evening';
 import { resolvePendingEvent } from '../../../src/engine/events';
 import { createExpectation } from '../../../src/engine/promises';
+import { repairSystem } from '../../../src/engine/repair';
 import type { DayFacts, GameState } from '../../../src/engine/types';
 import { makeContent } from '../../fixtures/content';
 import { deepFreeze } from '../../fixtures/freeze';
@@ -101,6 +102,22 @@ describe('endDay', () => {
     const late = endDay(lateDay, c, { dinner: 'cook' });
     expect(late.returnedOnTime).toBe(false);
     expect(causes(late)).toContain('return:late');
+  });
+
+  it('the return is judged at mooring: evening events and repairs at base cannot make it late', () => {
+    const arrivalEvent = { ...content.events[0]!, id: 'slow_arrival', trigger: { ...content.events[0]!.trigger, phase: 'arrival' as const } };
+    const c = { ...content, events: [...content.events, arrivalEvent] };
+    const moored = evening({ day: 6, clockMin: 16 * 60, locationId: 'base', dayFacts: facts({ day: 6, arrivalHour: 16 }) });
+    const eveningEvent = resolvePendingEvent({ ...moored, eventQueue: ['toilet_clog'] }, c, 'call_base');
+    expect(eveningEvent.clockMin).toBe(20 * 60);
+    expect(endDay(eveningEvent, c, { dinner: 'cook' }).returnedOnTime).toBe(true);
+    const broken = { ...moored, systems: { ...moored.systems, rig: { state: 'worn' as const, wear: 9, broken: true } } };
+    const repaired = repairSystem(broken, c, 'rig', 'service');
+    expect(repaired.clockMin).toBe(20 * 60);
+    expect(endDay(repaired, c, { dinner: 'cook' }).returnedOnTime).toBe(true);
+    const queued = resolvePendingEvent({ ...moored, eventQueue: ['slow_arrival'] }, c, 'call_base');
+    expect(queued.dayFacts!.arrivalHour).toBe(20);
+    expect(endDay(queued, c, { dinner: 'cook' }).returnedOnTime).toBe(false);
   });
 
   it('time lost late at night never runs the clock past the next morning: capped and logged', () => {

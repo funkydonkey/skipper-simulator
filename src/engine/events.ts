@@ -160,5 +160,13 @@ export function resolvePendingEvent(state: GameState, content: Content, optionId
   s = applyOutcomes(s, requireBoat(content, s), r.value.outcomes, content.balance);
   const context = ev.trigger.phase === 'morning' ? 'morning' : 'evening';
   for (const o of r.value.outcomes) if (o.effect.promise) s = sayDialogue(s, content, o.effect.promise, context);
-  return capClock(s, content.balance);
+  s = capClock(s, content.balance);
+  return ev.trigger.phase === 'passage' || ev.trigger.phase === 'arrival' ? delayArrival(s, s.clockMin - state.clockMin) : s;
+}
+
+/** Time a passage or arrival event costs is time before the boat is in for the night. */
+function delayArrival(state: GameState, minutes: number): GameState {
+  const facts = state.dayFacts;
+  if (!facts || facts.arrivalHour === null || minutes === 0) return state;
+  return { ...state, dayFacts: { ...facts, arrivalHour: facts.arrivalHour + minutes / 60 } };
 }

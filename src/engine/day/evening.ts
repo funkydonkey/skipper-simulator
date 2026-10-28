@@ -69,14 +69,15 @@ export function sleepShare(clockMin: number, b: Balance): number {
   return clamp((morning - clockMin / 60) / (morning - b.time.sunsetHour), 0, 1);
 }
 
-/** Rest and the return deadline use the clock after all of today's events were resolved. */
+/** Rest uses the clock after all of today's events were resolved. */
 function rest(state: GameState, boat: Boat, b: Balance): GameState {
   return applyOutcome(state, boat, { cause: 'rest', pillar: 'time', effect: { mood: round1(restHours(state.clockMin, b) * b.mood.restPerHour) } });
 }
 
-function checkReturn(state: GameState, point: MapPoint, b: Balance): GameState {
+/** Judged when the boat was in (a stay day: in all day): evening events and repairs at base cannot make it late. */
+function checkReturn(state: GameState, point: MapPoint, facts: DayFacts, b: Balance): GameState {
   if (state.day !== b.schedule.days) return state;
-  const onTime = point.kind === 'base' && state.clockMin <= b.schedule.returnDeadlineHour * 60;
+  const onTime = point.kind === 'base' && (facts.arrivalHour ?? 0) <= b.schedule.returnDeadlineHour;
   return appendLog({ ...state, returnedOnTime: onTime }, { kind: 'info', cause: `return:${onTime ? 'on_time' : 'late'}`, pillar: 'time' });
 }
 
@@ -91,7 +92,7 @@ export function endDay(state: GameState, content: Content, choice: EveningChoice
   if (choice.dinner === 'taverna' && !point.services.taverna) throw new EngineError('INVALID_INPUT', `No taverna at ${point.id}`);
   if (choice.dinner === 'taverna' && !tavernaOpen(state.clockMin, b)) throw new EngineError('INVALID_INPUT', 'Taverna is closed');
   const meal = dinner(state, content, choice.dinner);
-  let s = applyOutcomes(checkReturn(rest(state, boat, b), point, b), boat, meal.outcomes);
+  let s = applyOutcomes(checkReturn(rest(state, boat, b), point, facts, b), boat, meal.outcomes);
   const dayFacts = meal.activity ? { ...facts, activities: [...facts.activities, meal.activity] } : facts;
   const resolved = resolveDueExpectations(s.expectations, dayFacts, s.voices.diplomat, crewSensitivity(s, content), b);
   s = applyOutcomes({ ...s, expectations: resolved.expectations }, boat, resolved.outcomes);
