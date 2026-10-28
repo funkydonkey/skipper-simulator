@@ -112,8 +112,8 @@
     },
     "scene": "engine_bay",
     "text": {
-      "ru": "Сигнал перегрева. Из выхлопа валит пар, а воды почти нет.",
-      "en": "The overheat alarm shrieks. Steam pours from the exhaust, and the water is almost gone."
+      "ru": "На переходе сработал сигнал перегрева. Из выхлопа валил пар, а воды почти не было.",
+      "en": "On passage the overheat alarm shrieked. Steam poured from the exhaust, and the water was almost gone."
     },
     "voices": [
       {
@@ -164,8 +164,8 @@
       {
         "id": "keep_motoring",
         "text": {
-          "ru": "Идти дальше на моторе",
-          "en": "Keep motoring"
+          "ru": "Дойти на моторе как есть",
+          "en": "Carry on motoring as is"
         },
         "effects": {
           "damage": "impeller",
@@ -177,7 +177,7 @@
       {
         "id": "change_impeller",
         "text": {
-          "ru": "Встать и поменять импеллер",
+          "ru": "Остановиться и поменять импеллер",
           "en": "Stop and change the impeller"
         },
         "check": {
@@ -199,8 +199,8 @@
       {
         "id": "sail_on",
         "text": {
-          "ru": "Заглушить и идти под парусом",
-          "en": "Kill the engine and sail on"
+          "ru": "Заглушить и дойти под парусом",
+          "en": "Kill the engine and sail in"
         },
         "effects": {
           "time_hours": 1,
@@ -665,8 +665,8 @@
       {
         "id": "keep_sailing",
         "text": {
-          "ru": "Идти дальше под генуей",
-          "en": "Keep sailing on the genoa"
+          "ru": "Дойти под генуей как есть",
+          "en": "Carry on under the genoa as is"
         },
         "effects": {
           "damage": "sail_torn",
@@ -874,7 +874,8 @@
     "trigger": {
       "phase": "morning",
       "conditions": [
-        "front"
+        "front",
+        "at_marina || at_quay"
       ],
       "chance": 0.6
     },
@@ -1361,7 +1362,8 @@
     "trigger": {
       "phase": "passage",
       "conditions": [
-        "day <= 3"
+        "day <= 3",
+        "hour >= 11 && hour < 15"
       ],
       "chance": 0.3
     },
@@ -2459,7 +2461,8 @@
     "trigger": {
       "phase": "evening",
       "conditions": [
-        "moored_berth"
+        "moored_berth",
+        "hour >= 18"
       ],
       "chance": 0.3,
       "once": false,
@@ -2693,8 +2696,8 @@
       {
         "id": "keep_going",
         "text": {
-          "ru": "Идти дальше, разберёмся вечером",
-          "en": "Keep going, sort it out tonight"
+          "ru": "Не трогать, разберёмся вечером",
+          "en": "Leave it, sort it out tonight"
         },
         "effects": {
           "break": "electrical",
