@@ -84,6 +84,12 @@ describe('logbook', () => {
     expect(describeEntry(certain, content, 'ru', 1), 'a 0% marina roll is not a roll worth logging').toBeNull();
   });
 
+  it('says when the night ran out and the clock was capped at the next morning', () => {
+    const capped = entry('night:clock_capped', { kind: 'info', pillar: 'time', data: { lostMin: 40 } });
+    expect(describeEntry(capped, content, 'ru', 1)).toMatchObject({ text: 'Ночь кончилась раньше дел: наступило утро', tone: 'bad' });
+    expect(describeEntry(capped, content, 'en', 1)!.text).toBe('The night ran out before the work did: it is morning');
+  });
+
   it('describes the marinero roll: met or not, with the odds', () => {
     const odds = { value: 0.3, parts: [{ source: 'base', delta: 0.3 }] };
     const roll = (hit: boolean) => entry('roll:marinero:nisi_quay', { kind: 'roll', pillar: 'safety', odds, data: { hit } });

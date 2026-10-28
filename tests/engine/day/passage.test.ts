@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { endDay } from '../../../src/engine/day/evening';
 import { planDay, validatePlan } from '../../../src/engine/day/passage';
+import { previewPlan } from '../../../src/engine/preview';
 import type { DayPlan, LegPlan } from '../../../src/engine/types';
 import { makeContent } from '../../fixtures/content';
 import { deepFreeze } from '../../fixtures/freeze';
@@ -154,6 +155,18 @@ describe('planDay', () => {
       .toThrow(/past sunset/);
     expect(() => validatePlan(late, content, { departureHour: 9, legs: [], swimStops: 0, shower: 'normal', autopilot: false }))
       .not.toThrow();
+  });
+
+  it('rejects a plan the preview expects to arrive after time.latestArrivalHour, with its own error code', () => {
+    const t = content.balance.time;
+    const long = plan({ departureHour: 19, legs: [sail('r_base_bay_a'), sail('r_bay_a_marina_b'), sail('r_marina_b_base')] });
+    const s = makeState();
+    expect(previewPlan(s, content, long).arrivalMin!).toBeGreaterThan(t.latestArrivalHour * 60);
+    expect(previewPlan(s, content, long).arrivalTooLate).toBe(true);
+    expect(() => validatePlan(s, content, long)).toThrow(expect.objectContaining({ code: 'TOO_LATE' }));
+    expect(() => planDay(s, content, long)).toThrow(/latestArrivalHour/);
+    expect(previewPlan(s, content, plan()).arrivalTooLate).toBe(false);
+    expect(() => validatePlan(s, content, plan())).not.toThrow();
   });
 
   it('rejects maneuver orders for an unknown maneuver kind', () => {

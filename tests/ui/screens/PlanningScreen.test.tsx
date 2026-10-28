@@ -86,6 +86,16 @@ describe('PlanningScreen', () => {
     expect(r.currentScreen()).toBe('planning');
   });
 
+  it('a plan arriving in the dead of night is rejected with its own localized reason', () => {
+    const calm = { ...atBase().weather!, forecastKn: 4, forecastGustKn: 7, front: false, frontAddKn: 0 };
+    const sail = (routeId: string) => ({ routeId, mode: 'sail' as const, reefs: 0 as const, genoa: 'full' as const, course: 'detour' as const });
+    const long = { departureHour: 19.5, swimStops: 0, shower: 'normal' as const, autopilot: false, legs: ['r_base_marina_blue_lagoon', 'r_vela_bay_blue_lagoon', 'r_vela_bay_kastri_marina'].map(sail) };
+    const r = renderShell({ ...atBase(), weather: calm });
+    r.dispatch({ type: 'draft_plan', plan: long });
+    expect(screen.getByRole('alert')).toHaveTextContent(/день слишком длинный/);
+    expect(r.currentScreen()).toBe('planning');
+  });
+
   it('shows a localized line instead of the preview when the engine cannot estimate', () => {
     renderShell({ ...atBase(), weather: null });
     expect(screen.getByText('Не удаётся оценить этот план: сейчас этого сделать нельзя')).toBeInTheDocument();

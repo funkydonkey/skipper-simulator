@@ -89,6 +89,7 @@ export const LOG = dict({
   rest: { ru: 'Отдых на стоянке, настроение {mood}', en: 'Rest at the anchorage, mood {mood}' },
   nightRolly: { ru: 'Ночь в болтанке', en: 'A rolly night' },
   nightArrival: { ru: 'Пришли в темноте', en: 'Arrived after dark' },
+  nightClockCapped: { ru: 'Ночь кончилась раньше дел: наступило утро', en: 'The night ran out before the work did: it is morning' },
   sailOverpowered: { ru: 'Слишком много парусов: крен, экипаж укачало', en: 'Overpowered: heeling hard, the crew got seasick' },
   systemDaily: { ru: 'Неисправно: {system}', en: 'Out of order: {system}' },
   systemAnchor: { ru: '{system} сломано: якорь вручную', en: '{system} broken: anchoring by hand' },

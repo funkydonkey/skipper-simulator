@@ -31,4 +31,5 @@ export const ENGINE_ERRORS: Dict<EngineErrorCode> = {
   NOT_BROKEN: { ru: 'эта система исправна', en: 'that system is not broken' },
   REPAIR_UNAVAILABLE: { ru: 'здесь так починить нельзя', en: 'this repair is not possible here' },
   NO_MONEY: { ru: 'не хватает денег', en: 'not enough money' },
+  TOO_LATE: { ru: 'день слишком длинный: придём глубокой ночью', en: 'too long a day: you would arrive in the dead of night' },
 };

@@ -8,6 +8,7 @@ import { sayDialogue } from './promises';
 import { applyOutcomes } from './resources';
 import type { RngResult } from './rng';
 import { seedHash } from './seed';
+import { capClock } from './time';
 import { requireBoat, requireEvent } from './state';
 import { failureEventIds, rollFailures } from './systems';
 import { grantCheckXp } from './xp';
@@ -159,5 +160,5 @@ export function resolvePendingEvent(state: GameState, content: Content, optionId
   s = applyOutcomes(s, requireBoat(content, s), r.value.outcomes, content.balance);
   const context = ev.trigger.phase === 'morning' ? 'morning' : 'evening';
   for (const o of r.value.outcomes) if (o.effect.promise) s = sayDialogue(s, content, o.effect.promise, context);
-  return s;
+  return capClock(s, content.balance);
 }

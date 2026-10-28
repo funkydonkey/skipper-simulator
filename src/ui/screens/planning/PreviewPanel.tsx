@@ -17,6 +17,7 @@ export function PreviewPanel({ preview, berth, onBerth }: PreviewPanelProps) {
   const lastDay = game.day === b.schedule.days;
   const warnings: string[] = [];
   if (preview.arrivalAfterSunset) warnings.push(t('afterSunset'));
+  if (preview.arrivalTooLate) warnings.push(t('arrivalTooLate', { time: formatHour(b.time.latestArrivalHour % 24) }));
   if (!preview.marinaAffordable) warnings.push(t('marinaNoMoney'));
   if (preview.marinaLate) warnings.push(t('marinaLate'));
   if (lastDay && content.map.find((p) => p.id === preview.destinationId)?.kind !== 'base') warnings.push(t('mustReturn'));

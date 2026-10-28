@@ -43,6 +43,7 @@ export const PLANNING = dict({
   legNoSail: { ru: 'Паруса не работают: этот переход под мотором.', en: 'Sails out: this leg under engine.' },
   legTow: { ru: 'Понадобится буксир: {eur} €, {time}.', en: 'You will need a tow: €{eur}, {time}.' },
   afterSunset: { ru: 'Придёте после заката.', en: 'You will arrive after sunset.' },
+  arrivalTooLate: { ru: 'Так придёте позже {time}: слишком длинный день. Выйдите раньше или сократите маршрут.', en: 'You would arrive after {time}: too long a day. Leave earlier or shorten the route.' },
   marinaNoMoney: { ru: 'Марина: нет денег, встанете на якорь.', en: 'Marina: no money, you will anchor out.' },
   marinaLate: { ru: 'К этому часу места в марине могут кончиться.', en: 'The marina may be full by then.' },
   mustReturn: { ru: 'Сегодня нужно вернуться на базу.', en: 'You need to be back at base today.' },

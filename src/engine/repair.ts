@@ -5,6 +5,7 @@ import { appendLog } from './log';
 import { checkSpec } from './odds';
 import { applyOutcome } from './resources';
 import { requireBoat } from './state';
+import { capClock } from './time';
 import type { ChanceValue, Content, GameState, RepairOption, SystemDef, SystemId } from './types';
 import { grantCheckXp } from './xp';
 
@@ -65,5 +66,5 @@ export function repairSystem(state: GameState, content: Content, systemId: Syste
     const cur = s.systems[systemId]!;
     s = { ...s, systems: { ...s.systems, [systemId]: option.restores === 'ok' ? { state: 'ok', wear: 0, broken: false } : { ...cur, broken: false } } };
   }
-  return appendLog(s, { kind: 'effect', cause: `${cause}:${success ? 'success' : 'fail'}`, pillar: 'boat' });
+  return capClock(appendLog(s, { kind: 'effect', cause: `${cause}:${success ? 'success' : 'fail'}`, pillar: 'boat' }), content.balance);
 }

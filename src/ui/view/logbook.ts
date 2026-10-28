@@ -125,6 +125,7 @@ const DESCRIBE: Record<string, Describer> = {
   rest: (_p, e, _c, lang) => say('rest', lang, { mood: signed(e.delta?.mood ?? 0) }, 'good'),
   night: ([what], _e, _c, lang) => {
     if (what === 'rolly') return say('nightRolly', lang, {}, 'bad');
+    if (what === 'clock_capped') return say('nightClockCapped', lang, {}, 'bad');
     return what === 'arrival' ? say('nightArrival', lang, {}, 'bad') : null;
   },
   sail: ([what], _e, _c, lang) => {

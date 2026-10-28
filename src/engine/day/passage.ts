@@ -6,7 +6,8 @@ import { maneuverFor, validateOrder } from '../maneuver';
 import { applyOutcome } from '../resources';
 import { advanceClock, otherEnd, requireBoat, requirePoint, requireRoute, round1, round2 } from '../state';
 import { addWear, brokenFlags } from '../systems';
-import { restHours } from '../time';
+import { capClock, restHours } from '../time';
+import { previewPlan } from '../preview';
 import { MANEUVER_KINDS, type Activity, type Balance, type BerthType, type Boat, type Content, type DayPlan, type EventPhase, type GameState, type ManeuverKind, type MapPoint } from '../types';
 import { arrive, runManeuver } from './arrival';
 import { runLeg, startEngine } from './legs';
@@ -63,6 +64,9 @@ export function validatePlan(state: GameState, content: Content, plan: DayPlan):
     invalid(`${at} has no "${plan.berth}" berth`);
   }
   validateOrders(content, plan, plan.legs.length > 0 ? plan.berth ?? dest.berths[0]!.type : undefined);
+  if (plan.legs.length > 0 && state.weather && previewPlan(state, content, plan).arrivalTooLate) {
+    throw new EngineError('TOO_LATE', `The plan arrives after time.latestArrivalHour (${t.latestArrivalHour})`);
+  }
 }
 
 function logPlanDecisions(state: GameState, content: Content, plan: DayPlan): GameState {
@@ -158,7 +162,7 @@ export function planDay(state: GameState, content: Content, plan: DayPlan): Game
   let summary: DaySummary;
   if (plan.legs.length > 0) {
     const r = sail(s, content, boat, plan);
-    s = r.state;
+    s = capClock(r.state, content.balance);
     summary = r.summary;
   } else {
     const swim = swimStops(s, boat, plan.swimStops, content.balance);

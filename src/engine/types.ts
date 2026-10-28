@@ -389,6 +389,8 @@ export interface Balance {
     swimStopMin: number;
     sunsetHour: number;
     tavernaCloseHour: number;
+    /** A plan expected to arrive after this hour is rejected (TOO_LATE). */
+    latestArrivalHour: number;
     nightAnchorPenalty: number;
   };
   promises: { keptPerStrength: number; brokenPerStrength: number; diplomatSofteningPerLevel: number };

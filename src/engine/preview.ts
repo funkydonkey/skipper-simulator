@@ -47,6 +47,8 @@ export interface PlanPreview {
   /** Swim stops that would start before sunset. */
   swimStops: number;
   arrivalAfterSunset: boolean;
+  /** Arrives after `time.latestArrivalHour`: validatePlan rejects such a plan (TOO_LATE). */
+  arrivalTooLate: boolean;
   marinaLate: boolean;
   fuelNeededL: number;
   restHours: number;
@@ -167,7 +169,7 @@ export function previewPlan(state: GameState, content: Content, plan: DayPlan): 
     const swims = swimsBeforeSunset(state.clockMin, plan.swimStops, content);
     return {
       legs: [], departureMin: null, arrivalMin: null, destinationId: state.locationId, swimStops: swims.count,
-      arrivalAfterSunset: false, marinaLate: false, fuelNeededL: 0, restHours: restHours(swims.clockMin, b),
+      arrivalAfterSunset: false, arrivalTooLate: false, marinaLate: false, fuelNeededL: 0, restHours: restHours(swims.clockMin, b),
       marinaRefusal: null, marinaAffordable: true, anchorFail: null, destinationSeabed: here.seabed,
       situation: null, berths: here.berths.map((x) => x.type), berthFees: {},
     };
@@ -191,6 +193,7 @@ export function previewPlan(state: GameState, content: Content, plan: DayPlan): 
   return {
     legs, departureMin, arrivalMin, destinationId: at, swimStops: swims.count,
     arrivalAfterSunset: swims.clockMin >= b.time.sunsetHour * 60,
+    arrivalTooLate: arrivalMin > b.time.latestArrivalHour * 60,
     marinaLate,
     fuelNeededL: round1(motorHours * (requireBoat(content, state).motorLph ?? b.fuel.motorLph)),
     restHours: restHours(arrivalMin, b),

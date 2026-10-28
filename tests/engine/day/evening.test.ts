@@ -103,6 +103,16 @@ describe('endDay', () => {
     expect(causes(late)).toContain('return:late');
   });
 
+  it('time lost late at night never runs the clock past the next morning: capped and logged', () => {
+    const morning = (24 + content.balance.start.hour) * 60;
+    const lateNight = evening({ clockMin: morning - 60, eventQueue: ['toilet_clog'] });
+    const s = resolvePendingEvent(lateNight, content, 'call_base');
+    expect(s.clockMin).toBe(morning);
+    expect(s.log.find((e) => e.cause === 'night:clock_capped')).toMatchObject({ kind: 'info', pillar: 'time', data: { lostMin: 180 } });
+    const early = resolvePendingEvent(evening({ eventQueue: ['toilet_clog'] }), content, 'call_base');
+    expect(causes(early)).not.toContain('night:clock_capped');
+  });
+
   it('no gas → no hot food', () => {
     const s = endDay(evening({ resources: { ...res, gasPct: 5 } }), content, { dinner: 'cook' });
     expect(causes(s)).toContain('zero:gas');

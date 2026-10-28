@@ -1,7 +1,7 @@
 import type { GameState, Phase } from './types';
 
 export type EngineErrorCode = 'WRONG_PHASE' | 'PENDING_EVENT' | 'INVALID_INPUT' | 'NOT_FOUND' | 'BUDGET' | 'CONTENT'
-  | 'NOT_BROKEN' | 'REPAIR_UNAVAILABLE' | 'NO_MONEY';
+  | 'NOT_BROKEN' | 'REPAIR_UNAVAILABLE' | 'NO_MONEY' | 'TOO_LATE';
 
 export class EngineError extends Error {
   constructor(public readonly code: EngineErrorCode, message: string) {

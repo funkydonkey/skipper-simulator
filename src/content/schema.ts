@@ -196,7 +196,7 @@ export const BalanceSchema: z.ZodType<Balance> = z.object({
     anchorMin: Pair, anchorFailChance: Pair, seabedFailFactor: fullRecord(SEABEDS, Prob), anchorWindPenaltyKn: NonNeg,
     anchorWindPenalty: Prob, anchorBriefedReduction: Prob, anchorMaxAttempts: Int.positive(), marinaMooringMin: NonNeg,
     marinaLateRefusalChance: Prob, marinaWaitMin: NonNeg, swimStopMin: NonNeg, sunsetHour: Hour,
-    tavernaCloseHour: Hour, nightAnchorPenalty: Prob,
+    tavernaCloseHour: Hour, latestArrivalHour: Hour, nightAnchorPenalty: Prob,
   }).strict(),
   promises: z.object({ keptPerStrength: NonNeg, brokenPerStrength: NonNeg, diplomatSofteningPerLevel: NonNeg }).strict(),
   checks: z.object({ base: Prob, perLevel: NonNeg, min: Prob, max: Prob }).strict(),
