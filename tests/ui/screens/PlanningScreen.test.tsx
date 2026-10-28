@@ -56,6 +56,14 @@ describe('PlanningScreen', () => {
     expect(screen.getByText('Паруса не работают: этот переход под мотором.')).toBeInTheDocument();
   });
 
+  it('a stay day at a paid marina shows the fee for another night', () => {
+    const r = renderShell({ ...atBase(), locationId: 'kastri_marina' });
+    expect(screen.getByText(/^Ещё одна ночь здесь: [\d.]+ €\.$/)).toBeInTheDocument();
+    r.unmount();
+    renderShell(atBase());
+    expect(screen.queryByText(/Ещё одна ночь здесь/)).toBeNull();
+  });
+
   it('a stay day goes straight to the evening', async () => {
     const r = renderShell(atBase());
     await r.user.click(screen.getByRole('button', { name: 'Провести день здесь' }));

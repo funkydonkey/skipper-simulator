@@ -26,7 +26,12 @@ export function PreviewPanel({ preview, berth, onBerth }: PreviewPanelProps) {
   return (
     <section className={styles.preview} aria-live="polite">
       <h2>{t('preview')}</h2>
-      {preview.departureMin === null || preview.arrivalMin === null ? <p>{t('stayRest')}</p> : (
+      {preview.departureMin === null || preview.arrivalMin === null ? (
+        <>
+          <p>{t('stayRest')}</p>
+          {preview.stayFeeEur !== null && <p>{t('stayFee', { eur: preview.stayFeeEur })}</p>}
+        </>
+      ) : (
         <>
           <p className={styles.times}>{t('times', { dep: formatClock(preview.departureMin), arr: formatClock(preview.arrivalMin) })}</p>
           <ul className={styles.legPreviews}>

@@ -1,4 +1,4 @@
-import { berthFee } from '../berths';
+import { berthFee, stayFee } from '../berths';
 import { canAfford } from '../budget';
 import { EngineError } from '../errors';
 import { buildConditionContext } from '../expr';
@@ -81,7 +81,7 @@ function anchorHere(state: GameState, content: Content, boat: Boat, point: MapPo
   );
   s = appendLog(s, { kind: 'info', cause: `anchor:attempts:${r.value.attempts}`, pillar: 'time' });
   s = advanceClock(s, r.value.minutes * cautionTimeFactor(s.voices.caution, b));
-  s = addWear(runManeuver(s, content, 'anchoring', orders), content, 'anchoring', 1);
+  s = addWear(runManeuver({ ...s, lastBerth: null }, content, 'anchoring', orders), content, 'anchoring', 1);
   if (berth === 'anchor_ashore') s = applyOutcome(s, boat, { cause: 'anchor:ashore', pillar: 'time', effect: { time_hours: b.berths.ashoreTimeHours } });
   if (!r.value.held) s = applyOutcome(s, boat, { cause: 'anchor:dragging', pillar: 'time', effect: { fatigue: b.fatigue.rollyNightPenalty } });
   return { state: s, mooring: 'anchor' };
@@ -93,17 +93,17 @@ function nightArrival(state: GameState, boat: Boat, b: Balance): GameState {
 }
 
 /**
- * Another night where the boat already lies. A paid berth charges again (the point's default berth: the night's
- * berth type is not kept); short of money, the boat leaves it and lies at anchor off. A night anchored off stays one.
+ * Another night where the boat already lies. A paid berth charges again for the berth it arrived at; short of money,
+ * the boat leaves it and lies at anchor off. A night anchored off stays one.
  */
 export function stayHere(state: GameState, content: Content, boat: Boat): ArrivalResult {
   const b = content.balance;
   const point = requirePoint(content, state.locationId);
   if (point.kind === 'bay' || state.anchoredOff) return { state, mooring: 'anchor' };
-  const fee = berthFee(point, point.berths[0]!.type, state.voices.economist, b);
+  const fee = stayFee(state, point, b);
   if (!fee) return { state, mooring: 'berth' };
   if (!canAfford(state, fee.eur)) {
-    return { state: applyOutcome(state, boat, { cause: 'marina:no_money', pillar: 'boat', effect: { mood: -b.mood.marinaRefused } }), mooring: 'anchor' };
+    return { state: applyOutcome({ ...state, lastBerth: null }, boat, { cause: 'marina:no_money', pillar: 'boat', effect: { mood: -b.mood.marinaRefused } }), mooring: 'anchor' };
   }
   return { state: applyOutcome(state, boat, { cause: 'marina:fee', pillar: 'boat', effect: { money: -fee.eur }, saved: fee.savedEur }), mooring: 'berth' };
 }
@@ -127,7 +127,7 @@ export function arrive(state: GameState, content: Content, boat: Boat, orders?: 
     s = applyOutcome(s, boat, { cause: 'marina:refused', pillar: 'time', effect: { mood: -b.mood.marinaRefused } });
     return anchorHere(s, content, boat, point, 'anchor', orders);
   }
-  s = settleSituation(s, content, point, berth);
+  s = settleSituation({ ...s, lastBerth: berth }, content, point, berth);
   s = advanceClock(s, b.time.marinaMooringMin * cautionTimeFactor(s.voices.caution, b));
   s = runManeuver(s, content, 'mooring', orders);
   if (fee) {

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { EngineError } from '../../src/engine/errors';
 import { planDay } from '../../src/engine/day/passage';
 import { previewPlan } from '../../src/engine/preview';
+import { berthFee } from '../../src/engine/berths';
 import type { DayPlan, LegPlan } from '../../src/engine/types';
 import { makeContent } from '../fixtures/content';
 import { deepFreeze } from '../fixtures/freeze';
@@ -83,6 +84,17 @@ describe('previewPlan', () => {
   it('a stay-in-place plan has no departure and no arrival', () => {
     const p = previewPlan(makeState(), content, plan([], 9, 2));
     expect(p).toMatchObject({ departureMin: null, arrivalMin: null, destinationId: 'base', legs: [], swimStops: 2 });
+  });
+
+  it('a stay day at a paid berth previews another night\'s fee for the berth the boat lies at', () => {
+    const marina = content.map.find((p) => p.id === 'marina_b')!;
+    const fee = berthFee(marina, 'stern_to', 2, content.balance)!.eur;
+    expect(previewPlan(makeState({ locationId: 'marina_b' }), content, plan([]))).toMatchObject({ stayFeeEur: fee, marinaAffordable: true });
+    expect(previewPlan(makeState(), content, plan([])).stayFeeEur).toBeNull();
+    expect(previewPlan(makeState({ locationId: 'marina_b', anchoredOff: true }), content, plan([])).stayFeeEur).toBeNull();
+    const poor = makeState({ locationId: 'marina_b', resources: { ...makeState().resources, moneyEur: 10 } });
+    expect(previewPlan(poor, content, plan([])).marinaAffordable).toBe(false);
+    expect(previewPlan(makeState(), content, plan([motor('r_base_bay_a')])).stayFeeEur).toBeNull();
   });
 
   it('rejects a broken route chain and a missing weather roll', () => {

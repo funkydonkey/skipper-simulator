@@ -52,6 +52,7 @@ export const PLANNING = dict({
   rest: { ru: 'На отдых останется около {time}.', en: 'About {time} left for rest.' },
   noEstimate: { ru: 'Не удаётся оценить этот план: {message}', en: "Can't estimate this plan: {message}" },
   stayRest: { ru: 'День на месте: отдых и купание.', en: 'A day in place: rest and swimming.' },
+  stayFee: { ru: 'Ещё одна ночь здесь: {eur} €.', en: 'Another night here: €{eur}.' },
   tooLate: { ru: 'Сегодня уже поздно выходить', en: 'Too late to leave today' },
   stay: { ru: 'Провести день здесь', en: 'Spend the day here' },
   toManeuvers: { ru: 'К манёврам', en: 'On to maneuvers' },

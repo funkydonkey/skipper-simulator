@@ -109,6 +109,20 @@ describe('planDay', () => {
     expect(causes(endDay(broke, quiet, { dinner: 'cook' }))).not.toContain('charge:shore');
   });
 
+  it('another night charges the berth the boat arrived at, not the point\'s default', () => {
+    const withSideTo = { ...quiet, map: quiet.map.map((p) => (p.id === 'marina_b' ? { ...p, berths: [...p.berths, { type: 'side_to' as const, headingDeg: 0 }], placesGoneHour: null } : p)) };
+    const marina = withSideTo.map.find((p) => p.id === 'marina_b')!;
+    const sideTo = berthFee(marina, 'side_to', 2, content.balance)!;
+    const arrived = planDay(makeState({ locationId: 'bay_a' }), withSideTo, plan({ legs: [sail('r_bay_a_marina_b')], berth: 'side_to' }));
+    expect(arrived.dayFacts!.mooring).toBe('berth');
+    expect(arrived.lastBerth).toBe('side_to');
+    const next = { ...endDay(arrived, withSideTo, { dinner: 'cook' }), phase: 'planning' as const, weather: makeState().weather };
+    expect(next.lastBerth).toBe('side_to');
+    const stay = planDay(next, withSideTo, plan({ legs: [] }));
+    expect(stay.log.find((e) => e.cause === 'marina:fee' && e.day === next.day)).toMatchObject({ delta: { moneyEur: -sideTo.eur } });
+    expect(planDay(makeState({ locationId: 'base' }), quiet, plan()).lastBerth).toBeNull();
+  });
+
   it('endDay remembers a night anchored off a marina that turned the boat away, until it berths', () => {
     const broke = makeState({ locationId: 'bay_a', resources: { ...makeState().resources, moneyEur: 10 } });
     const refused = planDay(broke, quiet, plan({ legs: [sail('r_bay_a_marina_b')] }));

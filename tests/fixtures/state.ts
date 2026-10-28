@@ -44,6 +44,7 @@ export function makeState(overrides: Partial<GameState> = {}): GameState {
     checkin: null,
     situation: null,
     anchoredOff: false,
+    lastBerth: null,
   };
   return { ...base, ...overrides };
 }

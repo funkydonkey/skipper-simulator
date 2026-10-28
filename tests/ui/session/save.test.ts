@@ -23,6 +23,14 @@ describe('save slot', () => {
     expect(r.kind === 'ok' && r.game.anchoredOff).toBe(false);
   });
 
+  it('reads a v4 slot written before lastBerth as an unknown berth', () => {
+    const storage = memoryStorage();
+    const { lastBerth: _gone, ...older } = gameAt('morning');
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAt: NOW.toISOString(), game: older }));
+    const r = readSave(storage, content);
+    expect(r.kind === 'ok' && r.game.lastBerth).toBeNull();
+  });
+
   it('reports none, corrupt JSON, dangling references', () => {
     const storage = memoryStorage();
     expect(readSave(storage, content).kind).toBe('none');

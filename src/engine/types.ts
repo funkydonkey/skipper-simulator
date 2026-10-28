@@ -543,6 +543,8 @@ export interface GameState {
   situation: Situation | null;
   /** Last night was at anchor off a marina or quay that turned the boat away; cleared by a night anywhere else. */
   anchoredOff: boolean;
+  /** The berth the boat lies at since its last arrival (another night there is charged for it); null at anchor. */
+  lastBerth: BerthType | null;
 }
 
 export interface Situation {
