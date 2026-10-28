@@ -2,17 +2,18 @@ import type { Lang, VoiceImpact, VoiceReport } from '../../../engine';
 import { VoiceIcon } from '../../components/voices/icons';
 import { VOICE_NAMES } from '../../i18n/glossary';
 import { makeT, type TFn } from '../../i18n/t';
+import { money } from '../../view/format';
 import styles from './Debrief.module.css';
 import { DEBRIEF, XP_ROOT_OTHER, XP_ROOTS } from './strings';
 
 const TOP_XP = 3;
 
 /** One sentence per impact; null when it would read "nothing happened". */
-function impactText(i: VoiceImpact, t: TFn<keyof typeof DEBRIEF>): string | null {
+function impactText(i: VoiceImpact, t: TFn<keyof typeof DEBRIEF>, lang: Lang): string | null {
   switch (i.kind) {
     case 'risk': return i.avgDeltaPp === 0 ? null : t(i.avgDeltaPp < 0 ? 'impactRiskCut' : 'impactRiskUp', { n: Math.abs(i.avgDeltaPp), k: i.rolls });
     case 'checks': return i.passed + i.failed === 0 ? null : t('impactChecks', { n: i.passed, m: i.passed + i.failed });
-    case 'saved_eur': return i.eur === 0 ? null : t('impactSaved', { n: i.eur });
+    case 'saved_eur': return i.eur === 0 ? null : t('impactSaved', { n: money(i.eur, lang) });
     case 'front_warned': return i.days.length === 0 ? null : t('impactFront', { days: i.days.join(', ') });
     case 'softened': return i.mood === 0 ? null : t('impactSoftened', { n: i.mood });
   }
@@ -38,7 +39,7 @@ export function VoicesBlock({ voices, lang }: { voices: VoiceReport[]; lang: Lan
   const cards = voices.flatMap((v) => {
     const sources = topSources(v.xp, lang);
     const impacts = v.impacts.flatMap((i) => {
-      const text = impactText(i, t);
+      const text = impactText(i, t, lang);
       return text === null ? [] : [{ kind: i.kind, text }];
     });
     return sources.length + impacts.length === 0 && v.startLevel === v.endLevel ? [] : [{ v, sources, impacts }];

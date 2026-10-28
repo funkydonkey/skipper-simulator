@@ -6,7 +6,7 @@ import { ScreenFrame } from '../../components/ScreenFrame';
 import { SystemsPanel } from '../../components/SystemsPanel';
 import { useAct, useGame, useT } from '../../session/SessionContext';
 import { VOICE_NAMES } from '../../i18n/glossary';
-import { formatHour, signed } from '../../view/format';
+import { formatHour, money, signed } from '../../view/format';
 import { dayGrowth, levelUpText } from '../../view/logbook';
 import styles from '../day.module.css';
 import { Expectations } from '../morning/Expectations';
@@ -96,7 +96,7 @@ export function EveningScreen() {
         {!noCook && game.resources.gasPct < b.gas.pctPerDay && <p className={styles.warning}>{t('noGas')}</p>}
         <label>
           <input type="radio" name="dinner" checked={dinner === 'taverna'} disabled={tavernaReason !== null} onChange={() => setDinner('taverna')} />{' '}
-          {t('taverna', { eur: bill.eur })}
+          {t('taverna', { eur: money(bill.eur, lang) })}
         </label>
         {tavernaReason && <p className={styles.muted}>{tavernaReason}</p>}
       </fieldset>

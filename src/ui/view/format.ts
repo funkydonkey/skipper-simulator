@@ -22,3 +22,12 @@ export function signed(n: number): string {
   if (r > 0) return `+${r}`;
   return r < 0 ? `−${Math.abs(r)}` : '0';
 }
+
+/** One decimal at most, trailing zero dropped: 7.6, 8. */
+export const round1 = (n: number): number => Math.round(n * 10) / 10;
+
+/** A euro amount with at most two decimals, in the reader's decimal mark: "80,8" (ru), "80.8" (en). */
+export function money(eur: number, lang: Lang): string {
+  const s = String(Math.round(eur * 100) / 100);
+  return lang === 'ru' ? s.replace('.', ',') : s;
+}

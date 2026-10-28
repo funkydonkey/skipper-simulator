@@ -58,7 +58,7 @@ describe('PlanningScreen', () => {
 
   it('a stay day at a paid marina shows the fee for another night', () => {
     const r = renderShell({ ...atBase(), locationId: 'kastri_marina' });
-    expect(screen.getByText(/^Ещё одна ночь здесь: [\d.]+ €\.$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Ещё одна ночь здесь: [\d,]+ €\.$/)).toBeInTheDocument();
     r.unmount();
     renderShell(atBase());
     expect(screen.queryByText(/Ещё одна ночь здесь/)).toBeNull();

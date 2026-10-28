@@ -20,7 +20,7 @@ describe('VoicesBlock', () => {
   it('renders every impact kind in Russian', () => {
     render(<VoicesBlock voices={VOICES} lang="ru" />);
     expect(screen.getByRole('heading', { name: 'Голоса недели' })).toBeInTheDocument();
-    for (const s of ['риск ниже на 7.5 п.п. за бросок (бросков: 4)', 'проверки: 2 из 3', 'предупредило о фронте, дни: 3, 4', 'сэкономил 12.5 €', 'смягчил обиды на 6', 'уровень 1 → 2']) {
+    for (const s of ['риск ниже на 7.5 п.п. за бросок (бросков: 4)', 'проверки: 2 из 3', 'предупредило о фронте, дни: 3, 4', 'сэкономил 12,5 €', 'смягчил обиды на 6', 'уровень 1 → 2']) {
       expect(screen.getAllByText(s).length).toBeGreaterThan(0);
     }
   });

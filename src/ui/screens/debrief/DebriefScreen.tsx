@@ -8,6 +8,7 @@ import { useAct, useGame, useSession, useT } from '../../session/SessionContext'
 import styles from './Debrief.module.css';
 import { GradeMark } from './GradeMark';
 import { LinkCard } from './LinkCard';
+import { money } from '../../view/format';
 import { DEBRIEF } from './strings';
 import { VoicesBlock } from './VoicesBlock';
 
@@ -24,7 +25,7 @@ export function DebriefScreen() {
   const scales: Array<[keyof typeof d.scales, Grade, string]> = [
     ['safety', d.scales.safety, game.injuries > 0 ? t('injuries', { n: game.injuries }) : t('noInjuries')],
     ['crew', d.scales.crew, t('mood', { n: Math.round(game.resources.mood) })],
-    ['boat', d.scales.boat, t('deposit', { returned: d.depositReturnedEur, loss: d.depositLossEur })],
+    ['boat', d.scales.boat, t('deposit', { returned: money(d.depositReturnedEur, lang), loss: money(d.depositLossEur, lang) })],
     ['schedule', d.scales.schedule, game.returnedOnTime ? t('onTime') : t('late')],
     ['budget', d.scales.budget, t('spend', { spend: Math.round(weekSpend(game, d.depositLossEur)), budget: content.balance.budget.weekEur })],
   ];

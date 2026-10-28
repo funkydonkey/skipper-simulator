@@ -28,10 +28,13 @@ function dinner(state: GameState, content: Content, choice: EveningChoice['dinne
     return { outcomes: [{ cause: 'activity:taverna', pillar: 'promises', effect, saved: bill.savedEur }], cooked: false, activity: 'taverna' };
   }
   const noCook = brokenFlags(state, content).noCook;
-  if (noCook || state.resources.gasPct < b.gas.pctPerDay) {
-    const zero: Outcome = { cause: 'zero:gas', pillar: 'boat', effect: { mood: -b.gas.noHotFoodMoodPenalty } };
-    const broken: Outcome[] = noCook ? [{ cause: 'system:no_cook', pillar: 'boat', effect: {} }] : [];
-    return { outcomes: [zero, ...broken], cooked: false, activity: null };
+  const lowGas = state.resources.gasPct < b.gas.pctPerDay;
+  if (noCook || lowGas) {
+    const effect = { mood: -b.gas.noHotFoodMoodPenalty };
+    const outcomes: Outcome[] = lowGas
+      ? [{ cause: 'zero:gas', pillar: 'boat', effect }, ...(noCook ? [{ cause: 'system:no_cook', pillar: 'boat' as const, effect: {} }] : [])]
+      : [{ cause: 'system:no_cook', pillar: 'boat', effect }];
+    return { outcomes, cooked: false, activity: null };
   }
   return { outcomes: [], cooked: true, activity: null };
 }

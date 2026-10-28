@@ -1,7 +1,7 @@
 import { eventText, formatClock, renderText, type CrewMember, TRAINABLE_VOICES, type ChanceValue, type Content, type Lang, type LogEntry, type LogKind, type Pillar, type TrainableVoice } from '../../engine';
 import { CHECKPOINT_NAMES, DAMAGE_NAMES, label, VOICE_NAMES } from '../i18n/glossary';
 import { fmt, type Vars } from '../i18n/t';
-import { formatDuration, formatHour, signed } from './format';
+import { formatDuration, formatHour, money, round1, signed } from './format';
 import { pointName } from './map';
 import { LOG, MODE_NAMES, SHOWER_NAMES, SIGNAL_NAMES } from './strings';
 
@@ -16,7 +16,22 @@ type LogKey = keyof typeof LOG;
 
 const say = (key: LogKey, lang: Lang, vars: Vars = {}, tone: Tone = 'neutral'): Described => ({ text: fmt(LOG[key][lang], vars), tone });
 const num = (e: LogEntry, k: string): number => Number(e.data?.[k] ?? 0);
-const firstSentence = (s: string): string => s.split(/(?<=[.!?…])\s/)[0] ?? s;
+const ENDS = '.!?…';
+/** The text up to the first sentence end outside «»/"" quotes (a quoted shout like «Музыка! Дети спят!» stays whole). */
+function firstSentence(s: string): string {
+  let depth = 0;
+  let quoted = false;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s.charAt(i);
+    if (ch === '«') depth++;
+    else if (ch === '»') depth = Math.max(0, depth - 1);
+    else if (ch === '"') quoted = !quoted;
+    const open = depth > 0 || quoted;
+    const closesQuote = (ch === '»' || ch === '"') && !open && ENDS.includes(s.charAt(i - 1));
+    if ((closesQuote || (!open && ENDS.includes(ch))) && /\s/.test(s.charAt(i + 1))) return s.slice(0, i + 1);
+  }
+  return s;
+}
 
 function defectText(c: Content, id: string, lang: Lang): string {
   return c.boats.flatMap((b) => b.defectPool).find((d) => d.id === id)?.description[lang] ?? label(DAMAGE_NAMES, id, lang);
@@ -46,9 +61,17 @@ function eventTextOf(c: Content, eventId: string, day: number, lang: Lang, who: 
 function maneuverTitle(c: Content, id: string, lang: Lang): string {
   return c.maneuvers.find((m) => m.id === id)?.title[lang] ?? id;
 }
-function routeName(c: Content, id: string, lang: Lang): string {
+/** «From — to» in the direction sailed (`from`/`to` ride in the leg's data); older logs fall back to the route's own order. */
+function routeName(c: Content, id: string, lang: Lang, data?: LogEntry['data']): string {
   const r = c.routes.find((x) => x.id === id);
-  return r ? `${pointName(c, r.from, lang)} — ${pointName(c, r.to, lang)}` : id;
+  const from = typeof data?.from === 'string' ? data.from : r?.from;
+  const to = typeof data?.to === 'string' ? data.to : r?.to;
+  return from && to ? `${pointName(c, from, lang)} — ${pointName(c, to, lang)}` : id;
+}
+/** The voice behind a check: the event option's, or the system's repair option's (`roll:check:repair:<sys>:<repair>`). */
+function checkVoice(c: Content, a: string, b: string, repairId: string): keyof typeof VOICE_NAMES | undefined {
+  if (a === 'repair') return c.systems.find((d) => d.id === b)?.repairs.find((r) => r.id === repairId)?.check?.voice;
+  return c.events.find((x) => x.id === a)?.options.find((o) => o.id === b)?.check?.voice;
 }
 
 /** Human reason for an xp grant, from the inner cause (`fault:<sys>:<f>`, `roll:check:<event>:<option>`, `order:wrong:<m>:<err>`, `order:ok:<m>`); null when unknown. */
@@ -97,7 +120,7 @@ const DESCRIBE: Record<string, Describer> = {
     return null;
   },
   leg: ([routeId = ''], e, c, lang) => say('leg', lang, {
-    route: routeName(c, routeId, lang),
+    route: routeName(c, routeId, lang, e.data),
     mode: MODE_NAMES[e.data?.mode === 'sail' ? 'sail' : 'motor'][lang],
     wind: num(e, 'windKn'), speed: num(e, 'speedKn'), time: formatDuration(num(e, 'hours'), lang),
   }),
@@ -117,7 +140,7 @@ const DESCRIBE: Record<string, Describer> = {
   charge: () => null,
   refill: ([what], _e, _c, lang) => say(what === 'fuel' ? 'refillFuel' : what === 'gas' ? 'refillGas' : 'refillWater', lang),
   anchor: ([what, n = '1'], _e, _c, lang) => (what === 'dragging' ? say('anchorDragging', lang, {}, 'bad') : say('anchorAttempts', lang, { n })),
-  marina: ([what], e, _c, lang) => (what === 'refused' ? say('marinaRefused', lang, {}, 'bad') : what === 'no_money' ? say('marinaNoMoney', lang, {}, 'bad') : say('marinaFee', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0) })),
+  marina: ([what], e, _c, lang) => (what === 'refused' ? say('marinaRefused', lang, {}, 'bad') : what === 'no_money' ? say('marinaNoMoney', lang, {}, 'bad') : say('marinaFee', lang, { eur: money(Math.abs(e.delta?.moneyEur ?? 0), lang) })),
   activity: ([what], _e, _c, lang) => {
     if (what === 'swim_skipped') return say('swimSkipped', lang, {}, 'bad');
     return say(what === 'taverna' ? 'taverna' : 'swim', lang, {}, 'good');
@@ -146,7 +169,7 @@ const DESCRIBE: Record<string, Describer> = {
       default: return null;
     }
   },
-  rescue: ([what], e, _c, lang) => (what === 'tow' ? say('towed', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0), time: formatDuration(num(e, 'time_hours'), lang) }, 'bad') : null),
+  rescue: ([what], e, _c, lang) => (what === 'tow' ? say('towed', lang, { eur: money(Math.abs(e.delta?.moneyEur ?? 0), lang), time: formatDuration(num(e, 'time_hours'), lang) }, 'bad') : null),
   // `repair:<sys>:<id>` is the payment (noise); `…:success|fail` is the outcome the captain sees.
   repair: ([systemId = '', , outcome], _e, c, lang) => {
     const system = systemInline(c, systemId, lang);
@@ -159,11 +182,11 @@ const DESCRIBE: Record<string, Describer> = {
     return say('eventOption', lang, { option: optionText(c, eventId, optionId, lang, who, e.day) }, tag === 'fail' ? 'bad' : tag === 'success' ? 'good' : 'neutral');
   },
   choice: ([eventId = '', optionId = ''], e, c, lang, who) => say('chose', lang, { option: optionText(c, eventId, optionId, lang, who, e.day) }),
-  roll: ([what, a = '', b2 = ''], e, c, lang) => {
+  roll: ([what, a = '', b2 = '', b3 = ''], e, c, lang) => {
     const p = e.odds?.value ?? num(e, 'chance');
     const chance = Math.round(p * 100);
     if (what === 'check') {
-      const voice = c.events.find((x) => x.id === a)?.options.find((o) => o.id === b2)?.check?.voice;
+      const voice = checkVoice(c, a, b2, b3);
       const vars = { voice: voice ? VOICE_NAMES[voice][lang] : '?', chance: Math.round(num(e, 'chance') * 100) };
       return e.data?.success === true ? say('checkPassed', lang, vars, 'good') : say('checkFailed', lang, vars, 'bad');
     }
@@ -188,17 +211,17 @@ const DESCRIBE: Record<string, Describer> = {
     return cause ? say('xp', lang, { ...vars, cause }) : say('xpPlain', lang, vars);
   },
   voice: ([voice, what], e, _c, lang) => {
-    if (voice === 'economist' && what === 'saved') return say('economistSaved', lang, { eur: num(e, 'eur') }, 'good');
+    if (voice === 'economist' && what === 'saved') return say('economistSaved', lang, { eur: money(num(e, 'eur'), lang) }, 'good');
     if (voice === 'sea_sense' && what === 'front_seen') return say('seaSenseFront', lang);
-    if (voice === 'diplomat' && what === 'softened') return say('diplomatSoftened', lang, { mood: num(e, 'mood') }, 'good');
+    if (voice === 'diplomat' && what === 'softened') return say('diplomatSoftened', lang, { mood: round1(num(e, 'mood')) }, 'good');
     return say('unknown', lang, { cause: e.cause });
   },
   return: ([what], e, _c, lang) => {
-    if (what === 'late_fee') return say('lateFee', lang, { eur: Math.abs(e.delta?.moneyEur ?? 0) }, 'bad');
+    if (what === 'late_fee') return say('lateFee', lang, { eur: money(Math.abs(e.delta?.moneyEur ?? 0), lang) }, 'bad');
     return what === 'on_time' ? say('returnOnTime', lang, {}, 'good') : say('returnLate', lang, {}, 'bad');
   },
   deposit: ([kind, id = ''], e, c, lang) => {
-    if (kind === 'broken') return say('returnedBroken', lang, { system: systemInline(c, id, lang), eur: num(e, 'eur') }, 'bad');
+    if (kind === 'broken') return say('returnedBroken', lang, { system: systemInline(c, id, lang), eur: money(num(e, 'eur'), lang) }, 'bad');
     return say('depositCharged', lang, { what: defectText(c, id, lang) }, 'bad');
   },
 };

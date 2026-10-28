@@ -3,7 +3,7 @@ import { Button } from '../../components/Button';
 import { ChanceBadge } from '../../components/ChanceBadge';
 import { systemName } from '../../i18n/glossary';
 import { useAct, useGame, useT } from '../../session/SessionContext';
-import { formatDuration } from '../../view/format';
+import { formatDuration, money } from '../../view/format';
 import styles from './RepairBlock.module.css';
 import { REPAIR } from './strings';
 
@@ -22,7 +22,7 @@ export function RepairBlock() {
           <li key={`${systemId}:${option.id}`} className={styles.row}>
             <span className={styles.system}>{systemName(content, systemId, lang)}</span>
             <div className={styles.facts}>
-              <span>{t('cost', { eur: option.costEur ?? 0 })}</span>
+              <span>{t('cost', { eur: money(option.costEur ?? 0, lang) })}</span>
               <span>{formatDuration(option.timeHours ?? 0, lang)}</span>
               {odds && <ChanceBadge odds={odds} voices={game.voices} />}
             </div>
